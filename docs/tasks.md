@@ -177,7 +177,7 @@ ENVIRONMENT=local|staging|production
 
 ## PHASE 2 — Core domain (`studio_core`, `studio_providers`)
 
-### [ ] T2.1 Settings, DB access, repositories
+### [x] T2.1 Settings, DB access, repositories
 **Depends:** T1.3
 **Goal:** Typed config and async data access.
 **Steps**
@@ -186,11 +186,11 @@ ENVIRONMENT=local|staging|production
 3. Pydantic domain models mirroring tables; enums for `JobStatus`, `TaskType`, `InputRole`, `AssetKind`.
 4. Test fixtures: `db` fixture that connects to local Supabase Postgres and wraps each test in a rolled-back transaction.
 **DoD**
-- [ ] CRUD for each repository covered by tests against the local DB.
-- [ ] No SQL string interpolation (parameterized only); a test greps for f-strings in repository SQL.
+- [x] CRUD for each repository covered by tests against the local DB.
+- [x] No SQL string interpolation (parameterized only); a test greps for f-strings in repository SQL.
 **Verify:** `uv run pytest packages/studio_core -q`
 
-### [ ] T2.2 Job state machine
+### [x] T2.2 Job state machine
 **Depends:** T2.1
 **Goal:** A single place that governs legal state transitions.
 **Steps**
@@ -198,11 +198,11 @@ ENVIRONMENT=local|staging|production
 2. `JobService.transition(job_id, expected, new, **fields)` performing a guarded update (`UPDATE ... WHERE id=$1 AND status=$2 RETURNING *`), setting `started_at`/`completed_at` appropriately, and appending a `job_events` row **in the same transaction**. Returns `None` if the guard failed (caller decides what to do).
 3. Terminal states are immutable.
 **DoD**
-- [ ] Property-based test (`hypothesis`) shows no illegal transition is ever accepted and terminal states never change.
-- [ ] Concurrency test: two simultaneous `transition(running→finalizing)` calls — exactly one succeeds.
+- [x] Property-based test (`hypothesis`) shows no illegal transition is ever accepted and terminal states never change.
+- [x] Concurrency test: two simultaneous `transition(running→finalizing)` calls — exactly one succeeds.
 **Verify:** `uv run pytest packages/studio_core -k state -q`
 
-### [ ] T2.3 Provider interface, registry, FakeProvider
+### [x] T2.3 Provider interface, registry, FakeProvider
 **Depends:** T2.1
 **Goal:** Provider abstraction and a deterministic fake for all tests/dev.
 **Steps**
@@ -211,11 +211,11 @@ ENVIRONMENT=local|staging|production
 3. `fake.py`: `FakeProvider` with configurable latency, failure injection (`fail_rate`, `fail_on_prompt_contains="FAIL"`), webhook simulation (an in-process `trigger_webhook(job)` helper), and outputs served from `packages/studio_providers/fixtures/` (tiny PNG and MP4) via a local HTTP file server fixture.
 4. Error taxonomy: `TransientProviderError`, `PermanentProviderError`, `RateLimitedError(retry_after)`.
 **DoD**
-- [ ] A reusable contract test suite (`tests/contract.py`) any adapter can inherit: submit → status → outputs, cancel, bad-input → `PermanentProviderError`, webhook verification (valid/invalid signature).
-- [ ] `FakeProvider` passes the contract suite.
+- [x] A reusable contract test suite (`tests/contract.py`) any adapter can inherit: submit → status → outputs, cancel, bad-input → `PermanentProviderError`, webhook verification (valid/invalid signature).
+- [x] `FakeProvider` passes the contract suite.
 **Verify:** `uv run pytest packages/studio_providers -q`
 
-### [ ] T2.4 Credits service
+### [x] T2.4 Credits service
 **Depends:** T2.1
 **Goal:** Reserve/refund credits atomically.
 **Steps**
@@ -223,11 +223,11 @@ ENVIRONMENT=local|staging|production
 2. `refund(job_id)` — idempotent: refund once per job (check existing refund row).
 3. `balance(workspace_id)`.
 **DoD**
-- [ ] Concurrency test: 20 parallel reserves against a balance for 10 → exactly 10 succeed, balance never negative.
-- [ ] Double refund test results in one refund row.
+- [x] Concurrency test: 20 parallel reserves against a balance for 10 → exactly 10 succeed, balance never negative.
+- [x] Double refund test results in one refund row.
 **Verify:** `uv run pytest packages/studio_core -k credit -q`
 
-### [ ] T2.5 Generation request validation and job creation
+### [x] T2.5 Generation request validation and job creation
 **Depends:** T2.2, T2.3, T2.4
 **Goal:** Everything the API does on submit, as a testable service.
 **Steps**
@@ -240,8 +240,8 @@ ENVIRONMENT=local|staging|production
    - In one transaction: insert job (`queued`), `job_inputs`, reserve credits. On unique violation of idempotency key return the existing job (same payload) or raise `IdempotencyConflict` if payload differs.
 2. Return the job; **enqueueing is the caller's responsibility** (API) so this stays transport-agnostic.
 **DoD**
-- [ ] Tests for each validation failure path with specific `error_code`s (`MODEL_TASK_MISMATCH`, `INVALID_PARAMS`, `MISSING_INPUT`, `INSUFFICIENT_CREDITS`, `CONCURRENCY_LIMIT`, `IDEMPOTENCY_CONFLICT`).
-- [ ] Replaying the same idempotency key + payload returns the same job without double-charging.
+- [x] Tests for each validation failure path with specific `error_code`s (`MODEL_TASK_MISMATCH`, `INVALID_PARAMS`, `MISSING_INPUT`, `INSUFFICIENT_CREDITS`, `CONCURRENCY_LIMIT`, `IDEMPOTENCY_CONFLICT`).
+- [x] Replaying the same idempotency key + payload returns the same job without double-charging.
 **Verify:** `uv run pytest packages/studio_core -k generation -q`
 
 ---
