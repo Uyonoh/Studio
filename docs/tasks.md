@@ -103,7 +103,7 @@ ENVIRONMENT=local|staging|production
 - [x] `redis-cli -u $REDIS_URL ping` returns `PONG`; Supabase Studio reachable locally.
 **Verify:** run the script; curl `http://127.0.0.1:54321/rest/v1/` with anon key returns 200.
 
-### [ ] T0.3 CI skeleton
+### [x] T0.3 CI skeleton
 **Depends:** T0.1
 **Goal:** GitHub Actions runs lint/type/test on every PR.
 **Steps**
@@ -111,8 +111,8 @@ ENVIRONMENT=local|staging|production
 2. Cache `uv` and `pnpm` stores. Cancel superseded runs (`concurrency`).
 3. Add PR template (checklist = Global DoD) and CODEOWNERS.
 **DoD**
-- [ ] A PR with a deliberate lint error fails CI; fixing it turns CI green.
-- [ ] Run time under 6 minutes on a cold cache.
+- [x] A PR with a deliberate lint error fails CI; fixing it turns CI green.
+- [x] Run time under 6 minutes on a cold cache.
 **Verify:** open a draft PR.
 
 ---

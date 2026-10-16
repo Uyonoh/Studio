@@ -1,0 +1,18 @@
+# Global repository owners
+* @Uyonoh
+
+# Backend
+/apps/api/ @Uyonoh
+/apps/worker/ @Uyonoh
+/packages/studio_core/ @Uyonoh
+/packages/studio_providers/ @Uyonoh
+/packages/studio_media/ @Uyonoh
+
+# Frontend
+/apps/web/ @Uyonoh
+/packages/api-client/ @Uyonoh
+
+# Infrastructure & Database
+/infra/ @Uyonoh
+/supabase/ @Uyonoh
+/.github/ @Uyonoh
