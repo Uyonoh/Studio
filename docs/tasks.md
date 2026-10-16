@@ -121,7 +121,7 @@ ENVIRONMENT=local|staging|production
 
 > Copy DDL from TDD §3.2/§3.3 into migrations. Split into the migrations below; do not rewrite the design without recording an ADR.
 
-### [ ] T1.1 Migration: identity, tenancy, projects
+### [x] T1.1 Migration: identity, tenancy, projects
 **Depends:** T0.2
 **Goal:** `profiles`, `workspaces`, `workspace_members`, `projects`, `workspace_role` enum, auto-provisioning.
 **Steps**
@@ -131,12 +131,12 @@ ENVIRONMENT=local|staging|production
 4. Add `is_member(ws, min_role)` function (security definer, `set search_path = public`). **Check the enum ordering comparison actually yields the intended semantics** and write a test proving `viewer` cannot satisfy `editor`.
 5. Enable RLS + policies for `profiles` (self read/update), `workspaces`, `workspace_members`, `projects` per TDD §3.3.
 **DoD**
-- [ ] `supabase db reset` applies cleanly.
-- [ ] Creating a user via Supabase Auth yields profile + workspace + owner membership automatically.
-- [ ] Policies verified in T1.4 tests (stub tests may be added here).
+- [x] `supabase db reset` applies cleanly.
+- [x] Creating a user via Supabase Auth yields profile + workspace + owner membership automatically.
+- [x] Policies verified in T1.4 tests (stub tests may be added here).
 **Verify:** `supabase db reset && supabase test db`
 
-### [ ] T1.2 Migration: models, assets, jobs, ledger
+### [x] T1.2 Migration: models, assets, jobs, ledger
 **Depends:** T1.1
 **Goal:** All MVP generation tables.
 **Steps**
@@ -146,12 +146,12 @@ ENVIRONMENT=local|staging|production
 4. Add DB-level guard: `check` that `generation_jobs.attempt <= max_attempts`.
 5. Enable Realtime publication for `generation_jobs` only.
 **DoD**
-- [ ] Reset applies cleanly; all indexes present (`\d+` check in a test).
-- [ ] Unique `(workspace_id, idempotency_key)` and unique `provider_job_id` enforced (test inserts a duplicate and expects failure).
-- [ ] `generation_jobs` is in the `supabase_realtime` publication.
+- [x] Reset applies cleanly; all indexes present (`\d+` check in a test).
+- [x] Unique `(workspace_id, idempotency_key)` and unique `provider_job_id` enforced (test inserts a duplicate and expects failure).
+- [x] `generation_jobs` is in the `supabase_realtime` publication.
 **Verify:** `supabase db reset && supabase test db`
 
-### [ ] T1.3 Storage bucket, policies, seed data
+### [x] T1.3 Storage bucket, policies, seed data
 **Depends:** T1.2
 **Goal:** Private `media` bucket scoped by workspace path; seed providers/models.
 **Steps**
@@ -159,18 +159,18 @@ ENVIRONMENT=local|staging|production
 2. `supabase/seed.sql`: providers (`replicate`, `fal`, `fake`), and models for the `fake` provider covering all four task types, with realistic `input_schema` JSON Schemas (prompt, aspect_ratio enum, seed int, duration_s for video) and `cost_credits`.
 3. Seed a dev user via a script (`scripts/seed_dev_user.py`) that signs up `dev@example.com` through the Auth admin API and grants 1000 credits via `credit_ledger`.
 **DoD**
-- [ ] A member can upload/download only under their workspace prefix; non-members get denied (tested).
-- [ ] `select * from models` shows fake models for all four task types.
+- [x] A member can upload/download only under their workspace prefix; non-members get denied (tested).
+- [x] `select * from models` shows fake models for all four task types.
 **Verify:** `supabase db reset && python scripts/seed_dev_user.py && supabase test db`
 
-### [ ] T1.4 RLS and constraint tests (pgTAP)
+### [x] T1.4 RLS and constraint tests (pgTAP)
 **Depends:** T1.3
 **Goal:** Automated proof of tenant isolation.
 **Steps**
 1. `supabase/tests/rls_*.sql` using pgTAP. Fixtures: two workspaces A and B; users: A-owner, A-editor, A-viewer, B-owner.
 2. Cases: B-owner cannot read A's projects/assets/jobs; viewer cannot insert project; editor can; nobody can write `generation_jobs`/`credit_ledger` with the anon/authenticated role; storage path isolation.
 **DoD**
-- [ ] ≥ 20 assertions, all passing; run in CI (add job `db-tests`).
+- [x] ≥ 20 assertions, all passing; run in CI (add job `db-tests`).
 **Verify:** `supabase test db`
 
 ---
