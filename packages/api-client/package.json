@@ -1,0 +1,11 @@
+{
+  "name": "@studio/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint": "echo no-op",
+    "typecheck": "echo no-op",
+    "test": "echo no-op",
+    "build": "echo no-op"
+  }
+}
