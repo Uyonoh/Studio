@@ -90,7 +90,7 @@ ENVIRONMENT=local|staging|production
 - [x] `docs/design.md` exists and is the TDD.
 **Verify:** `make lint typecheck test`
 
-### [ ] T0.2 Local dev environment
+### [x] T0.2 Local dev environment
 **Depends:** T0.1
 **Goal:** One command brings up Postgres/Auth/Storage (Supabase local) and Redis.
 **Steps**
@@ -99,8 +99,8 @@ ENVIRONMENT=local|staging|production
 3. `.env.example` with all variables from the reference list; `scripts/dev-up.sh` runs `supabase start` + `docker compose up -d redis` and prints local URLs/keys.
 4. Document in `README.md`: prerequisites (Docker, Supabase CLI, uv, pnpm), first-run steps.
 **DoD**
-- [ ] `scripts/dev-up.sh` works from a clean machine following the README only.
-- [ ] `redis-cli -u $REDIS_URL ping` returns `PONG`; Supabase Studio reachable locally.
+- [x] `scripts/dev-up.sh` works from a clean machine following the README only.
+- [x] `redis-cli -u $REDIS_URL ping` returns `PONG`; Supabase Studio reachable locally.
 **Verify:** run the script; curl `http://127.0.0.1:54321/rest/v1/` with anon key returns 200.
 
 ### [ ] T0.3 CI skeleton

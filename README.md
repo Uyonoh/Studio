@@ -20,12 +20,36 @@ Refer to the technical documentation:
 - Python 3.12+ and [`uv`](https://github.com/astral-sh/uv)
 - Node.js 20+ and [`pnpm`](https://pnpm.io/)
 - Docker & Docker Compose
-- Supabase CLI
+- Supabase CLI (or `npx supabase`)
 
-### Setup
-```bash
-make setup
-make lint
-make typecheck
-make test
-```
+### First-Run & Local Dev Setup
+1. Copy the example environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+2. Install workspace dependencies:
+   ```bash
+   make setup
+   ```
+3. Start the local database, storage, realtime, and Redis stack:
+   - Linux/macOS:
+     ```bash
+     chmod +x scripts/dev-up.sh
+     ./scripts/dev-up.sh
+     ```
+   - Windows (PowerShell):
+     ```powershell
+     .\scripts\dev-up.ps1
+     ```
+   This spins up:
+   - Redis at `redis://127.0.0.1:6379`
+   - Supabase local API at `http://127.0.0.1:54321`
+   - Supabase Studio at `http://127.0.0.1:54323`
+   - Supabase PostgreSQL at `postgresql://postgres:postgres@127.0.0.1:54322/postgres`
+
+4. Run code quality and test suites:
+   ```bash
+   make lint
+   make typecheck
+   make test
+   ```
