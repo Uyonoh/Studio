@@ -2,6 +2,7 @@
 
 Allowed transitions:
   queued -> submitting
+  queued -> failed (enqueue/infrastructure failure)
   submitting -> running
   submitting -> queued (transient retry)
   submitting -> failed (permanent failure)
@@ -25,7 +26,7 @@ from studio_core.models import GenerationJob, JobStatus
 from studio_core.repositories import EventRepository
 
 ALLOWED_TRANSITIONS: dict[JobStatus, set[JobStatus]] = {
-    JobStatus.QUEUED: {JobStatus.SUBMITTING, JobStatus.CANCELED},
+    JobStatus.QUEUED: {JobStatus.SUBMITTING, JobStatus.CANCELED, JobStatus.FAILED},
     JobStatus.SUBMITTING: {JobStatus.RUNNING, JobStatus.QUEUED, JobStatus.FAILED},
     JobStatus.RUNNING: {JobStatus.FINALIZING, JobStatus.FAILED, JobStatus.CANCELED},
     JobStatus.FINALIZING: {JobStatus.SUCCEEDED, JobStatus.FAILED},

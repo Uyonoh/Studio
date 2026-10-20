@@ -52,7 +52,10 @@ name = "api"
 version = "0.1.0"
 source = { editable = "apps/api" }
 dependencies = [
+    { name = "arq" },
     { name = "fastapi" },
+    { name = "httpx" },
+    { name = "pyjwt" },
     { name = "studio-core" },
     { name = "studio-media" },
     { name = "studio-providers" },
@@ -61,7 +64,10 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "arq", specifier = ">=0.25.0" },
     { name = "fastapi", specifier = ">=0.111.0" },
+    { name = "httpx", specifier = ">=0.27.0" },
+    { name = "pyjwt", specifier = ">=2.8.0" },
     { name = "studio-core", editable = "packages/studio_core" },
     { name = "studio-media", editable = "packages/studio_media" },
     { name = "studio-providers", editable = "packages/studio_providers" },

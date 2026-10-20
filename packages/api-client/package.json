@@ -2,10 +2,27 @@
   "name": "@studio/api-client",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
+    "codegen": "openapi-typescript ../../docs/openapi.json -o src/schema.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
     "lint": "echo no-op",
-    "typecheck": "echo no-op",
-    "test": "echo no-op",
-    "build": "echo no-op"
+    "test": "echo no-op"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
   }
 }

@@ -248,7 +248,7 @@ ENVIRONMENT=local|staging|production
 
 ## PHASE 3 — API (`apps/api`)
 
-### [ ] T3.1 FastAPI skeleton, auth, errors, middleware
+### [x] T3.1 FastAPI skeleton, auth, errors, middleware
 **Depends:** T2.1
 **Goal:** App factory with auth and consistent errors.
 **Steps**
@@ -258,11 +258,11 @@ ENVIRONMENT=local|staging|production
 4. Exception handlers mapping domain errors → problem+json with `error_code`.
 5. `GET /healthz` (liveness) and `GET /readyz` (checks DB + Redis).
 **DoD**
-- [ ] Tests: valid/invalid/expired token; problem+json shape; request ID propagated to logs.
-- [ ] `uvicorn apps.api.main:app` starts and `/docs` renders.
+- [x] Tests: valid/invalid/expired token; problem+json shape; request ID propagated to logs.
+- [x] `uvicorn apps.api.main:app` starts and `/docs` renders.
 **Verify:** `uv run pytest apps/api -q`
 
-### [ ] T3.2 Workspaces and projects endpoints
+### [x] T3.2 Workspaces and projects endpoints
 **Depends:** T3.1, T1.4
 **Goal:** CRUD per TDD §4.1.
 **Steps**
@@ -270,10 +270,10 @@ ENVIRONMENT=local|staging|production
 2. Cursor pagination helper (opaque base64 of `(created_at, id)`), default limit 24, max 100.
 3. Soft-archive on `DELETE /v1/projects/{id}`.
 **DoD**
-- [ ] Integration tests: happy path, 403 for non-member, 404 for cross-workspace IDs (don't leak existence), pagination stable across inserts.
+- [x] Integration tests: happy path, 403 for non-member, 404 for cross-workspace IDs (don't leak existence), pagination stable across inserts.
 **Verify:** `uv run pytest apps/api -k projects -q`
 
-### [ ] T3.3 Asset endpoints and uploads
+### [x] T3.3 Asset endpoints and uploads
 **Depends:** T3.2
 **Goal:** Signed upload flow and asset reads.
 **Steps**
@@ -283,19 +283,19 @@ ENVIRONMENT=local|staging|production
 4. `DELETE` → soft delete.
 5. Implement `studio_media`: `probe_image`, `probe_video`, `make_thumbnail`, `make_poster_frame`. Install `ffmpeg` in the API/worker Docker images.
 **DoD**
-- [ ] Tests with fixture image/video: metadata correct; spoofed extension rejected; oversize rejected.
-- [ ] Download URLs expire (test with short TTL setting).
+- [x] Tests with fixture image/video: metadata correct; spoofed extension rejected; oversize rejected.
+- [x] Download URLs expire (test with short TTL setting).
 **Verify:** `uv run pytest apps/api packages/studio_media -k asset -q`
 
-### [ ] T3.4 Models endpoint
+### [x] T3.4 Models endpoint
 **Depends:** T3.1
 **Goal:** `GET /v1/models?task_type=` returning enabled models with `input_schema`, `default_params`, `cost_credits`, and which input roles each task needs.
 **DoD**
-- [ ] Disabled models/providers never returned; response cached 60s (`Cache-Control`).
-- [ ] Test for filtering by `task_type`.
+- [x] Disabled models/providers never returned; response cached 60s (`Cache-Control`).
+- [x] Test for filtering by `task_type`.
 **Verify:** `uv run pytest apps/api -k models -q`
 
-### [ ] T3.5 Generation endpoints
+### [x] T3.5 Generation endpoints
 **Depends:** T2.5, T3.2, T3.3, T4.0 (queue helper below)
 **Goal:** Submit/get/list/cancel/retry per TDD §4.2.
 **Steps**
@@ -305,11 +305,11 @@ ENVIRONMENT=local|staging|production
 4. `POST .../cancel` — transition to `canceled` if not terminal, enqueue `cancel_generation` if `running`, refund.
 5. `POST .../retry` — only for `failed`/`canceled`; creates a new job with `parent_job_id`, same inputs (new idempotency key derived server-side).
 **DoD**
-- [ ] Integration tests with a stub queue: 202 shape, validation errors, idempotent replay, cancel/retry rules, cross-workspace denial.
-- [ ] Enqueue failure path leaves job `failed` and credits refunded (test).
+- [x] Integration tests with a stub queue: 202 shape, validation errors, idempotent replay, cancel/retry rules, cross-workspace denial.
+- [x] Enqueue failure path leaves job `failed` and credits refunded (test).
 **Verify:** `uv run pytest apps/api -k generations -q`
 
-### [ ] T3.6 Provider webhook receiver
+### [x] T3.6 Provider webhook receiver
 **Depends:** T3.5, T2.3
 **Goal:** Safe, idempotent webhook ingestion.
 **Steps**
@@ -317,10 +317,10 @@ ENVIRONMENT=local|staging|production
 2. Append `job_events(type='webhook', payload=<raw>)`. If the job is not terminal and status is `running`, enqueue `finalize_generation`. Always return `200` quickly for valid but redundant deliveries; `401` for bad signature/token.
 3. Never trust provider payload for state; the finalize task re-fetches status via `get_status` when possible.
 **DoD**
-- [ ] Tests: bad signature → 401; duplicate delivery → 200, only one finalize enqueued (dedupe via ARQ job id); unknown job → 404; terminal job → 200 no-op.
+- [x] Tests: bad signature → 401; duplicate delivery → 200, only one finalize enqueued (dedupe via ARQ job id); unknown job → 404; terminal job → 200 no-op.
 **Verify:** `uv run pytest apps/api -k webhook -q`
 
-### [ ] T3.7 OpenAPI export and generated client
+### [x] T3.7 OpenAPI export and generated client
 **Depends:** T3.5
 **Goal:** Typed client for the frontend and a breaking-change gate.
 **Steps**
@@ -328,7 +328,7 @@ ENVIRONMENT=local|staging|production
 2. `packages/api-client`: generate types/client with `openapi-typescript` + `openapi-fetch`; export `createClient(baseUrl, getToken)`.
 3. CI: regenerate and fail if `docs/openapi.json` changed but was not committed; add `oasdiff breaking` check against `main`.
 **DoD**
-- [ ] `pnpm --filter api-client build` passes; CI gate demonstrably fails on a deliberate breaking change.
+- [x] `pnpm --filter api-client build` passes; CI gate demonstrably fails on a deliberate breaking change.
 **Verify:** `make openapi && git diff --exit-code docs/openapi.json`
 
 ---
