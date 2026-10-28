@@ -439,7 +439,7 @@ ENVIRONMENT=local|staging|production
 
 ## PHASE 6 — Frontend (`apps/web`)
 
-### [ ] T6.1 Next.js scaffold and Supabase auth
+### [x] T6.1 Next.js scaffold and Supabase auth
 **Depends:** T3.7
 **Goal:** Authenticated shell.
 **Steps**
@@ -448,8 +448,8 @@ ENVIRONMENT=local|staging|production
 3. `lib/api.ts`: instantiate `@studio/api-client` with the user's access token; React Query provider; global error boundary + toast.
 4. Layout: sidebar (workspace switcher, projects), top bar (credits balance, user menu).
 **DoD**
-- [ ] Sign in/out works locally; unauthenticated visit to `/projects` redirects to `/login`.
-- [ ] Vitest + RTL smoke tests for layout; Lighthouse accessibility ≥ 90 on login page.
+- [x] Sign in/out works locally; unauthenticated visit to `/projects` redirects to `/login`.
+- [x] Vitest + RTL smoke tests for layout; Lighthouse accessibility ≥ 90 on login page.
 **Verify:** `pnpm --filter web lint typecheck test && pnpm --filter web build`
 
 ### [ ] T6.2 Projects pages

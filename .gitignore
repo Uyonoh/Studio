@@ -42,6 +42,7 @@ out/
 coverage/
 *.lcov
 .nyc_output
+*.tsbuildinfo
 
 # Environment & Secrets
 .env
