@@ -15,6 +15,7 @@ def test_migrations_exist_and_ordered() -> None:
     assert "0001_identity.sql" in filenames
     assert "0002_generation.sql" in filenames
     assert "0003_storage.sql" in filenames
+    assert "0004_models_seed.sql" in filenames
 
 
 def test_identity_migration_contents() -> None:
@@ -75,3 +76,18 @@ def test_seed_contents() -> None:
     assert "'image_to_image'" in content
     assert "'text_to_video'" in content
     assert "'image_to_video'" in content
+
+
+def test_models_seed_migration_contents() -> None:
+    migration_file = REPO_ROOT / "supabase" / "migrations" / "0004_models_seed.sql"
+    content = migration_file.read_text(encoding="utf-8")
+
+    assert "replicate" in content
+    assert "fal" in content
+    assert "black-forest-labs/flux-schnell" in content
+    assert "fal-ai/flux/schnell" in content
+    assert "text_to_image" in content
+    assert "image_to_image" in content
+    assert "text_to_video" in content
+    assert "image_to_video" in content
+    assert "on conflict (provider_id, provider_model, task_type) do update" in content.lower()

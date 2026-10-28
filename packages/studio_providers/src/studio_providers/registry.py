@@ -1,7 +1,11 @@
 """Registry mapping provider identifiers to GenerationProvider adapter instances."""
 
+import logging
+
 from studio_core.settings import Settings, get_settings
 from studio_providers.base import GenerationProvider
+
+logger = logging.getLogger(__name__)
 
 
 class ProviderRegistry:
@@ -32,14 +36,33 @@ def get_provider_registry(settings: Settings | None = None) -> ProviderRegistry:
     global _registry
     if _registry is None:
         _registry = ProviderRegistry()
-        settings or get_settings()
+        s = settings or get_settings()
 
-        # Always register FakeProvider unless strictly production and not configured
-        from studio_providers.fake import FakeProvider
+        # Always register FakeProvider in non-production environments
+        if s.environment != "production":
+            from studio_providers.fake import FakeProvider
 
-        _registry.register(FakeProvider())
+            _registry.register(FakeProvider())
+            logger.info("Registered FakeProvider (environment=%s)", s.environment)
 
-        # Placeholder: Replicate and Fal will register here if credentials exist (Phase 5)
+        # Register ReplicateProvider if credentials are configured
+        if s.replicate_api_token:
+            from studio_providers.replicate import ReplicateProvider
+
+            _registry.register(
+                ReplicateProvider(
+                    api_token=s.replicate_api_token,
+                    webhook_secret=s.replicate_webhook_secret,
+                )
+            )
+            logger.info("Registered ReplicateProvider")
+
+        # Register FalProvider if credentials are configured
+        if s.fal_key:
+            from studio_providers.fal import FalProvider
+
+            _registry.register(FalProvider(api_key=s.fal_key))
+            logger.info("Registered FalProvider")
 
     return _registry
 

@@ -404,7 +404,7 @@ ENVIRONMENT=local|staging|production
 
 ## PHASE 5 — Real providers
 
-### [ ] T5.1 Replicate adapter
+### [x] T5.1 Replicate adapter
 **Depends:** T2.3, T4.1
 **Goal:** `ReplicateProvider` implementing the Protocol.
 **Steps**
@@ -414,17 +414,17 @@ ENVIRONMENT=local|staging|production
 4. Map HTTP 429/5xx → `RateLimitedError`/`TransientProviderError`; 4xx validation → `PermanentProviderError`.
 5. Check the provider's current API docs before implementing; do not assume field names from memory.
 **DoD**
-- [ ] Inherits the contract test suite using recorded fixtures (`respx`/`vcrpy`), no live calls in CI.
-- [ ] A manual smoke script `scripts/smoke_provider.py replicate` generates one real image (documented, not in CI).
+- [x] Inherits the contract test suite using recorded fixtures (`respx`/`vcrpy`), no live calls in CI.
+- [x] A manual smoke script `scripts/smoke_provider.py replicate` generates one real image (documented, not in CI).
 **Verify:** `uv run pytest packages/studio_providers -k replicate -q`
 
-### [ ] T5.2 Fal.ai adapter
+### [x] T5.2 Fal.ai adapter
 **Depends:** T5.1 (reuse patterns)
 **Goal:** `FalProvider` using fal's queue API (submit → status → result, with webhook URL).
 **Steps/DoD:** Same as T5.1 (mappers, signature verification per current docs, error mapping, contract suite, smoke script).
 **Verify:** `uv run pytest packages/studio_providers -k fal -q`
 
-### [ ] T5.3 Real model catalog rows
+### [x] T5.3 Real model catalog rows
 **Depends:** T5.1, T5.2
 **Goal:** Seed one or two models per task type.
 **Steps**
@@ -432,7 +432,7 @@ ENVIRONMENT=local|staging|production
 2. Write migration `0004_models_seed.sql` (idempotent upserts) with accurate `input_schema`, defaults, and `cost_credits` derived from provider pricing (document the formula).
 3. Ensure `FakeProvider` models remain enabled only when `ENVIRONMENT != production`.
 **DoD**
-- [ ] `GET /v1/models` returns real models in staging; smoke script generates one asset per task type successfully.
+- [x] `GET /v1/models` returns real models in staging; smoke script generates one asset per task type successfully.
 **Verify:** run smoke script for each task type on staging.
 
 ---
