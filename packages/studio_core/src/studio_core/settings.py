@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import Field
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -47,6 +47,9 @@ class Settings(BaseSettings):
         default=None, validation_alias="REPLICATE_WEBHOOK_SECRET"
     )
     fal_key: str | None = Field(default=None, validation_alias="FAL_KEY")
+    gemini_api_key: str | None = Field(
+        default=None, validation_alias=AliasChoices("GEMINI_API_KEY", "GOOGLE_API_KEY")
+    )
 
     # Limits & Orchestration
     max_active_jobs_per_workspace: int = Field(

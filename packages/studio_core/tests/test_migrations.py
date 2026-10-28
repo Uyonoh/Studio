@@ -16,6 +16,7 @@ def test_migrations_exist_and_ordered() -> None:
     assert "0002_generation.sql" in filenames
     assert "0003_storage.sql" in filenames
     assert "0004_models_seed.sql" in filenames
+    assert "0005_google_models_seed.sql" in filenames
 
 
 def test_identity_migration_contents() -> None:
@@ -90,4 +91,15 @@ def test_models_seed_migration_contents() -> None:
     assert "image_to_image" in content
     assert "text_to_video" in content
     assert "image_to_video" in content
+    assert "on conflict (provider_id, provider_model, task_type) do update" in content.lower()
+
+
+def test_google_models_seed_migration_contents() -> None:
+    migration_file = REPO_ROOT / "supabase" / "migrations" / "0005_google_models_seed.sql"
+    content = migration_file.read_text(encoding="utf-8")
+
+    assert "google" in content
+    assert "imagen-3.0-generate-002" in content
+    assert "text_to_image" in content
+    assert "image_to_image" in content
     assert "on conflict (provider_id, provider_model, task_type) do update" in content.lower()

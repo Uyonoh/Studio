@@ -17,6 +17,7 @@ from studio_providers.base import (
 from studio_providers.contract import ProviderContractSuite
 from studio_providers.fake import FakeProvider
 from studio_providers.fal import FalProvider
+from studio_providers.google import GoogleProvider
 from studio_providers.registry import ProviderRegistry, get_provider, get_provider_registry
 from studio_providers.replicate import ReplicateProvider
 
@@ -27,6 +28,7 @@ __all__ = [
     "FalProvider",
     "FakeProvider",
     "GenerationProvider",
+    "GoogleProvider",
     "PermanentProviderError",
     "ProviderContractSuite",
     "ProviderError",

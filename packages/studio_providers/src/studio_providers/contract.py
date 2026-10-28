@@ -40,7 +40,7 @@ class ProviderContractSuite:
         assert status.state == ProviderJobState.SUCCEEDED
         assert len(status.outputs) > 0
         assert status.outputs[0].kind == AssetKind.IMAGE
-        assert status.outputs[0].url.startswith("http")
+        assert status.outputs[0].url.startswith(("http://", "https://", "data:"))
 
     @pytest.mark.asyncio
     async def test_cancel_job(self, provider: GenerationProvider) -> None:

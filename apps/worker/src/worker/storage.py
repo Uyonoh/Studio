@@ -5,6 +5,7 @@ Handles downloading provider outputs and uploading objects to Supabase Storage.
 
 from __future__ import annotations
 
+import base64
 import logging
 from typing import Any
 
@@ -63,7 +64,14 @@ class StorageClient:
         return storage_path
 
     async def download_file(self, url: str, max_size_bytes: int = 500 * 1024 * 1024) -> bytes:
-        """Download content with size limit and timeout."""
+        """Download content with size limit and timeout (supports HTTP URLs and data URIs)."""
+        if url.startswith("data:"):
+            _, encoded = url.split(",", 1)
+            data = base64.b64decode(encoded)
+            if len(data) > max_size_bytes:
+                raise ValueError(f"Data URI exceeded maximum size of {max_size_bytes} bytes")
+            return data
+
         async with httpx.AsyncClient(timeout=120.0, follow_redirects=True) as client:
             async with client.stream("GET", url) as resp:
                 resp.raise_for_status()

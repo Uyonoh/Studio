@@ -64,6 +64,13 @@ def get_provider_registry(settings: Settings | None = None) -> ProviderRegistry:
             _registry.register(FalProvider(api_key=s.fal_key))
             logger.info("Registered FalProvider")
 
+        # Register GoogleProvider if credentials are configured
+        if s.gemini_api_key:
+            from studio_providers.google import GoogleProvider
+
+            _registry.register(GoogleProvider(api_key=s.gemini_api_key))
+            logger.info("Registered GoogleProvider")
+
     return _registry
 
 

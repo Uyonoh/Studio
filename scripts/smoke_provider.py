@@ -93,9 +93,43 @@ async def smoke_fal() -> None:
         print("[fal] Timed out after 120s")
 
 
+async def smoke_google() -> None:
+    """Smoke test: submit a text→image prediction with Google Imagen 3."""
+    from studio_core.models import TaskType
+    from studio_providers.base import ProviderRequest
+    from studio_providers.google import GoogleProvider
+
+    key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+    if not key:
+        print("ERROR: GEMINI_API_KEY or GOOGLE_API_KEY not set")
+        sys.exit(1)
+
+    provider = GoogleProvider(api_key=key)
+    req = ProviderRequest(
+        task_type=TaskType.TEXT_TO_IMAGE,
+        model="imagen-3.0-generate-002",
+        prompt="A serene Japanese garden with a koi pond, soft morning light, photorealistic",
+        params={"aspect_ratio": "16:9", "num_images": 1},
+    )
+
+    print("[google] Submitting text→image prediction to Imagen 3...")
+    ref = await provider.submit(req)
+    print(f"[google] Prediction ID: {ref.provider_job_id}")
+
+    status = await provider.get_status(ref)
+    print(f"[google] Status: {status.state}")
+    if status.outputs:
+        for j, out in enumerate(status.outputs):
+            url_preview = out.url[:60] + "..." if len(out.url) > 60 else out.url
+            print(f"[google] Output {j}: {url_preview} ({out.kind})")
+    if status.error_message:
+        print(f"[google] Error: {status.error_message}")
+
+
 PROVIDERS = {
     "replicate": smoke_replicate,
     "fal": smoke_fal,
+    "google": smoke_google,
 }
 
 if __name__ == "__main__":
