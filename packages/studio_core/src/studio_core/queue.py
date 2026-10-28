@@ -47,6 +47,7 @@ async def enqueue(
     kwargs: dict[str, object] = {"_job_id": arq_job_id}
     if defer_by is not None:
         from datetime import timedelta
+
         kwargs["_defer_by"] = timedelta(seconds=defer_by)
 
     try:

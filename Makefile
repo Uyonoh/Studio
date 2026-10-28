@@ -11,7 +11,7 @@ lint:
 
 typecheck:
 	uv run mypy -p api -p worker -p studio_core -p studio_providers -p studio_media
-	uv run mypy apps/api/tests apps/worker/tests packages/studio_core/tests packages/studio_providers/tests packages/studio_media/tests
+	uv run mypy apps/api/tests apps/worker/tests packages/studio_core/tests packages/studio_providers/tests packages/studio_media/tests tests/e2e_backend
 	pnpm -r --if-present typecheck
 
 test:

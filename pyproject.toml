@@ -55,6 +55,7 @@ known-first-party = ["api", "worker", "studio_core", "studio_providers", "studio
 [tool.mypy]
 python_version = "3.12"
 strict = true
+explicit_package_bases = true
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -67,10 +68,12 @@ warn_unused_ignores = true
 [tool.pytest.ini_options]
 minversion = "7.0"
 asyncio_mode = "auto"
+addopts = ["--import-mode=importlib"]
 testpaths = [
     "apps/api/tests",
     "apps/worker/tests",
     "packages/studio_core/tests",
     "packages/studio_providers/tests",
     "packages/studio_media/tests",
+    "tests/e2e_backend",
 ]

@@ -14,12 +14,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
 import pytest
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from .conftest import make_jwt
 
 
-def _make_app(mock_conn: AsyncMock):
+def _make_app(mock_conn: AsyncMock) -> FastAPI:
     from api.main import create_app
 
     app = create_app()
@@ -95,6 +96,7 @@ def _model_row(task_type: str = "text_to_image") -> dict[str, Any]:
 
 # ── Submit generation ─────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_submit_generation_requires_idempotency_key() -> None:
     uid = uuid.uuid4()
@@ -120,7 +122,7 @@ async def test_submit_generation_cross_workspace_denied() -> None:
 
     conn = _mock_conn()
 
-    async def fetchrow_se(query: str, *args: Any) -> dict | None:
+    async def fetchrow_se(query: str, *args: Any) -> dict[str, Any] | None:
         if "public.projects" in query and "archived_at IS NULL" in query:
             return {
                 "id": proj_id,
@@ -163,11 +165,19 @@ async def test_submit_generation_task_mismatch_returns_422() -> None:
 
     now = datetime.now(UTC)
 
-    async def fetchrow_se(query: str, *args: Any) -> dict | None:
+    async def fetchrow_se(query: str, *args: Any) -> dict[str, Any] | None:
         if "public.projects" in query and "archived_at IS NULL" in query:
-            return {"id": proj_id, "workspace_id": ws_id, "name": "proj", "description": None,
-                    "cover_asset_id": None, "created_by": uid,
-                    "created_at": now, "updated_at": now, "archived_at": None}
+            return {
+                "id": proj_id,
+                "workspace_id": ws_id,
+                "name": "proj",
+                "description": None,
+                "cover_asset_id": None,
+                "created_by": uid,
+                "created_at": now,
+                "updated_at": now,
+                "archived_at": None,
+            }
         if "generation_jobs" in query and "idempotency_key" in query:
             return None  # no existing job
         if "public.models" in query and "slug" in query:
@@ -175,6 +185,7 @@ async def test_submit_generation_task_mismatch_returns_422() -> None:
         return None
 
     conn.fetchrow = AsyncMock(side_effect=fetchrow_se)
+
     async def fetchval_se(query: str, *args: Any) -> Any:
         if "workspace_members" in query:
             return "editor"
@@ -202,6 +213,7 @@ async def test_submit_generation_task_mismatch_returns_422() -> None:
 
 # ── Get generation ────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_generation_not_found() -> None:
     uid = uuid.uuid4()
@@ -226,7 +238,7 @@ async def test_get_generation_happy_path() -> None:
 
     conn = _mock_conn()
 
-    async def fetchrow_se(query: str, *args: Any) -> dict | None:
+    async def fetchrow_se(query: str, *args: Any) -> dict[str, Any] | None:
         if "generation_jobs" in query:
             return job
         return None
@@ -251,6 +263,7 @@ async def test_get_generation_happy_path() -> None:
 
 # ── Cancel ────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_cancel_terminal_job_returns_409() -> None:
     uid = uuid.uuid4()
@@ -259,7 +272,7 @@ async def test_cancel_terminal_job_returns_409() -> None:
 
     conn = _mock_conn()
 
-    async def fetchrow_se(query: str, *args: Any) -> dict | None:
+    async def fetchrow_se(query: str, *args: Any) -> dict[str, Any] | None:
         if "generation_jobs" in query and "WHERE id" in query:
             return job
         return None
@@ -278,6 +291,7 @@ async def test_cancel_terminal_job_returns_409() -> None:
 
 # ── Retry ─────────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_retry_running_job_returns_409() -> None:
     uid = uuid.uuid4()
@@ -286,7 +300,7 @@ async def test_retry_running_job_returns_409() -> None:
 
     conn = _mock_conn()
 
-    async def fetchrow_se(query: str, *args: Any) -> dict | None:
+    async def fetchrow_se(query: str, *args: Any) -> dict[str, Any] | None:
         if "generation_jobs" in query and "WHERE id" in query:
             return job
         return None
@@ -305,6 +319,7 @@ async def test_retry_running_job_returns_409() -> None:
 
 # ── Enqueue failure path ──────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_enqueue_failure_marks_job_failed_and_refunds() -> None:
     """When the queue is unavailable, the job becomes failed and credits refunded."""
@@ -318,11 +333,19 @@ async def test_enqueue_failure_marks_job_failed_and_refunds() -> None:
     conn = _mock_conn()
     now = datetime.now(UTC)
 
-    async def fetchrow_se(query: str, *args: Any) -> dict | None:
+    async def fetchrow_se(query: str, *args: Any) -> dict[str, Any] | None:
         if "public.projects" in query and "archived_at IS NULL" in query:
-            return {"id": proj_id, "workspace_id": ws_id, "name": "proj", "description": None,
-                    "cover_asset_id": None, "created_by": uid,
-                    "created_at": now, "updated_at": now, "archived_at": None}
+            return {
+                "id": proj_id,
+                "workspace_id": ws_id,
+                "name": "proj",
+                "description": None,
+                "cover_asset_id": None,
+                "created_by": uid,
+                "created_at": now,
+                "updated_at": now,
+                "archived_at": None,
+            }
         if "INSERT INTO public.generation_jobs" in query:
             return job
         if "generation_jobs" in query and "idempotency_key" in query:
@@ -334,12 +357,24 @@ async def test_enqueue_failure_marks_job_failed_and_refunds() -> None:
         if "credit_ledger" in query and "reason = 'refund'" in query:
             return None  # no prior refund
         if "credit_ledger" in query and "INSERT" in query:
-            return {"id": 1, "workspace_id": ws_id, "job_id": job_id,
-                    "delta": Decimal("1.00"), "reason": "refund", "created_at": now}
+            return {
+                "id": 1,
+                "workspace_id": ws_id,
+                "job_id": job_id,
+                "delta": Decimal("1.00"),
+                "reason": "refund",
+                "created_at": now,
+            }
         if "job_events" in query:
-            return {"id": 1, "job_id": job_id, "type": "state_change",
-                    "from_status": None, "to_status": None, "payload": None,
-                    "created_at": now}
+            return {
+                "id": 1,
+                "job_id": job_id,
+                "type": "state_change",
+                "from_status": None,
+                "to_status": None,
+                "payload": None,
+                "created_at": now,
+            }
         return None
 
     conn.fetchrow = AsyncMock(side_effect=fetchrow_se)

@@ -32,6 +32,7 @@ MAX_PAGE_SIZE = 100
 
 # ── Schemas ────────────────────────────────────────────────────────────────────
 
+
 class ProjectResponse(BaseModel):
     """Project as returned to clients."""
 
@@ -62,6 +63,7 @@ class ProjectListResponse(BaseModel):
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _project_response(p: Project) -> ProjectResponse:
     return ProjectResponse(
@@ -100,6 +102,7 @@ async def _require_workspace_member(
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
+
 
 @router.post(
     "/workspaces/{workspace_id}/projects",

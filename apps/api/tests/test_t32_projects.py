@@ -13,12 +13,13 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
 import pytest
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from .conftest import make_jwt
 
 
-def _make_app(mock_conn: AsyncMock):
+def _make_app(mock_conn: AsyncMock) -> FastAPI:
     from api.main import create_app
 
     app = create_app()
@@ -61,6 +62,7 @@ def _project_row(
 
 # ── List workspaces ────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_list_workspaces_returns_empty() -> None:
     uid = uuid.uuid4()
@@ -77,6 +79,7 @@ async def test_list_workspaces_returns_empty() -> None:
 
 # ── Create project ─────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_create_project_happy_path() -> None:
     uid = uuid.uuid4()
@@ -90,7 +93,7 @@ async def test_create_project_happy_path() -> None:
             return "editor"
         return None
 
-    async def fetchrow_side_effect(query: str, *args: Any) -> dict | None:
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
         if "INSERT INTO public.projects" in query:
             return proj
         return None
@@ -149,6 +152,7 @@ async def test_create_project_403_for_viewer() -> None:
 
 # ── Get project ────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_project_404_for_cross_workspace() -> None:
     """Non-members (or non-existent projects) return 404 — do not leak existence."""
@@ -174,7 +178,7 @@ async def test_get_project_happy_path() -> None:
 
     conn = _mock_conn()
 
-    async def fetchrow_side_effect(query: str, *args: Any) -> dict | None:
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
         if "public.projects" in query and "archived_at IS NULL" in query:
             return proj
         return None
@@ -193,6 +197,7 @@ async def test_get_project_happy_path() -> None:
 
 
 # ── Pagination stability ───────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_list_projects_cursor_pagination() -> None:
@@ -220,6 +225,7 @@ async def test_list_projects_cursor_pagination() -> None:
 
 # ── Archive (soft-delete) ─────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_archive_project_returns_204() -> None:
     uid = uuid.uuid4()
@@ -227,7 +233,7 @@ async def test_archive_project_returns_204() -> None:
 
     conn = _mock_conn()
 
-    async def fetchrow_side_effect(query: str, *args: Any) -> dict | None:
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
         if "public.projects" in query and "archived_at IS NULL" in query:
             return proj
         return None
@@ -244,4 +250,3 @@ async def test_archive_project_returns_204() -> None:
     assert resp.status_code == 204
     # Verify the UPDATE was called
     conn.execute.assert_called()
-

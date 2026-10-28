@@ -63,6 +63,7 @@ async def list_models(
         except ValueError as exc:
             valid = ", ".join(t.value for t in TaskType)
             from fastapi import HTTPException
+
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid task_type '{task_type}'. Valid values: {valid}",

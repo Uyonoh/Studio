@@ -56,6 +56,7 @@ TERMINAL_STATUSES = {JobStatus.SUCCEEDED, JobStatus.FAILED, JobStatus.CANCELED}
 
 # ── Schemas ────────────────────────────────────────────────────────────────────
 
+
 class GenerationSubmitBody(BaseModel):
     """Request body for POST /v1/projects/{id}/generations."""
 
@@ -111,6 +112,7 @@ class JobEventResponse(BaseModel):
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 async def _get_job_outputs(
     db: DBConn,
@@ -225,6 +227,7 @@ async def _get_job_checked(
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
+
 @router.post(
     "/projects/{project_id}/generations",
     response_model=GenerationJobResponse,
@@ -253,6 +256,7 @@ async def submit_generation(
     parsed_inputs: list[InputItem] = []
     for inp in body.inputs:
         from studio_core.models import InputRole
+
         parsed_inputs.append(
             InputItem(asset_id=UUID(str(inp["asset_id"])), role=InputRole(inp["role"]))
         )
@@ -284,6 +288,7 @@ async def submit_generation(
         # Mark job failed so it doesn't orphan in queued state
         state_machine = JobStateMachine(db)
         from studio_core.credits import CreditService
+
         await state_machine.transition(
             job.id,
             expected=JobStatus.QUEUED,
@@ -408,6 +413,7 @@ async def cancel_generation(
 
     # Refund credits
     from studio_core.credits import CreditService
+
     credit_svc = CreditService(db)
     await credit_svc.refund(job_id)
 
@@ -484,6 +490,7 @@ async def retry_generation(
             error_message="Failed to enqueue retry job",
         )
         from studio_core.credits import CreditService
+
         await CreditService(db).refund(new_job.id)
         raise HTTPException(
             status_code=503, detail="Failed to queue retry. Credits refunded."

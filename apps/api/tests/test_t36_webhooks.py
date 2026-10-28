@@ -15,12 +15,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import UUID
 
 import pytest
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from studio_core.settings import get_settings
 
 
-def _make_app(mock_conn: AsyncMock):
+def _make_app(mock_conn: AsyncMock) -> FastAPI:
     from api.main import create_app
 
     app = create_app()
@@ -82,7 +83,7 @@ def _job_row(job_id: UUID, status: str = "running") -> dict[str, Any]:
 
 
 @pytest.fixture()
-def fake_provider_patch():
+def fake_provider_patch() -> Any:
     """Patch studio_providers.registry.get_provider to return a mock adapter."""
     mock_adapter = MagicMock()
     mock_event = MagicMock()
@@ -95,6 +96,7 @@ def fake_provider_patch():
 
 
 # ── Bad token ─────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_webhook_bad_token_returns_401(fake_provider_patch: Any) -> None:
@@ -112,6 +114,7 @@ async def test_webhook_bad_token_returns_401(fake_provider_patch: Any) -> None:
 
 
 # ── Unknown job ────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_webhook_unknown_job_returns_404(fake_provider_patch: Any) -> None:
@@ -132,6 +135,7 @@ async def test_webhook_unknown_job_returns_404(fake_provider_patch: Any) -> None
 
 # ── Terminal job (no-op) ──────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_webhook_terminal_job_returns_200_noop(fake_provider_patch: Any) -> None:
     job_id = uuid.uuid4()
@@ -140,13 +144,19 @@ async def test_webhook_terminal_job_returns_200_noop(fake_provider_patch: Any) -
 
     conn = _mock_conn()
 
-    async def fetchrow_se(query: str, *args: Any) -> dict | None:
+    async def fetchrow_se(query: str, *args: Any) -> dict[str, Any] | None:
         if "generation_jobs" in query and "WHERE id" in query:
             return job
         if "job_events" in query and "INSERT" in query:
-            return {"id": 1, "job_id": job_id, "type": "webhook",
-                    "from_status": None, "to_status": None, "payload": None,
-                    "created_at": datetime.now(UTC)}
+            return {
+                "id": 1,
+                "job_id": job_id,
+                "type": "webhook",
+                "from_status": None,
+                "to_status": None,
+                "payload": None,
+                "created_at": datetime.now(UTC),
+            }
         return None
 
     conn.fetchrow = AsyncMock(side_effect=fetchrow_se)
@@ -164,6 +174,7 @@ async def test_webhook_terminal_job_returns_200_noop(fake_provider_patch: Any) -
 
 # ── Valid webhook (running → finalizing) ─────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_webhook_valid_enqueues_finalize_once(fake_provider_patch: Any) -> None:
     """A valid webhook for a running job transitions to finalizing and enqueues finalize."""
@@ -177,15 +188,21 @@ async def test_webhook_valid_enqueues_finalize_once(fake_provider_patch: Any) ->
 
     conn = _mock_conn()
 
-    async def fetchrow_se(query: str, *args: Any) -> dict | None:
+    async def fetchrow_se(query: str, *args: Any) -> dict[str, Any] | None:
         if "UPDATE public.generation_jobs" in query:
             return updated_job  # transition succeeded
         if "SELECT" in query and "generation_jobs" in query:
             return job
         if "job_events" in query and "INSERT" in query:
-            return {"id": 1, "job_id": job_id, "type": "state_change",
-                    "from_status": None, "to_status": None, "payload": None,
-                    "created_at": datetime.now(UTC)}
+            return {
+                "id": 1,
+                "job_id": job_id,
+                "type": "state_change",
+                "from_status": None,
+                "to_status": None,
+                "payload": None,
+                "created_at": datetime.now(UTC),
+            }
         return None
 
     conn.fetchrow = AsyncMock(side_effect=fetchrow_se)
@@ -210,6 +227,7 @@ async def test_webhook_valid_enqueues_finalize_once(fake_provider_patch: Any) ->
 
 # ── Duplicate delivery (idempotent via ARQ dedup) ─────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_webhook_duplicate_delivery_is_noop(fake_provider_patch: Any) -> None:
     """Second delivery for a finalizing job results in 200 with no additional enqueue."""
@@ -221,13 +239,19 @@ async def test_webhook_duplicate_delivery_is_noop(fake_provider_patch: Any) -> N
     enqueue_calls: list[str] = []
     conn = _mock_conn()
 
-    async def fetchrow_se(query: str, *args: Any) -> dict | None:
+    async def fetchrow_se(query: str, *args: Any) -> dict[str, Any] | None:
         if "generation_jobs" in query and "WHERE id =" in query:
             return job
         if "job_events" in query and "INSERT" in query:
-            return {"id": 2, "job_id": job_id, "type": "webhook",
-                    "from_status": None, "to_status": None, "payload": None,
-                    "created_at": datetime.now(UTC)}
+            return {
+                "id": 2,
+                "job_id": job_id,
+                "type": "webhook",
+                "from_status": None,
+                "to_status": None,
+                "payload": None,
+                "created_at": datetime.now(UTC),
+            }
         return None
 
     conn.fetchrow = AsyncMock(side_effect=fetchrow_se)

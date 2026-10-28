@@ -9,12 +9,13 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID
 
 import pytest
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from .conftest import make_jwt
 
 
-def _make_app(mock_conn: AsyncMock):
+def _make_app(mock_conn: AsyncMock) -> FastAPI:
     from api.main import create_app
 
     app = create_app()
@@ -71,6 +72,7 @@ def _asset_row(
 
 # ── Upload request ────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_request_upload_returns_201_and_url() -> None:
     """POST /assets/uploads creates draft and returns signed URL."""
@@ -81,7 +83,7 @@ async def test_request_upload_returns_201_and_url() -> None:
 
     conn = _mock_conn()
 
-    async def fetchrow_side_effect(query: str, *args: Any) -> dict | None:
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
         if "projects" in query and "archived_at IS NULL" in query:
             return {"workspace_id": ws_id}
         if "INSERT INTO public.assets" in query:
@@ -115,7 +117,7 @@ async def test_request_upload_rejects_non_media_mime() -> None:
 
     conn = _mock_conn()
 
-    async def fetchrow_side_effect(query: str, *args: Any) -> dict | None:
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
         if "projects" in query:
             return {"workspace_id": ws_id}
         return None
@@ -142,7 +144,7 @@ async def test_request_upload_rejects_oversized() -> None:
 
     conn = _mock_conn()
 
-    async def fetchrow_side_effect(query: str, *args: Any) -> dict | None:
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
         if "projects" in query:
             return {"workspace_id": ws_id}
         return None
@@ -166,6 +168,7 @@ async def test_request_upload_rejects_oversized() -> None:
 
 # ── Get asset ─────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_get_asset_happy_path() -> None:
     uid = uuid.uuid4()
@@ -174,7 +177,7 @@ async def test_get_asset_happy_path() -> None:
 
     conn = _mock_conn()
 
-    async def fetchrow_side_effect(query: str, *args: Any) -> dict | None:
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
         if "public.assets" in query:
             return asset
         return None
@@ -212,6 +215,7 @@ async def test_get_asset_404_if_not_found() -> None:
 
 # ── Soft delete ────────────────────────────────────────────────────────────────
 
+
 @pytest.mark.asyncio
 async def test_delete_asset_returns_204() -> None:
     uid = uuid.uuid4()
@@ -220,7 +224,7 @@ async def test_delete_asset_returns_204() -> None:
 
     conn = _mock_conn()
 
-    async def fetchrow_side_effect(query: str, *args: Any) -> dict | None:
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
         if "public.assets" in query:
             return asset
         return None
@@ -238,6 +242,7 @@ async def test_delete_asset_returns_204() -> None:
 
 
 # ── Models endpoint ────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_list_models_returns_enabled_models() -> None:

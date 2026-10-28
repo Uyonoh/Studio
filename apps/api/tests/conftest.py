@@ -10,6 +10,7 @@ from uuid import UUID
 
 import jwt
 import pytest
+from fastapi import FastAPI
 
 from api.main import create_app
 from studio_core.settings import get_settings
@@ -31,7 +32,7 @@ def make_jwt(user_id: UUID | None = None, expired: bool = False) -> str:
 
 
 @pytest.fixture()
-def app():
+def app() -> FastAPI:
     """Create a test FastAPI application with mocked lifespan state."""
     application = create_app()
 
@@ -43,7 +44,7 @@ def app():
 
 
 @pytest.fixture()
-def mock_db():
+def mock_db() -> AsyncMock:
     """Return a mock asyncpg connection."""
     conn = AsyncMock()
     conn.fetchrow = AsyncMock(return_value=None)

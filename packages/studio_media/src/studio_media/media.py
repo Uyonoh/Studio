@@ -102,8 +102,10 @@ def probe_video(path: Path | str) -> VideoMetadata:
     path = Path(path)
     cmd = [
         "ffprobe",
-        "-v", "quiet",
-        "-print_format", "json",
+        "-v",
+        "quiet",
+        "-print_format",
+        "json",
         "-show_streams",
         "-show_format",
         str(path),
@@ -214,11 +216,16 @@ def make_poster_frame(src: Path | str, dst: Path | str, time_s: float = 0.0) -> 
     cmd = [
         "ffmpeg",
         "-y",  # overwrite output
-        "-ss", str(time_s),
-        "-i", str(src),
-        "-frames:v", "1",
-        "-q:v", "2",
-        "-vf", f"scale='min({THUMBNAIL_SIZE[0]},iw)':-2",
+        "-ss",
+        str(time_s),
+        "-i",
+        str(src),
+        "-frames:v",
+        "1",
+        "-q:v",
+        "2",
+        "-vf",
+        f"scale='min({THUMBNAIL_SIZE[0]},iw)':-2",
         str(dst),
     ]
     try:

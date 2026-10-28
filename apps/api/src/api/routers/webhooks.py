@@ -118,9 +118,7 @@ async def receive_webhook(
                 await enqueue(redis_pool, TASK_FINALIZE_GENERATION, job_id)
             except EnqueueError as exc:
                 # Log but don't fail the webhook — reconciler will pick it up
-                logger.error(
-                    "Failed to enqueue finalize for job %s after webhook: %s", job_id, exc
-                )
+                logger.error("Failed to enqueue finalize for job %s after webhook: %s", job_id, exc)
         # If updated is None, another webhook/worker already transitioned the job — fine
     else:
         logger.info(

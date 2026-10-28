@@ -15,6 +15,7 @@ from .conftest import make_jwt
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
+
 def _make_app_with_db(mock_conn: AsyncMock) -> FastAPI:
     """Build a test app where the DB pool always yields mock_conn."""
     app = create_app()
@@ -29,6 +30,7 @@ def _make_app_with_db(mock_conn: AsyncMock) -> FastAPI:
 
 
 # ── Auth tests ─────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_valid_jwt_is_accepted() -> None:
@@ -84,15 +86,14 @@ async def test_invalid_jwt_returns_401() -> None:
     app.state.redis_pool = None
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        resp = await client.get(
-            "/v1/workspaces", headers={"Authorization": "Bearer not.a.jwt"}
-        )
+        resp = await client.get("/v1/workspaces", headers={"Authorization": "Bearer not.a.jwt"})
     assert resp.status_code == 401
     body = resp.json()
     assert body["error_code"] == "INVALID_TOKEN"
 
 
 # ── Problem+JSON shape ─────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_problem_json_shape() -> None:
@@ -111,6 +112,7 @@ async def test_problem_json_shape() -> None:
 
 
 # ── Request ID ────────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_request_id_is_propagated() -> None:
@@ -139,6 +141,7 @@ async def test_request_id_generated_when_absent() -> None:
 
 
 # ── Health endpoints ───────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_healthz_always_200() -> None:
@@ -191,6 +194,7 @@ async def test_readyz_503_when_db_unreachable() -> None:
 
 
 # ── /docs renders ─────────────────────────────────────────────────────────────
+
 
 @pytest.mark.asyncio
 async def test_openapi_docs_render() -> None:

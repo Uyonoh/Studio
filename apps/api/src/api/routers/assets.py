@@ -39,6 +39,7 @@ SIGNED_URL_TTL = 3600  # 1 hour
 
 # ── Schemas ────────────────────────────────────────────────────────────────────
 
+
 class AssetResponse(BaseModel):
     """Asset representation with signed download URL."""
 
@@ -85,6 +86,7 @@ class AssetListResponse(BaseModel):
 
 # ── Supabase storage helpers ───────────────────────────────────────────────────
 
+
 def _supabase_signed_upload_url(
     workspace_id: UUID,
     project_id: UUID,
@@ -109,19 +111,14 @@ def _supabase_signed_upload_url(
 def _supabase_signed_download_url(storage_path: str) -> str:
     """Return a signed download URL for an existing storage object."""
     settings = get_settings()
-    url = (
-        f"{settings.supabase_url}/storage/v1/object/sign/"
-        f"{settings.storage_bucket}/{storage_path}"
-    )
+    url = f"{settings.supabase_url}/storage/v1/object/sign/{settings.storage_bucket}/{storage_path}"
     return url
 
 
 def _asset_response(asset: Asset) -> AssetResponse:
     signed_url = _supabase_signed_download_url(asset.storage_path) if asset.storage_path else None
     thumb_url = (
-        _supabase_signed_download_url(asset.thumbnail_path)
-        if asset.thumbnail_path
-        else None
+        _supabase_signed_download_url(asset.thumbnail_path) if asset.thumbnail_path else None
     )
     return AssetResponse(
         id=asset.id,
@@ -183,6 +180,7 @@ async def _require_project_member(
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
+
 @router.post(
     "/projects/{project_id}/assets/uploads",
     response_model=UploadResponse,
@@ -200,9 +198,7 @@ async def request_upload(
     ``POST /v1/assets/{id}/complete`` to confirm and extract metadata.
     """
     # Validate declared MIME
-    if not (
-        body.mime_type.startswith("image/") or body.mime_type.startswith("video/")
-    ):
+    if not (body.mime_type.startswith("image/") or body.mime_type.startswith("video/")):
         raise HTTPException(
             status_code=415, detail="Only image/* and video/* MIME types are accepted"
         )
@@ -239,9 +235,7 @@ async def request_upload(
     # (The repository always inserts and lets Postgres generate the ID.)
     # We need the asset to use our chosen ID for deterministic storage paths.
     # Workaround: re-fetch by storage_path and return its actual ID.
-    row = await db.fetchrow(
-        "SELECT id FROM public.assets WHERE storage_path = $1", storage_path
-    )
+    row = await db.fetchrow("SELECT id FROM public.assets WHERE storage_path = $1", storage_path)
     actual_id: UUID = row["id"] if row else asset_id
 
     upload_url = _supabase_signed_upload_url(workspace_id, project_id, actual_id, body.filename)

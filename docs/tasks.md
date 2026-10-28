@@ -335,7 +335,7 @@ ENVIRONMENT=local|staging|production
 
 ## PHASE 4 — Worker (`apps/worker`)
 
-### [ ] T4.1 Worker bootstrap and `run_generation`
+### [x] T4.1 Worker bootstrap and `run_generation`
 **Depends:** T3.5 (queue helper), T2.3
 **Goal:** Claim a queued job and submit it to the provider.
 **Steps**
@@ -348,11 +348,11 @@ ENVIRONMENT=local|staging|production
 3. Error handling: `RateLimitedError` / `TransientProviderError` → `submitting → queued`, `attempt += 1`, re-enqueue with ARQ `defer` (exponential backoff with jitter, base 5s, cap 5m). `PermanentProviderError` or attempts exhausted → `failed` with `error_code`/`error_message`, refund credits.
 4. Per-provider concurrency limiter (Redis semaphore) configured via Settings.
 **DoD**
-- [ ] Integration test with FakeProvider: job goes `queued → running` and `provider_job_id` stored.
-- [ ] Tests: transient error retries then succeeds; permanent error fails + refunds; attempts exhausted fails; second delivery of the same task doesn't double-submit.
+- [x] Integration test with FakeProvider: job goes `queued → running` and `provider_job_id` stored.
+- [x] Tests: transient error retries then succeeds; permanent error fails + refunds; attempts exhausted fails; second delivery of the same task doesn't double-submit.
 **Verify:** `uv run pytest apps/worker -k run_generation -q`
 
-### [ ] T4.2 `finalize_generation`
+### [x] T4.2 `finalize_generation`
 **Depends:** T4.1, T3.3 (studio_media)
 **Goal:** Turn provider outputs into owned assets.
 **Steps**
@@ -362,12 +362,12 @@ ENVIRONMENT=local|staging|production
 4. Transition `finalizing → succeeded`, set `completed_at`.
 5. On failure: retry up to N times for transient errors, then `failed` + refund.
 **DoD**
-- [ ] Test: image and video outputs end up in storage with correct metadata and thumbnails; assets reference the job.
-- [ ] Re-running finalize on a finished job is a no-op; re-running mid-failure produces no duplicate assets.
-- [ ] Oversized/non-media outputs are rejected with `OUTPUT_INVALID`.
+- [x] Test: image and video outputs end up in storage with correct metadata and thumbnails; assets reference the job.
+- [x] Re-running finalize on a finished job is a no-op; re-running mid-failure produces no duplicate assets.
+- [x] Oversized/non-media outputs are rejected with `OUTPUT_INVALID`.
 **Verify:** `uv run pytest apps/worker -k finalize -q`
 
-### [ ] T4.3 Reconciler (safety net)
+### [x] T4.3 Reconciler (safety net)
 **Depends:** T4.2
 **Goal:** Recover from lost webhooks/crashed workers.
 **Steps**
@@ -380,24 +380,24 @@ ENVIRONMENT=local|staging|production
 2. Use `SELECT ... FOR UPDATE SKIP LOCKED` so multiple reconciler instances don't collide. Limit batch size.
 3. On startup, run one reconciliation pass (covers Redis loss).
 **DoD**
-- [ ] Tests (with time travel via injectable clock): each stuck-state scenario above is recovered/failed as specified.
-- [ ] Two concurrent reconcilers don't process the same job twice.
+- [x] Tests (with time travel via injectable clock): each stuck-state scenario above is recovered/failed as specified.
+- [x] Two concurrent reconcilers don't process the same job twice.
 **Verify:** `uv run pytest apps/worker -k reconcile -q`
 
-### [ ] T4.4 `cancel_generation`
+### [x] T4.4 `cancel_generation`
 **Depends:** T4.1
 **Goal:** Best-effort provider cancel.
 **Steps:** If job has `provider_job_id`, call `provider.cancel` (swallow "already finished"); record event; ensure credits refunded exactly once; if provider finished anyway, discard outputs (don't create assets).
 **DoD**
-- [ ] Tests: cancel while `running` stops further processing; finalize after cancel is a no-op.
+- [x] Tests: cancel while `running` stops further processing; finalize after cancel is a no-op.
 **Verify:** `uv run pytest apps/worker -k cancel -q`
 
-### [ ] T4.5 End-to-end backend test
+### [x] T4.5 End-to-end backend test
 **Depends:** T4.2, T3.6
 **Goal:** Prove the whole pipeline without the UI.
 **Steps:** Test that boots API (httpx ASGI), worker (in-process ARQ), Redis and local Supabase; creates user/project; uploads an image; submits `image_to_video` via the FakeProvider; triggers fake webhook; asserts job `succeeded`, asset exists, signed URL downloads. Include failure variant (prompt contains `FAIL`).
 **DoD**
-- [ ] Test runs in CI in < 90s and is stable over 20 consecutive runs.
+- [x] Test runs in CI in < 90s and is stable over 20 consecutive runs.
 **Verify:** `uv run pytest tests/e2e_backend -q`
 
 ---
