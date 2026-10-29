@@ -452,12 +452,12 @@ ENVIRONMENT=local|staging|production
 - [x] Vitest + RTL smoke tests for layout; Lighthouse accessibility ≥ 90 on login page.
 **Verify:** `pnpm --filter web lint typecheck test && pnpm --filter web build`
 
-### [ ] T6.2 Projects pages
+### [x] T6.2 Projects pages
 **Depends:** T6.1, T3.2
 **Goal:** List/create/rename/archive projects.
 **DoD**
-- [ ] Empty, loading, error states implemented; optimistic create; keyboard accessible dialogs.
-- [ ] Component tests with MSW covering list/create/error.
+- [x] Empty, loading, error states implemented; optimistic create; keyboard accessible dialogs.
+- [x] Component tests with MSW covering list/create/error.
 **Verify:** `pnpm --filter web test`
 
 ### [ ] T6.3 Asset library and uploads

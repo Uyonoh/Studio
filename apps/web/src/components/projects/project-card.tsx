@@ -1,0 +1,118 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Folder, MoreVertical, Edit2, Archive, Calendar } from "lucide-react";
+import { type Project } from "@/hooks/use-projects";
+
+interface ProjectCardProps {
+  project: Project;
+  onRename: (project: Project) => void;
+  onArchive: (project: Project) => void;
+}
+
+export function ProjectCard({ project, onRename, onArchive }: ProjectCardProps) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const formattedDate = new Date(project.updated_at || project.created_at).toLocaleDateString(
+    undefined,
+    { month: "short", day: "numeric" }
+  );
+
+  return (
+    <div className="group relative bg-[#14161C] border border-[#262A35] hover:border-[#383E4E] rounded-2xl overflow-hidden shadow-card transition-all flex flex-col justify-between">
+      {/* Cover / Preview Area */}
+      <Link
+        href={`/projects/${project.id}`}
+        className="block aspect-[16/9] bg-[#0E1015] relative overflow-hidden group-hover:opacity-95 transition-opacity"
+      >
+        <div className="absolute inset-0 bg-gradient-to-t from-[#14161C] via-transparent to-transparent z-10" />
+        <div className="absolute inset-0 flex items-center justify-center text-[#7C5CFF]/30 group-hover:text-[#7C5CFF]/50 transition-colors">
+          <Folder className="w-12 h-12" />
+        </div>
+      </Link>
+
+      {/* Content */}
+      <div className="p-4 flex flex-col justify-between flex-1">
+        <div>
+          <div className="flex items-start justify-between gap-2">
+            <Link
+              href={`/projects/${project.id}`}
+              className="text-sm font-semibold text-[#E8EAF0] hover:text-[#7C5CFF] transition-colors line-clamp-1"
+            >
+              {project.name}
+            </Link>
+
+            {/* Menu */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMenuOpen(!isMenuOpen);
+                }}
+                aria-label={`Options for ${project.name}`}
+                aria-expanded={isMenuOpen}
+                className="p-1 rounded-lg text-[#9AA1B2] hover:text-[#E8EAF0] hover:bg-[#1B1E26] transition-colors"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+
+              {isMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-20"
+                    onClick={() => setIsMenuOpen(false)}
+                  />
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full mt-1 w-36 bg-[#14161C] border border-[#262A35] rounded-xl shadow-card z-30 py-1 overflow-hidden"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        onRename(project);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-[#E8EAF0] hover:bg-[#1B1E26] transition-colors text-left"
+                    >
+                      <Edit2 className="w-3.5 h-3.5 text-[#9AA1B2]" />
+                      <span>Rename</span>
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        onArchive(project);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 transition-colors text-left"
+                    >
+                      <Archive className="w-3.5 h-3.5" />
+                      <span>Archive</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <p className="text-xs text-[#9AA1B2] mt-1 line-clamp-2 min-h-[2rem]">
+            {project.description || "No description provided."}
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between pt-3 mt-2 border-t border-[#262A35]/60 text-[11px] font-mono text-[#9AA1B2]">
+          <span className="flex items-center gap-1.5">
+            <Calendar className="w-3 h-3 text-[#9AA1B2]/60" />
+            <span>Updated {formattedDate}</span>
+          </span>
+          <span className="text-[10px] uppercase font-semibold text-[#7C5CFF] tracking-wider px-1.5 py-0.5 rounded bg-[#1B1E26]">
+            Active
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}

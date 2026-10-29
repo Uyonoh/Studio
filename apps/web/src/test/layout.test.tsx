@@ -21,19 +21,6 @@ vi.mock("@/lib/supabase/client", () => ({
   }),
 }));
 
-vi.mock("@/lib/api", () => ({
-  getApiClient: () => ({
-    GET: vi.fn().mockResolvedValue({
-      data: {
-        workspaces: [
-          { id: "ws-1", name: "Alpha Workspace" },
-          { id: "ws-2", name: "Beta Workspace" },
-        ],
-      },
-    }),
-  }),
-}));
-
 describe("Layout Components", () => {
   it("renders workspace switcher with current workspace and toggles options", () => {
     const workspaces = [
@@ -96,7 +83,10 @@ describe("Layout Components", () => {
   it("renders AppShell wrapping page content", async () => {
     await act(async () => {
       render(
-        <AppShell userEmail="user@example.com">
+        <AppShell
+          userEmail="user@example.com"
+          initialWorkspace={{ id: "ws-1", name: "Alpha Workspace" }}
+        >
           <div data-testid="test-content">Dashboard Content</div>
         </AppShell>
       );

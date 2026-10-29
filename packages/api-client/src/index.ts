@@ -21,6 +21,7 @@ export function createClient(
 ): ApiClient {
   const client = createFetchClient<paths>({
     baseUrl,
+    fetch: (...args) => globalThis.fetch(...args),
   });
 
   if (getToken) {
