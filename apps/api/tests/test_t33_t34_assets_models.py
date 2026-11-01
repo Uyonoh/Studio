@@ -195,6 +195,85 @@ async def test_get_asset_happy_path() -> None:
     body = resp.json()
     assert body["id"] == str(asset["id"])
     assert body["mime_type"] == "image/png"
+    assert body["lineage"] == {"source_job": None, "inputs": [], "parent": None}
+
+
+@pytest.mark.asyncio
+async def test_get_asset_returns_lineage_for_generated_asset() -> None:
+    """Generated assets expose the source job, its params and its inputs."""
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    job_id = uuid.uuid4()
+    input_id = uuid.uuid4()
+    parent_id = uuid.uuid4()
+    asset = _asset_row(workspace_id=ws_id, origin="generated")
+    asset["source_job_id"] = job_id
+    asset["parent_asset_id"] = parent_id
+
+    conn = _mock_conn()
+
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
+        if "FROM public.generation_jobs" in query:
+            return {
+                "id": job_id,
+                "task_type": "image_to_video",
+                "status": "succeeded",
+                "prompt": "slow dolly-in, golden hour",
+                "negative_prompt": "blurry",
+                "params": '{"duration_s": 5, "seed": 42}',
+                "queued_at": datetime.now(UTC),
+                "model_slug": "img-fast-v1",
+                "model_display_name": "Fast Image v1",
+            }
+        if "SELECT id, kind, storage_path, thumbnail_path" in query:
+            return {
+                "id": parent_id,
+                "kind": "image",
+                "storage_path": "ws/proj/parent/frame.png",
+                "thumbnail_path": None,
+            }
+        if "public.assets" in query:
+            return asset
+        return None
+
+    async def fetch_side_effect(query: str, *args: Any) -> list[dict[str, Any]]:
+        if "public.job_inputs" in query:
+            return [
+                {
+                    "asset_id": input_id,
+                    "kind": "image",
+                    "storage_path": "ws/proj/input/frame.png",
+                    "thumbnail_path": None,
+                    "role": "first_frame",
+                }
+            ]
+        return []
+
+    conn.fetchrow = AsyncMock(side_effect=fetchrow_side_effect)
+    conn.fetch = AsyncMock(side_effect=fetch_side_effect)
+    conn.fetchval = AsyncMock(return_value="viewer")
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            f"/v1/assets/{asset['id']}",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 200
+    lineage = resp.json()["lineage"]
+    assert lineage["source_job"]["id"] == str(job_id)
+    assert lineage["source_job"]["prompt"] == "slow dolly-in, golden hour"
+    assert lineage["source_job"]["params"] == {"duration_s": 5, "seed": 42}
+    assert lineage["source_job"]["model_slug"] == "img-fast-v1"
+    assert lineage["inputs"][0]["asset_id"] == str(input_id)
+    assert lineage["inputs"][0]["kind"] == "image"
+    assert lineage["inputs"][0]["role"] == "first_frame"
+    assert lineage["inputs"][0]["signed_url"].endswith(
+        "/storage/v1/object/sign/media/ws/proj/input/frame.png"
+    )
+    assert lineage["inputs"][0]["thumbnail_url"] is None
+    assert lineage["parent"]["asset_id"] == str(parent_id)
 
 
 @pytest.mark.asyncio

@@ -10,6 +10,7 @@ Endpoints:
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime
 from decimal import Decimal
@@ -18,7 +19,7 @@ from uuid import UUID, uuid4
 
 import asyncpg
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from api.auth import AuthUser
 from api.deps import DBConn
@@ -38,6 +39,38 @@ SIGNED_URL_TTL = 3600  # 1 hour
 
 
 # ── Schemas ────────────────────────────────────────────────────────────────────
+
+
+class LineageAssetRef(BaseModel):
+    """A lightweight reference to another asset (input or parent)."""
+
+    asset_id: UUID
+    kind: str
+    role: str | None = None
+    signed_url: str | None = None
+    thumbnail_url: str | None = None
+
+
+class LineageSourceJob(BaseModel):
+    """Summary of the generation job that produced an asset."""
+
+    id: UUID
+    task_type: str
+    status: str
+    prompt: str | None
+    negative_prompt: str | None
+    params: dict[str, Any]
+    model_slug: str | None
+    model_display_name: str | None
+    created_at: datetime
+
+
+class AssetLineage(BaseModel):
+    """Everything needed to explain where an asset came from."""
+
+    source_job: LineageSourceJob | None = None
+    inputs: list[LineageAssetRef] = Field(default_factory=list)
+    parent: LineageAssetRef | None = None
 
 
 class AssetResponse(BaseModel):
@@ -62,6 +95,7 @@ class AssetResponse(BaseModel):
     created_at: datetime
     signed_url: str | None = None
     thumbnail_url: str | None = None
+    lineage: AssetLineage | None = None
 
 
 class UploadRequest(BaseModel):
@@ -141,6 +175,97 @@ def _asset_response(asset: Asset) -> AssetResponse:
         signed_url=signed_url,
         thumbnail_url=thumb_url,
     )
+
+
+def _asset_ref(
+    asset_id: UUID,
+    kind: str,
+    storage_path: str | None,
+    thumbnail_path: str | None,
+    role: str | None = None,
+) -> LineageAssetRef:
+    return LineageAssetRef(
+        asset_id=asset_id,
+        kind=kind,
+        role=role,
+        signed_url=_supabase_signed_download_url(storage_path) if storage_path else None,
+        thumbnail_url=_supabase_signed_download_url(thumbnail_path) if thumbnail_path else None,
+    )
+
+
+async def _build_lineage(db: asyncpg.Connection[asyncpg.Record], asset: Asset) -> AssetLineage:
+    """Assemble the lineage block for an asset.
+
+    Lineage is derived from three sources: the job that produced the asset
+    (prompt, model, params), the assets that job consumed (`job_inputs`), and
+    the parent asset for derived media.
+    """
+    source_job: LineageSourceJob | None = None
+    inputs: list[LineageAssetRef] = []
+
+    if asset.source_job_id is not None:
+        row = await db.fetchrow(
+            """
+            SELECT j.id, j.task_type, j.status, j.prompt, j.negative_prompt,
+                   j.params, j.queued_at, m.slug AS model_slug,
+                   m.display_name AS model_display_name
+            FROM public.generation_jobs j
+            LEFT JOIN public.models m ON m.id = j.model_id
+            WHERE j.id = $1
+            """,
+            asset.source_job_id,
+        )
+        if row is not None:
+            params = row["params"]
+            if isinstance(params, str):
+                params = json.loads(params)
+            source_job = LineageSourceJob(
+                id=row["id"],
+                task_type=row["task_type"],
+                status=row["status"],
+                prompt=row["prompt"],
+                negative_prompt=row["negative_prompt"],
+                params=params or {},
+                model_slug=row["model_slug"],
+                model_display_name=row["model_display_name"],
+                created_at=row["queued_at"],
+            )
+
+        input_rows = await db.fetch(
+            """
+            SELECT a.id AS asset_id, a.kind, a.storage_path, a.thumbnail_path,
+                   ji.role
+            FROM public.job_inputs ji
+            JOIN public.assets a ON a.id = ji.asset_id
+            WHERE ji.job_id = $1
+            ORDER BY ji.position, a.created_at
+            """,
+            asset.source_job_id,
+        )
+        inputs = [
+            _asset_ref(r["asset_id"], r["kind"], r["storage_path"], r["thumbnail_path"], r["role"])
+            for r in input_rows
+        ]
+
+    parent: LineageAssetRef | None = None
+    if asset.parent_asset_id is not None:
+        parent_row = await db.fetchrow(
+            """
+            SELECT id, kind, storage_path, thumbnail_path
+            FROM public.assets
+            WHERE id = $1
+            """,
+            asset.parent_asset_id,
+        )
+        if parent_row is not None:
+            parent = _asset_ref(
+                parent_row["id"],
+                parent_row["kind"],
+                parent_row["storage_path"],
+                parent_row["thumbnail_path"],
+            )
+
+    return AssetLineage(source_job=source_job, inputs=inputs, parent=parent)
 
 
 async def _get_workspace_for_project(
@@ -297,7 +422,9 @@ async def get_asset(asset_id: UUID, user: AuthUser, db: DBConn) -> AssetResponse
     role = await project_repo.get_member_role(asset.workspace_id, user.id)
     if role is None:
         raise HTTPException(status_code=403, detail="Not a member of this workspace")
-    return _asset_response(asset)
+    response = _asset_response(asset)
+    response.lineage = await _build_lineage(db, asset)
+    return response
 
 
 @router.get("/projects/{project_id}/assets", response_model=AssetListResponse)
@@ -346,14 +473,12 @@ async def list_assets(
         ORDER BY created_at DESC
         LIMIT ${len(params)}
     """
-    import json as _json
-
     rows = await db.fetch(query, *params)
     assets = []
     for r in rows:
         data = dict(r)
         if isinstance(data["metadata"], str):
-            data["metadata"] = _json.loads(data["metadata"])
+            data["metadata"] = json.loads(data["metadata"])
         assets.append(Asset.model_validate(data))
 
     has_more = len(assets) > limit

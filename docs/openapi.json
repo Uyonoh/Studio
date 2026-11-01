@@ -1,6 +1,40 @@
 {
   "components": {
     "schemas": {
+      "AssetLineage": {
+        "description": "Everything needed to explain where an asset came from.",
+        "properties": {
+          "inputs": {
+            "items": {
+              "$ref": "#/components/schemas/LineageAssetRef"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LineageAssetRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_job": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LineageSourceJob"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "AssetLineage",
+        "type": "object"
+      },
       "AssetListResponse": {
         "properties": {
           "items": {
@@ -78,6 +112,16 @@
           "kind": {
             "title": "Kind",
             "type": "string"
+          },
+          "lineage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetLineage"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "metadata": {
             "additionalProperties": true,
@@ -578,6 +622,144 @@
           "next_cursor"
         ],
         "title": "JobListResponse",
+        "type": "object"
+      },
+      "LineageAssetRef": {
+        "description": "A lightweight reference to another asset (input or parent).",
+        "properties": {
+          "asset_id": {
+            "format": "uuid",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "signed_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Url"
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url"
+          }
+        },
+        "required": [
+          "asset_id",
+          "kind"
+        ],
+        "title": "LineageAssetRef",
+        "type": "object"
+      },
+      "LineageSourceJob": {
+        "description": "Summary of the generation job that produced an asset.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "model_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Display Name"
+          },
+          "model_slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Slug"
+          },
+          "negative_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Negative Prompt"
+          },
+          "params": {
+            "additionalProperties": true,
+            "title": "Params",
+            "type": "object"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "task_type": {
+            "title": "Task Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "task_type",
+          "status",
+          "prompt",
+          "negative_prompt",
+          "params",
+          "model_slug",
+          "model_display_name",
+          "created_at"
+        ],
+        "title": "LineageSourceJob",
         "type": "object"
       },
       "ModelResponse": {

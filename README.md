@@ -53,3 +53,16 @@ Refer to the technical documentation:
    make typecheck
    make test
    ```
+
+### Frontend tests
+
+```bash
+pnpm --filter web test          # Vitest component tests (MSW)
+pnpm --filter web e2e           # Playwright E2E (mocked API + auth, no backend needed)
+pnpm --filter web e2e -g upload # Run a single E2E spec by title
+```
+
+The Playwright suite starts its own Next.js server plus an in-process mock backend
+(`apps/web/e2e/mock-backend.mjs`), so it does not require Supabase, Redis, or the
+FastAPI service to be running. Run `pnpm --filter web build` first if you prefer
+serving an optimized build.

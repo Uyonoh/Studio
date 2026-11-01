@@ -460,7 +460,7 @@ ENVIRONMENT=local|staging|production
 - [x] Component tests with MSW covering list/create/error.
 **Verify:** `pnpm --filter web test`
 
-### [ ] T6.3 Asset library and uploads
+### [x] T6.3 Asset library and uploads
 **Depends:** T6.2, T3.3
 **Goal:** Grid of project assets with direct-to-storage upload.
 **Steps**
@@ -468,8 +468,8 @@ ENVIRONMENT=local|staging|production
 2. Upload: drag-drop and picker → request signed URL → `PUT` to storage with progress → call `complete` → refresh. Client-side type/size pre-check.
 3. Asset detail drawer: preview (image / `<video controls>`), metadata, lineage (source job prompt/model/params, parent/inputs), download, delete.
 **DoD**
-- [ ] Upload failure/retry handled; delete confirms; signed URL refresh handled when expired (refetch on 403).
-- [ ] Component tests + one Playwright test for upload.
+- [x] Upload failure/retry handled; delete confirms; signed URL refresh handled when expired (refetch on 403).
+- [x] Component tests + one Playwright test for upload.
 **Verify:** `pnpm --filter web test && pnpm --filter web e2e -g upload`
 
 ### [ ] T6.4 Generation composer (schema-driven)

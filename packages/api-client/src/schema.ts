@@ -361,6 +361,19 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AssetLineage
+         * @description Everything needed to explain where an asset came from.
+         */
+        AssetLineage: {
+            /**
+             * Inputs
+             * @default []
+             */
+            inputs: components["schemas"]["LineageAssetRef"][];
+            parent?: components["schemas"]["LineageAssetRef"] | null;
+            source_job?: components["schemas"]["LineageSourceJob"] | null;
+        };
         /** AssetListResponse */
         AssetListResponse: {
             /** Items */
@@ -391,6 +404,7 @@ export interface components {
             id: string;
             /** Kind */
             kind: string;
+            lineage?: components["schemas"]["AssetLineage"] | null;
             /** Metadata */
             metadata: {
                 [key: string]: unknown;
@@ -561,6 +575,57 @@ export interface components {
             items: components["schemas"]["GenerationJobResponse"][];
             /** Next Cursor */
             next_cursor: string | null;
+        };
+        /**
+         * LineageAssetRef
+         * @description A lightweight reference to another asset (input or parent).
+         */
+        LineageAssetRef: {
+            /**
+             * Asset Id
+             * Format: uuid
+             */
+            asset_id: string;
+            /** Kind */
+            kind: string;
+            /** Role */
+            role?: string | null;
+            /** Signed Url */
+            signed_url?: string | null;
+            /** Thumbnail Url */
+            thumbnail_url?: string | null;
+        };
+        /**
+         * LineageSourceJob
+         * @description Summary of the generation job that produced an asset.
+         */
+        LineageSourceJob: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Model Display Name */
+            model_display_name: string | null;
+            /** Model Slug */
+            model_slug: string | null;
+            /** Negative Prompt */
+            negative_prompt: string | null;
+            /** Params */
+            params: {
+                [key: string]: unknown;
+            };
+            /** Prompt */
+            prompt: string | null;
+            /** Status */
+            status: string;
+            /** Task Type */
+            task_type: string;
         };
         /**
          * ModelResponse
