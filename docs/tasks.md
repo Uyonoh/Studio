@@ -472,7 +472,7 @@ ENVIRONMENT=local|staging|production
 - [x] Component tests + one Playwright test for upload.
 **Verify:** `pnpm --filter web test && pnpm --filter web e2e -g upload`
 
-### [ ] T6.4 Generation composer (schema-driven)
+### [x] T6.4 Generation composer (schema-driven)
 **Depends:** T6.3, T3.4, T3.5
 **Goal:** One UI for all five flows.
 **Steps**
@@ -481,9 +481,9 @@ ENVIRONMENT=local|staging|production
 3. Parameter form generated from each model's JSON Schema (`react-jsonschema-form` or a small custom renderer for enum/int/number/boolean/string) with `default_params` prefilled; show credit cost live.
 4. Submit with a client-generated `Idempotency-Key` (reuse on retry of the same submission). Handle `402`, `422` (inline field errors), `429`.
 **DoD**
-- [ ] All five flows submit correct payloads (unit tests assert request bodies).
-- [ ] Double-click doesn't create two jobs.
-- [ ] Form validation errors map to fields; cost shown matches model.
+- [x] All five flows submit correct payloads (unit tests assert request bodies).
+- [x] Double-click doesn't create two jobs.
+- [x] Form validation errors map to fields; cost shown matches model.
 **Verify:** `pnpm --filter web test -k composer`
 
 ### [ ] T6.5 Job status and history (Realtime)

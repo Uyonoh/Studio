@@ -7,6 +7,7 @@ import Link from "next/link";
 import { getApiClient } from "@/lib/api";
 import { type Project } from "@/hooks/use-projects";
 import { AssetLibrary } from "@/components/assets/asset-library";
+import { GenerationComposer } from "@/components/composer/generation-composer";
 
 export default function ProjectWorkspacePage() {
   const params = useParams();
@@ -99,11 +100,7 @@ export default function ProjectWorkspacePage() {
       {/* Tab Panels */}
       {activeTab === "assets" && <AssetLibrary projectId={projectId} />}
 
-      {activeTab === "composer" && (
-        <div className="rounded-2xl border border-[#262A35] bg-[#14161C] p-12 text-center">
-          <p className="text-sm text-[#9AA1B2]">Generation composer will be loaded here (T6.4).</p>
-        </div>
-      )}
+      {activeTab === "composer" && <GenerationComposer projectId={projectId} />}
 
       {activeTab === "history" && (
         <div className="rounded-2xl border border-[#262A35] bg-[#14161C] p-12 text-center">
