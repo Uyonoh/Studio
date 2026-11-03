@@ -15,6 +15,7 @@ from studio_core.models import (
     TaskType,
     WorkspaceRole,
 )
+from studio_core.moderation import ModerationService
 from studio_core.repositories import (
     AssetRepository,
     JobRepository,
@@ -68,6 +69,19 @@ class PermissionDeniedError(GenerationServiceError):
         super().__init__("PERMISSION_DENIED", message)
 
 
+class PromptTooLongError(GenerationServiceError):
+    def __init__(self, limit: int, field: str = "Prompt") -> None:
+        super().__init__(
+            "PROMPT_TOO_LONG",
+            f"{field} exceeds the maximum length of {limit} characters",
+        )
+
+
+class ContentRejectedError(GenerationServiceError):
+    def __init__(self, message: str) -> None:
+        super().__init__("CONTENT_REJECTED", message)
+
+
 class InputItem(BaseModel):
     asset_id: UUID
     role: InputRole
@@ -85,13 +99,18 @@ class GenerationSubmitRequest(BaseModel):
 class GenerationService:
     """Orchestrates job validation, credit reservation, and creation."""
 
-    def __init__(self, conn: asyncpg.Connection) -> None:
+    def __init__(
+        self,
+        conn: asyncpg.Connection,
+        moderation_service: ModerationService | None = None,
+    ) -> None:
         self.conn = conn
         self.project_repo = ProjectRepository(conn)
         self.model_repo = ModelRepository(conn)
         self.asset_repo = AssetRepository(conn)
         self.job_repo = JobRepository(conn)
         self.credit_service = CreditService(conn)
+        self.moderation_service = moderation_service or ModerationService()
 
     async def create_job(
         self,
@@ -125,7 +144,24 @@ class GenerationService:
                 f"Idempotency key '{idempotency_key}' was used with a different request payload"
             )
 
-        # 3. Load model & verify task_type
+        # 3. Enforce prompt length limits and moderation before any model load
+        #    or credit reservation, so rejected content costs nothing.
+        settings = get_settings()
+        if request.prompt and len(request.prompt) > settings.max_prompt_chars:
+            raise PromptTooLongError(settings.max_prompt_chars, "Prompt")
+        if request.negative_prompt and len(request.negative_prompt) > settings.max_prompt_chars:
+            raise PromptTooLongError(settings.max_prompt_chars, "Negative prompt")
+
+        decision = await self.moderation_service.check(
+            request.prompt,
+            [inp.asset_id for inp in request.inputs],
+        )
+        if not decision.allowed:
+            raise ContentRejectedError(
+                decision.reason or "Prompt was rejected by the moderation service"
+            )
+
+        # 4. Load model & verify task_type
         # Can be slug or UUID
         model = None
         try:
@@ -145,7 +181,7 @@ class GenerationService:
                 f"not '{request.task_type.value}'"
             )
 
-        # 4. Validate parameters against model.input_schema & merge default_params
+        # 5. Validate parameters against model.input_schema & merge default_params
         merged_params = dict(model.default_params)
         merged_params.update(request.params)
 
@@ -154,7 +190,7 @@ class GenerationService:
         except jsonschema.ValidationError as err:
             raise InvalidParamsError(f"Invalid generation parameters: {err.message}") from err
 
-        # 5. Enforce required inputs per task type
+        # 6. Enforce required inputs per task type
         input_roles_present = {inp.role for inp in request.inputs}
         if request.task_type == TaskType.IMAGE_TO_IMAGE:
             if InputRole.INIT_IMAGE not in input_roles_present:
@@ -184,14 +220,13 @@ class GenerationService:
                     err_msg = f"Input role '{inp.role.value}' must be an image asset"
                     raise InvalidParamsError(err_msg)
 
-        # 6. Enforce per-workspace concurrent active jobs cap
-        settings = get_settings()
+        # 7. Enforce per-workspace concurrent active jobs cap
         active_jobs = await self.job_repo.count_active_jobs_for_workspace(project.workspace_id)
         if active_jobs >= settings.max_active_jobs_per_workspace:
             cap = settings.max_active_jobs_per_workspace
             raise ConcurrencyLimitError(f"Workspace active generation limit of {cap} reached")
 
-        # 7. Reserve credits & insert job
+        # 8. Reserve credits & insert job
         cost_credits = model.cost_credits
         job = await self.job_repo.create(
             workspace_id=project.workspace_id,

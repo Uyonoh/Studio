@@ -55,6 +55,14 @@ class Settings(BaseSettings):
     max_active_jobs_per_workspace: int = Field(
         default=5, validation_alias="MAX_ACTIVE_JOBS_PER_WORKSPACE"
     )
+    max_prompt_chars: int = Field(default=4000, validation_alias="MAX_PROMPT_CHARS")
+    rate_limit_enabled: bool = Field(default=True, validation_alias="RATE_LIMIT_ENABLED")
+    rate_limit_submit_per_minute: int = Field(
+        default=20, validation_alias="RATE_LIMIT_SUBMIT_PER_MINUTE"
+    )
+    rate_limit_upload_per_minute: int = Field(
+        default=30, validation_alias="RATE_LIMIT_UPLOAD_PER_MINUTE"
+    )
 
     # Runtime & Observability
     environment: Literal["local", "staging", "production"] = Field(

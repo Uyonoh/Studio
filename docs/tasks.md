@@ -508,11 +508,11 @@ ENVIRONMENT=local|staging|production
 
 ## PHASE 7 — Hardening, deployment, launch
 
-### [ ] T7.1 Rate limits, quotas, abuse controls
+### [x] T7.1 Rate limits, quotas, abuse controls
 **Depends:** T3.5
 **Steps:** Redis token-bucket middleware (per user and per workspace) on submit/upload endpoints returning `429` with `Retry-After`; per-workspace concurrent job cap (already T2.5) configurable; prompt length limits; moderation hook interface `ModerationService.check(prompt, inputs)` (no-op default implementation, called in `create_job`; provider-backed implementation optional); Cloudflare WAF/rate rules documented in `docs/runbooks/cloudflare.md`.
 **DoD**
-- [ ] Tests: limit triggers and resets; moderation rejection returns `CONTENT_REJECTED` and refunds nothing (never reserved).
+- [x] Tests: limit triggers and resets; moderation rejection returns `CONTENT_REJECTED` and refunds nothing (never reserved).
 **Verify:** `uv run pytest apps/api -k limit -q`
 
 ### [ ] T7.2 Observability

@@ -16,12 +16,13 @@ from datetime import datetime
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from api.auth import AuthUser
-from api.deps import DBConn
+from api.deps import DBConn, ModerationDep
 from api.pagination import decode_cursor, encode_cursor
+from api.rate_limit import retry_rate_limit, submit_rate_limit
 from api.routers.assets import _asset_response  # reuse signed-URL logic
 from studio_core.generation import (
     GenerationService,
@@ -232,12 +233,14 @@ async def _get_job_checked(
     "/projects/{project_id}/generations",
     response_model=GenerationJobResponse,
     status_code=202,
+    dependencies=[Depends(submit_rate_limit)],
 )
 async def submit_generation(
     project_id: UUID,
     body: GenerationSubmitBody,
     user: AuthUser,
     db: DBConn,
+    moderation: ModerationDep,
     request: Request,
     idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
 ) -> GenerationJobResponse:
@@ -270,7 +273,7 @@ async def submit_generation(
         params=body.params,
     )
 
-    svc = GenerationService(db)
+    svc = GenerationService(db, moderation_service=moderation)
     # This may raise domain errors that are mapped by the exception handlers
     job = await svc.create_job(
         user_id=user.id,
@@ -429,11 +432,17 @@ async def cancel_generation(
     return await _build_job_response(updated, db, asset_repo)
 
 
-@router.post("/generations/{job_id}/retry", response_model=GenerationJobResponse, status_code=202)
+@router.post(
+    "/generations/{job_id}/retry",
+    response_model=GenerationJobResponse,
+    status_code=202,
+    dependencies=[Depends(retry_rate_limit)],
+)
 async def retry_generation(
     job_id: UUID,
     user: AuthUser,
     db: DBConn,
+    moderation: ModerationDep,
     request: Request,
 ) -> GenerationJobResponse:
     """Retry a failed or canceled job by creating a new job with the same inputs."""
@@ -468,7 +477,7 @@ async def retry_generation(
     # Derive a fresh idempotency key server-side
     new_idempotency_key = f"retry-{original.id}-{uuid.uuid4()}"
 
-    svc = GenerationService(db)
+    svc = GenerationService(db, moderation_service=moderation)
     new_job = await svc.create_job(
         user_id=user.id,
         project_id=original.project_id,

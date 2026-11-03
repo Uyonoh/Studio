@@ -43,5 +43,15 @@ This document records ambiguous requirements, environment differences, questions
 - **Empty states:** Existing project/asset/job empty states were kept and re-checked under the new contrast values; no new placeholder screens were required.
 - **Mock backend:** Added `GET /v1/workspaces/{id}/projects` so the projects page (and the axe scan for it) renders against the same self-contained mock as the other E2E flows.
 
+### T7.1 - Rate limits, quotas, and abuse-control notes
+- **Token bucket:** `api/rate_limit.py` runs a Lua script (`HMGET`/`HSET`/`EXPIRE`) so the read-refill-consume-write cycle is atomic across API workers. Each bucket stores `tokens` and the last refill timestamp in Redis; capacity equals the per-minute allowance, so the configured value is also the burst size. Keys expire after one full refill window plus 60 seconds.
+- **Two scopes:** Submit and retry share `ratelimit:submit:{user|workspace}:<id>`; uploads use `ratelimit:upload:...`. Both the caller's personal bucket and the workspace bucket are consumed, so one member cannot spend the whole workspace budget and a shared workspace still caps aggregate throughput. Retries are charged to the submit budget.
+- **Fail-open:** If `redis_pool` is `None`, Redis `eval` raises, or the reply is unexpected, the request is allowed and a warning is logged. This keeps local development and transient Redis outages working; Cloudflare edge rules are the backstop documented in `docs/runbooks/cloudflare.md`.
+- **Dependency wiring:** The limiter runs as a FastAPI route dependency on `POST /projects/{id}/generations`, `POST /generations/{id}/retry`, and `POST /projects/{id}/assets/uploads`. It resolves the workspace from the project/job row before consuming the workspace bucket. A `429` uses the existing problem+json shape with `error_code=RATE_LIMITED` and a `Retry-After` header in whole seconds.
+- **Prompt length:** `MAX_PROMPT_CHARS` (default 4000) applies to both `prompt` and `negative_prompt`. The check runs after the idempotency replay but before model lookup, so a replayed request still returns its original job and an oversized prompt never reaches a provider or the ledger. Violations raise `PromptTooLongError` (`PROMPT_TOO_LONG`, 422).
+- **Moderation:** `ModerationService.check(prompt, input_asset_ids)` defaults to a no-op; `StaticModerationService` is provided for tests/dev. The API resolves an app-scoped implementation from `app.state.moderation_service`, and `GenerationService` calls it before model loading and credit reservation. A rejection raises `ContentRejectedError` (`CONTENT_REJECTED`, 422) and therefore never reserves or refunds credits.
+- **Concurrency cap:** The existing `MAX_ACTIVE_JOBS_PER_WORKSPACE` check in `GenerationService` remains the per-workspace job cap; it is now documented alongside the new limits in `.env.example`.
+
+
 
 

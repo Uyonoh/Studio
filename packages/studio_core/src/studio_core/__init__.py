@@ -3,6 +3,7 @@
 from studio_core.credits import CreditService, InsufficientCredits
 from studio_core.db import create_pool, transaction
 from studio_core.generation import (
+    ContentRejectedError,
     GenerationService,
     GenerationSubmitRequest,
     InputItem,
@@ -10,6 +11,7 @@ from studio_core.generation import (
     MissingInputError,
     ModelTaskMismatchError,
     PermissionDeniedError,
+    PromptTooLongError,
 )
 from studio_core.models import (
     Asset,
@@ -27,6 +29,11 @@ from studio_core.models import (
     Workspace,
     WorkspaceMember,
     WorkspaceRole,
+)
+from studio_core.moderation import (
+    ModerationDecision,
+    ModerationService,
+    StaticModerationService,
 )
 from studio_core.repositories import (
     AssetRepository,
@@ -47,6 +54,7 @@ __all__ = [
     "AssetKind",
     "AssetOrigin",
     "AssetRepository",
+    "ContentRejectedError",
     "CreditLedger",
     "CreditService",
     "EventRepository",
@@ -67,10 +75,14 @@ __all__ = [
     "Model",
     "ModelRepository",
     "ModelTaskMismatchError",
+    "ModerationDecision",
+    "ModerationService",
     "PermissionDeniedError",
     "Project",
     "ProjectRepository",
+    "PromptTooLongError",
     "Settings",
+    "StaticModerationService",
     "TaskType",
     "Workspace",
     "WorkspaceMember",

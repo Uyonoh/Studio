@@ -18,12 +18,13 @@ from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 import asyncpg
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from api.auth import AuthUser
 from api.deps import DBConn
 from api.pagination import decode_cursor, encode_cursor
+from api.rate_limit import upload_rate_limit
 from studio_core.models import Asset, AssetKind, AssetOrigin, WorkspaceRole
 from studio_core.repositories import AssetRepository, ProjectRepository
 from studio_core.settings import get_settings
@@ -310,6 +311,7 @@ async def _require_project_member(
     "/projects/{project_id}/assets/uploads",
     response_model=UploadResponse,
     status_code=201,
+    dependencies=[Depends(upload_rate_limit)],
 )
 async def request_upload(
     project_id: UUID,
