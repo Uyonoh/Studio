@@ -27,3 +27,12 @@ This document records ambiguous requirements, environment differences, questions
 - **Idempotency key ownership:** The composer generates one key per distinct payload signature (`JSON.stringify` of the submit body), reuses it when retrying an unchanged submission, and clears it after success. Changing any field produces a new key.
 - **Error surfacing:** `402` shows a credits message, `429` includes `Retry-After`, `MISSING_INPUT` attaches to the image picker, FastAPI `422` issue lists map to matching schema fields when possible, and everything else falls back to the problem `detail`.
 
+### T6.5 — Job status/history notes and assumptions
+- **Realtime + fallback:** `hooks/use-job-realtime.ts` subscribes to `postgres_changes` on `generation_jobs` filtered by project. If the channel is not `SUBSCRIBED` within 5s, errors, or closes, the UI switches to polling. The timeout is overridable (`realtimeTimeoutMs`) so tests don't wait 5 seconds.
+- **Polling scope:** Detail polling (`useLiveJob`) runs only for active jobs and only while the Realtime state is `disconnected`; with a live channel it stays disabled so the cache patch is the single source of truth. Backoff is 2s × 1.5ⁿ capped at 10s. A terminal polled status invalidates the list so outputs are fetched once.
+- **Cache patching:** Realtime UPDATE payloads only carry row fields, not outputs, so updates patch every cached list under `["generations", projectId]` plus `["generation", id]`, then invalidate on terminal status to pick up outputs and derived fields.
+- **"Use as input" adapter:** Outputs are not full asset records. `outputToAsset` builds a lightweight `Asset` from the output (`asset_id`, kind, mime, signed URL, source job) with empty workspace/project/storage fields, which is enough for the composer's image picker and submit payload. It is only offered for image outputs.
+- **Composer remount:** The project page stores the chosen asset as `seedAsset` and remounts the composer with `key={seedAsset?.id ?? "composer"}` so the initial asset is applied without adding effect-driven state syncing.
+- **E2E without Realtime:** The Playwright mock backend has no Realtime server, so `e2e/generation.spec.ts` deliberately exercises the polling fallback by advancing job state in `GET /v1/generations/{id}` (queued → running → succeeded) and asserting the card reaches `succeeded` and shows the output without a reload.
+
+

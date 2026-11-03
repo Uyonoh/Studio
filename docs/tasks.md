@@ -486,7 +486,7 @@ ENVIRONMENT=local|staging|production
 - [x] Form validation errors map to fields; cost shown matches model.
 **Verify:** `pnpm --filter web test -k composer`
 
-### [ ] T6.5 Job status and history (Realtime)
+### [x] T6.5 Job status and history (Realtime)
 **Depends:** T6.4
 **Goal:** Live job cards.
 **Steps**
@@ -494,8 +494,8 @@ ENVIRONMENT=local|staging|production
 2. Fallback: if the channel isn't `SUBSCRIBED` within 5s or disconnects, poll `GET /v1/generations/{id}` with backoff 2s→10s.
 3. Job card states: queued, running (elapsed timer), finalizing, succeeded (preview), failed (error + retry button), canceled; cancel button for active jobs; "use as input" action on results.
 **DoD**
-- [ ] With the FakeProvider, status transitions render live without a page refresh; killing Realtime falls back to polling (tested with a mocked channel).
-- [ ] No duplicate subscriptions after navigation (cleanup verified).
+- [x] With the FakeProvider, status transitions render live without a page refresh; killing Realtime falls back to polling (tested with a mocked channel).
+- [x] No duplicate subscriptions after navigation (cleanup verified).
 **Verify:** `pnpm --filter web test -k jobs && pnpm --filter web e2e -g generation`
 
 ### [ ] T6.6 Polish: accessibility, responsiveness, empty states

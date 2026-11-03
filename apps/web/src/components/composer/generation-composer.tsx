@@ -43,6 +43,8 @@ export function deriveTaskType(mode: ComposerMode, withImage: boolean): TaskType
 
 interface GenerationComposerProps {
   projectId: string;
+  /** Pre-selected source image, e.g. from a generated result's "Use as input". */
+  initialAsset?: Asset | null;
   /** Called after a job is accepted so job history can update immediately. */
   onSubmitted?: (job: GenerationJob) => void;
 }
@@ -55,13 +57,17 @@ const segmentButton = (active: boolean) =>
   }`;
 
 /** Schema-driven composer for every text/image → image/video flow. */
-export function GenerationComposer({ projectId, onSubmitted }: GenerationComposerProps) {
+export function GenerationComposer({
+  projectId,
+  initialAsset = null,
+  onSubmitted,
+}: GenerationComposerProps) {
   const [mode, setMode] = useState<ComposerMode>("image");
-  const [withImage, setWithImage] = useState(false);
+  const [withImage, setWithImage] = useState(Boolean(initialAsset));
   const [prompt, setPrompt] = useState("");
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [params, setParams] = useState<ParamValues>({});
-  const [inputAsset, setInputAsset] = useState<Asset | null>(null);
+  const [inputAsset, setInputAsset] = useState<Asset | null>(initialAsset);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [imageError, setImageError] = useState<string | undefined>();
   const [submitError, setSubmitError] = useState<string | null>(null);

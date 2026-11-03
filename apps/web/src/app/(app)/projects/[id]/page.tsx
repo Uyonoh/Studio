@@ -8,6 +8,8 @@ import { getApiClient } from "@/lib/api";
 import { type Project } from "@/hooks/use-projects";
 import { AssetLibrary } from "@/components/assets/asset-library";
 import { GenerationComposer } from "@/components/composer/generation-composer";
+import { JobHistory } from "@/components/jobs/job-history";
+import { type Asset } from "@/hooks/use-assets";
 
 export default function ProjectWorkspacePage() {
   const params = useParams();
@@ -15,6 +17,7 @@ export default function ProjectWorkspacePage() {
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"assets" | "composer" | "history">("assets");
+  const [seedAsset, setSeedAsset] = useState<Asset | null>(null);
 
   useEffect(() => {
     async function loadProject() {
@@ -100,12 +103,22 @@ export default function ProjectWorkspacePage() {
       {/* Tab Panels */}
       {activeTab === "assets" && <AssetLibrary projectId={projectId} />}
 
-      {activeTab === "composer" && <GenerationComposer projectId={projectId} />}
+      {activeTab === "composer" && (
+        <GenerationComposer
+          key={seedAsset?.id ?? "composer"}
+          projectId={projectId}
+          initialAsset={seedAsset}
+        />
+      )}
 
       {activeTab === "history" && (
-        <div className="rounded-2xl border border-[#262A35] bg-[#14161C] p-12 text-center">
-          <p className="text-sm text-[#9AA1B2]">Realtime job status & history will be loaded here (T6.5).</p>
-        </div>
+        <JobHistory
+          projectId={projectId}
+          onUseAsInput={(asset) => {
+            setSeedAsset(asset);
+            setActiveTab("composer");
+          }}
+        />
       )}
     </div>
   );

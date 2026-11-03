@@ -33,6 +33,50 @@ export function startMockBackend(port = 3101) {
 
   let pendingUpload = null;
 
+  const models = [
+    {
+      id: "model-e2e-1",
+      slug: "fake-image-fast",
+      display_name: "Fake Fast Image Generator",
+      task_type: "text_to_image",
+      provider_id: "fake",
+      input_schema: {
+        type: "object",
+        properties: {
+          aspect_ratio: {
+            type: "string",
+            enum: ["1:1", "16:9"],
+            default: "1:1",
+          },
+        },
+        additionalProperties: false,
+      },
+      default_params: { aspect_ratio: "1:1" },
+      cost_credits: "1.00",
+      required_input_roles: [],
+    },
+  ];
+
+  const jobs = [];
+
+  const makeJob = (body) => ({
+    id: `job-e2e-${jobs.length + 1}`,
+    project_id: "proj-e2e",
+    workspace_id: "ws-e2e",
+    status: "queued",
+    task_type: body?.task_type || "text_to_image",
+    prompt: body?.prompt || null,
+    params: body?.params || {},
+    error_code: null,
+    error_message: null,
+    queued_at: new Date().toISOString(),
+    started_at: null,
+    completed_at: null,
+    outputs: [],
+    links: { self: `/v1/generations/job-e2e-${jobs.length + 1}` },
+  });
+
+
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, `http://127.0.0.1:${port}`);
     const method = req.method;
@@ -116,6 +160,55 @@ export function startMockBackend(port = 3101) {
         items: assets,
         next_cursor: null,
       });
+    }
+
+    // 4b. Models
+    if (url.pathname === "/v1/models" && method === "GET") {
+      const taskType = url.searchParams.get("task_type");
+      return sendJson(taskType ? models.filter((model) => model.task_type === taskType) : models);
+    }
+
+    // 4c. Generation history
+    if (url.pathname === "/v1/projects/proj-e2e/generations" && method === "GET") {
+      const status = url.searchParams.get("status");
+      const items = status ? jobs.filter((job) => job.status === status) : jobs;
+      return sendJson({ items, next_cursor: null });
+    }
+
+    // 4d. Submit generation
+    if (url.pathname === "/v1/projects/proj-e2e/generations" && method === "POST") {
+      readJson().then((body) => {
+        const job = makeJob(body);
+        jobs.unshift(job);
+        sendJson(job, 202);
+      });
+      return;
+    }
+
+    // 4e. Generation detail (drives the polling fallback in the browser)
+    const generationMatch = url.pathname.match(/^\/v1\/generations\/([^/]+)$/);
+    if (generationMatch && method === "GET") {
+      const job = jobs.find((item) => item.id === generationMatch[1]);
+      if (!job) return sendJson({ detail: "Generation not found" }, 404);
+
+      if (job.status === "queued") {
+        job.status = "running";
+        job.started_at = new Date().toISOString();
+      } else if (job.status === "running") {
+        job.status = "succeeded";
+        job.completed_at = new Date().toISOString();
+        job.outputs = [
+          {
+            asset_id: "asset-generated-e2e",
+            kind: "image",
+            mime_type: "image/png",
+            signed_url: `http://127.0.0.1:${port}/media/ws-e2e/proj-e2e/asset-generated-e2e/original.png`,
+            thumbnail_url: null,
+          },
+        ];
+      }
+
+      return sendJson(job);
     }
 
     // 5. Request upload
