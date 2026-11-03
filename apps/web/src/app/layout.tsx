@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { SentryInit } from "@/components/sentry-init";
 
 export const metadata: Metadata = {
   title: "Studio — AI Content Creation Platform",
@@ -16,6 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen bg-[#0B0C10] text-[#E8EAF0] antialiased selection:bg-[#6C4CE8]/30">
+        <SentryInit />
         <ErrorBoundary>
           <QueryProvider>{children}</QueryProvider>
         </ErrorBoundary>

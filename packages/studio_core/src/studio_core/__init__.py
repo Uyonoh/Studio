@@ -35,6 +35,16 @@ from studio_core.moderation import (
     ModerationService,
     StaticModerationService,
 )
+from studio_core.observability import (
+    capture_exception,
+    clear_current_job_context,
+    get_release,
+    init_sentry,
+    log_job_transition,
+    set_current_job_context,
+    set_job_context,
+    set_request_context,
+)
 from studio_core.repositories import (
     AssetRepository,
     EventRepository,
@@ -88,7 +98,15 @@ __all__ = [
     "WorkspaceMember",
     "WorkspaceRole",
     "can_transition",
+    "capture_exception",
+    "clear_current_job_context",
     "create_pool",
+    "get_release",
     "get_settings",
+    "init_sentry",
+    "log_job_transition",
+    "set_current_job_context",
+    "set_job_context",
+    "set_request_context",
     "transaction",
 ]

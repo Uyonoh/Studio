@@ -13,6 +13,7 @@ dependencies = [
     "studio-media",
     "arq>=0.26.0",
     "redis>=5.0.0",
+    "sentry-sdk>=2.20",
 ]
 
 [tool.hatch.build.targets.wheel]

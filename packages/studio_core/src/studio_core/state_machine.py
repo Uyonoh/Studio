@@ -16,6 +16,7 @@ Allowed transitions:
 Terminal states (succeeded, failed, canceled) are immutable.
 """
 
+import logging
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
@@ -23,7 +24,10 @@ from uuid import UUID
 import asyncpg
 
 from studio_core.models import GenerationJob, JobStatus
+from studio_core.observability import log_job_transition
 from studio_core.repositories import EventRepository
+
+logger = logging.getLogger(__name__)
 
 ALLOWED_TRANSITIONS: dict[JobStatus, set[JobStatus]] = {
     JobStatus.QUEUED: {JobStatus.SUBMITTING, JobStatus.CANCELED, JobStatus.FAILED},
@@ -60,6 +64,8 @@ class JobStateMachine:
         provider_job_id: str | None = None,
         heartbeat_at: datetime | None = None,
         event_payload: dict[str, Any] | None = None,
+        provider_id: str | None = None,
+        model_slug: str | None = None,
     ) -> GenerationJob | None:
         """Perform a guarded transition.
 
@@ -133,4 +139,21 @@ class JobStateMachine:
         data = dict(row)
         if isinstance(data["params"], str):
             data["params"] = json.loads(data["params"])
+
+        queued_at = data.get("queued_at")
+        duration_ms: float | None = None
+        if isinstance(queued_at, datetime):
+            duration_ms = (now - queued_at).total_seconds() * 1000
+
+        log_job_transition(
+            logger,
+            job_id=str(job_id),
+            from_status=expected.value,
+            to_status=new.value,
+            provider=provider_id,
+            model=model_slug or str(data.get("model_id")),
+            duration_ms=duration_ms,
+            error_code=error_code,
+        )
+
         return GenerationJob.model_validate(data)

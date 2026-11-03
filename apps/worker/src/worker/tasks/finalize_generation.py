@@ -17,6 +17,7 @@ from uuid import UUID
 
 from studio_core.credits import CreditService
 from studio_core.models import AssetKind, AssetOrigin, JobStatus
+from studio_core.observability import capture_exception, set_current_job_context
 from studio_core.repositories import (
     AssetRepository,
     EventRepository,
@@ -62,6 +63,8 @@ async def finalize_generation(ctx: dict[str, Any], job_id_raw: str | UUID) -> No
             logger.error("Job %s not found for finalization", job_id)
             return
 
+        set_current_job_context(job_id=str(job_id), status=job.status.value)
+
         # 1. Guarded transition: running -> finalizing
         # If already finalizing, we may be recovering a stalled finalization.
         if job.status == JobStatus.RUNNING:
@@ -98,6 +101,13 @@ async def finalize_generation(ctx: dict[str, Any], job_id_raw: str | UUID) -> No
             await credit_svc.refund(job_id)
             return
 
+        set_current_job_context(
+            job_id=str(job_id),
+            provider=model.provider_id,
+            model=model.slug,
+            status=job.status.value,
+        )
+
         try:
             provider = get_provider(model.provider_id)
         except KeyError:
@@ -119,6 +129,13 @@ async def finalize_generation(ctx: dict[str, Any], job_id_raw: str | UUID) -> No
             provider_status = await provider.get_status(ref)
         except Exception as exc:
             logger.error("Failed to query provider status for job %s: %s", job_id, exc)
+            capture_exception(
+                exc,
+                job_id=str(job_id),
+                provider=model.provider_id,
+                model=model.slug,
+                status=JobStatus.FAILED.value,
+            )
             await state_machine.transition(
                 job.id,
                 expected=JobStatus.FINALIZING,
@@ -201,6 +218,13 @@ async def finalize_generation(ctx: dict[str, Any], job_id_raw: str | UUID) -> No
                     logger.error(
                         "Failed to download output %s for job %s: %s", out.url, job.id, exc
                     )
+                    capture_exception(
+                        exc,
+                        job_id=str(job_id),
+                        provider=model.provider_id,
+                        model=model.slug,
+                        status=JobStatus.FAILED.value,
+                    )
                     await state_machine.transition(
                         job.id,
                         expected=JobStatus.FINALIZING,
@@ -261,6 +285,13 @@ async def finalize_generation(ctx: dict[str, Any], job_id_raw: str | UUID) -> No
                         thumb_path = thumb_storage_path
                 except Exception as exc:
                     logger.error("Invalid media output for job %s: %s", job.id, exc)
+                    capture_exception(
+                        exc,
+                        job_id=str(job_id),
+                        provider=model.provider_id,
+                        model=model.slug,
+                        status=JobStatus.FAILED.value,
+                    )
                     await state_machine.transition(
                         job.id,
                         expected=JobStatus.FINALIZING,

@@ -52,6 +52,15 @@ This document records ambiguous requirements, environment differences, questions
 - **Moderation:** `ModerationService.check(prompt, input_asset_ids)` defaults to a no-op; `StaticModerationService` is provided for tests/dev. The API resolves an app-scoped implementation from `app.state.moderation_service`, and `GenerationService` calls it before model loading and credit reservation. A rejection raises `ContentRejectedError` (`CONTENT_REJECTED`, 422) and therefore never reserves or refunds credits.
 - **Concurrency cap:** The existing `MAX_ACTIVE_JOBS_PER_WORKSPACE` check in `GenerationService` remains the per-workspace job cap; it is now documented alongside the new limits in `.env.example`.
 
+### T7.2 - Observability notes
+- **Optional Sentry:** `studio_core.observability` imports `sentry_sdk` lazily and treats a missing SDK or empty `SENTRY_DSN` as a no-op. API, worker, and web therefore run normally in local development and tests without a Sentry account. The web app reads `NEXT_PUBLIC_SENTRY_DSN` at runtime and initialises from the `SentryInit` client component in the root layout.
+- **Release tagging:** `get_release()` prefers `SENTRY_RELEASE`, then `GIT_SHA`, `RENDER_GIT_COMMIT`, and `VERCEL_GIT_COMMIT_SHA`. The web build passes `NEXT_PUBLIC_SENTRY_RELEASE` explicitly. Source-map upload is deferred to T7.4 because `next.config.mjs` is not wrapped in `withSentryConfig`; the runbook calls this out.
+- **API context:** The request-ID middleware sets `request.state.request_id`; `auth.py` sets `request.state.user_id` after JWT verification. The 500 handler reports the exception with request ID, path, method, and user ID. 4xx responses are not sent to Sentry.
+- **Worker context:** `set_current_job_context` stores `job_id`, `provider`, `model`, and `status` in a `ContextVar` so concurrent ARQ tasks do not share context. Provider/download failures call `capture_exception` with those tags, and every `JobStateMachine.transition` emits one structured `job_transition` log line with `duration_ms` since `queued_at`.
+- **Admin stats:** `GET /v1/admin/stats` is gated by the comma-separated `ADMIN_USER_IDS` allow-list (empty denies everyone). It returns queue depth/oldest age, a 15-minute failure rate, 24-hour time-in-state and duration averages, and per-provider job/error/latency/cost aggregates. Queries are parameter-free (no user input) and read directly from Postgres.
+- **Staging verification:** T7.2's `Verify` step requires staging, which is provisioned in T7.3. Locally the behaviour is proven by `apps/api/tests/test_t72_observability.py`, `apps/worker/tests/test_t72_observability.py`, and `apps/web/src/test/sentry.test.ts`, and the exact forced-error procedure for each service is documented in `docs/runbooks/observability.md`.
+- **`.gitignore` repair:** The Python-packaging rule `lib/` was also ignoring `apps/web/src/lib/`, so the web `api.ts`, Supabase clients, and utils were never committed even though the app imports them. Added `!apps/web/src/lib/` and committed the directory alongside `sentry.ts`; a fresh checkout can now build the web app.
+
 
 
 

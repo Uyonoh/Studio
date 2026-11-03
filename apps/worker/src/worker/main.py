@@ -9,6 +9,7 @@ from arq.connections import create_pool
 from arq.cron import cron
 
 from studio_core.db import create_pool as create_db_pool
+from studio_core.observability import init_sentry
 from worker.config import WorkerConfig, get_worker_config
 from worker.tasks.cancel_generation import cancel_generation
 from worker.tasks.finalize_generation import finalize_generation
@@ -25,6 +26,15 @@ async def startup(ctx: dict[str, Any]) -> None:
 
     logging.basicConfig(level=config.log_level)
     logger.info("Starting ARQ Worker in %s environment", config.environment)
+
+    sentry_active = init_sentry(
+        service="worker",
+        dsn=config.sentry_dsn,
+        environment=config.environment,
+        release=config.sentry_release,
+        traces_sample_rate=config.sentry_traces_sample_rate,
+    )
+    logger.info("Sentry %s for worker", "enabled" if sentry_active else "disabled")
 
     # Database pool
     db_pool = await create_db_pool(

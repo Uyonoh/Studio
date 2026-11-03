@@ -515,11 +515,11 @@ ENVIRONMENT=local|staging|production
 - [x] Tests: limit triggers and resets; moderation rejection returns `CONTENT_REJECTED` and refunds nothing (never reserved).
 **Verify:** `uv run pytest apps/api -k limit -q`
 
-### [ ] T7.2 Observability
+### [x] T7.2 Observability
 **Depends:** T4.3
 **Steps:** Sentry in API, worker, web (release tagging from git SHA); log `job_id`, `provider`, `model`, `status`, durations on every transition; metrics endpoint or log-based metrics: queue depth, time-in-state, provider latency/error rate, cost per job; admin-only `GET /v1/admin/stats`; alert rules documented (stuck jobs > 10 min, failure rate > 20% over 15 min, queue depth growing).
 **DoD**
-- [ ] Forced exception in each service appears in Sentry with request/job context; dashboard/alerts described in `docs/runbooks/observability.md`.
+- [x] Forced exception in each service appears in Sentry with request/job context; dashboard/alerts described in `docs/runbooks/observability.md`.
 **Verify:** trigger test errors on staging.
 
 ### [ ] T7.3 Containers and `render.yaml`

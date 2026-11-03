@@ -12,8 +12,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.errors import problem_response, register_exception_handlers
-from api.routers import assets, generations, models, projects, webhooks, workspaces
+from api.routers import (
+    admin,
+    assets,
+    generations,
+    models,
+    projects,
+    webhooks,
+    workspaces,
+)
 from studio_core.db import create_pool
+from studio_core.observability import init_sentry, set_request_context
 from studio_core.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -66,6 +75,14 @@ def create_app() -> FastAPI:
     """Construct and configure the FastAPI application."""
     settings = get_settings()
 
+    init_sentry(
+        service="api",
+        dsn=settings.sentry_dsn,
+        environment=settings.environment,
+        release=settings.sentry_release,
+        traces_sample_rate=settings.sentry_traces_sample_rate,
+    )
+
     app = FastAPI(
         title="AI Content Studio API",
         version="0.1.0",
@@ -92,6 +109,11 @@ def create_app() -> FastAPI:
         """Attach a request ID to every request and propagate it in the response."""
         request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
         request.state.request_id = request_id
+        set_request_context(
+            request_id=request_id,
+            path=request.url.path,
+            method=request.method,
+        )
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response
@@ -162,6 +184,7 @@ def create_app() -> FastAPI:
     app.include_router(assets.router, prefix="/v1")
     app.include_router(models.router, prefix="/v1")
     app.include_router(generations.router, prefix="/v1")
+    app.include_router(admin.router, prefix="/v1")
     app.include_router(webhooks.router, prefix="/internal")
 
     return app

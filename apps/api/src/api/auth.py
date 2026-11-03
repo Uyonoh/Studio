@@ -9,6 +9,7 @@ from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
+from studio_core.observability import set_request_context
 from studio_core.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -103,6 +104,13 @@ async def get_current_user(
         ) from exc
 
     email: str | None = payload.get("email")
+    request.state.user_id = str(user_id)
+    set_request_context(
+        request_id=getattr(request.state, "request_id", ""),
+        path=request.url.path,
+        method=request.method,
+        user_id=str(user_id),
+    )
     return CurrentUser(id=user_id, email=email)
 
 

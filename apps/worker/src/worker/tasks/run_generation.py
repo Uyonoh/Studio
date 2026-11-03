@@ -17,6 +17,10 @@ from arq.worker import Retry
 
 from studio_core.credits import CreditService
 from studio_core.models import AssetKind, JobStatus
+from studio_core.observability import (
+    capture_exception,
+    set_current_job_context,
+)
 from studio_core.queue import TASK_RUN_GENERATION, enqueue
 from studio_core.repositories import (
     AssetRepository,
@@ -69,6 +73,8 @@ async def run_generation(ctx: dict[str, Any], job_id_raw: str | UUID) -> None:
             logger.error("Job %s not found", job_id)
             return
 
+        set_current_job_context(job_id=str(job_id), status=job.status.value)
+
         # 1. Guarded transition: queued -> submitting
         if job.status == JobStatus.QUEUED:
             updated = await state_machine.transition(
@@ -115,6 +121,13 @@ async def run_generation(ctx: dict[str, Any], job_id_raw: str | UUID) -> None:
             )
             await credit_svc.refund(job_id)
             return
+
+        set_current_job_context(
+            job_id=str(job_id),
+            provider=model.provider_id,
+            model=model.slug,
+            status=job.status.value,
+        )
 
         try:
             provider = get_provider(model.provider_id)
@@ -274,6 +287,13 @@ async def run_generation(ctx: dict[str, Any], job_id_raw: str | UUID) -> None:
 
         except Exception as exc:
             logger.exception("Unexpected error submitting job %s: %s", job_id, exc)
+            capture_exception(
+                exc,
+                job_id=str(job_id),
+                provider=model.provider_id,
+                model=model.slug,
+                status=JobStatus.FAILED.value,
+            )
             await state_machine.transition(
                 job.id,
                 expected=JobStatus.SUBMITTING,

@@ -71,3 +71,6 @@ Thumbs.db
 test-results/
 playwright-report/
 blob-report/
+
+# Application source directories named lib/ are not Python packaging output
+!apps/web/src/lib/

@@ -15,6 +15,7 @@ from studio_core.generation import (
     ModelTaskMismatchError,
     PermissionDeniedError,
 )
+from studio_core.observability import capture_exception
 
 
 def problem_response(
@@ -145,6 +146,14 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(500)
     async def handle_internal_error(request: Request, exc: Any) -> JSONResponse:
+        if isinstance(exc, Exception):
+            capture_exception(
+                exc,
+                request_id=getattr(request.state, "request_id", None),
+                path=request.url.path,
+                method=request.method,
+                user_id=getattr(request.state, "user_id", None),
+            )
         return problem_response(
             500, "INTERNAL_SERVER_ERROR", "An unexpected error occurred.", request
         )

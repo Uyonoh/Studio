@@ -70,6 +70,11 @@ class Settings(BaseSettings):
     )
     log_level: str = Field(default="INFO", validation_alias="LOG_LEVEL")
     sentry_dsn: str | None = Field(default=None, validation_alias="SENTRY_DSN")
+    sentry_release: str | None = Field(default=None, validation_alias="SENTRY_RELEASE")
+    sentry_traces_sample_rate: float = Field(
+        default=0.1, validation_alias="SENTRY_TRACES_SAMPLE_RATE"
+    )
+    admin_user_ids: str = Field(default="", validation_alias="ADMIN_USER_IDS")
 
 
 _settings: Settings | None = None
