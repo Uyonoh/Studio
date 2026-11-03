@@ -15,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-[#0B0C10] text-[#E8EAF0] antialiased selection:bg-[#7C5CFF]/30">
+      <body className="min-h-screen bg-[#0B0C10] text-[#E8EAF0] antialiased selection:bg-[#6C4CE8]/30">
         <ErrorBoundary>
           <QueryProvider>{children}</QueryProvider>
         </ErrorBoundary>

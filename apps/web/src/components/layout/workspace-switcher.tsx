@@ -36,7 +36,7 @@ export function WorkspaceSwitcher({
         aria-haspopup="listbox"
         className="flex items-center gap-2.5 w-full p-2 rounded-xl hover:bg-[#1B1E26] text-left transition-colors group border border-transparent hover:border-[#262A35]"
       >
-        <div className="w-8 h-8 rounded-lg bg-[#1B1E26] border border-[#262A35] flex items-center justify-center flex-shrink-0 text-[#7C5CFF]">
+        <div className="w-8 h-8 rounded-lg bg-[#1B1E26] border border-[#262A35] flex items-center justify-center flex-shrink-0 text-[#A995FF]">
           <Building2 className="w-4 h-4" />
         </div>
         <div className="flex flex-col min-w-0 flex-1">
@@ -82,7 +82,7 @@ export function WorkspaceSwitcher({
                 >
                   <span className="truncate">{ws.name}</span>
                   {ws.id === active.id && (
-                    <Check className="w-3.5 h-3.5 text-[#7C5CFF] flex-shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-[#A995FF] flex-shrink-0" />
                   )}
                 </button>
               ))

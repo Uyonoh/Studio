@@ -46,7 +46,8 @@ export default function ProjectWorkspacePage() {
       <div className="flex items-center gap-4">
         <Link
           href="/projects"
-          className="p-2 rounded-xl bg-[#14161C] border border-[#262A35] text-[#9AA1B2] hover:text-[#E8EAF0] transition-colors"
+          aria-label="Back to projects"
+          className="p-2 rounded-xl bg-[#14161C] border border-[#262A35] text-[#9AA1B2] hover:text-[#E8EAF0] transition-colors shrink-0"
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
@@ -61,65 +62,77 @@ export default function ProjectWorkspacePage() {
       </div>
 
       {/* Workspace Tabs */}
-      <div className="border-b border-[#262A35] flex items-center gap-6">
+      <div
+        role="tablist"
+        aria-label="Project workspace sections"
+        className="border-b border-[#262A35] flex items-center gap-4 sm:gap-6 overflow-x-auto"
+      >
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "assets"}
           onClick={() => setActiveTab("assets")}
-          className={`flex items-center gap-2 pb-3 border-b-2 text-sm font-semibold transition-colors ${
+          className={`flex items-center gap-2 pb-3 border-b-2 text-sm font-semibold whitespace-nowrap shrink-0 transition-colors ${
             activeTab === "assets"
               ? "border-[#7C5CFF] text-[#E8EAF0]"
               : "border-transparent text-[#9AA1B2] hover:text-[#E8EAF0]"
           }`}
         >
-          <ImageIcon className={`w-4 h-4 ${activeTab === "assets" ? "text-[#7C5CFF]" : ""}`} />
+          <ImageIcon className={`w-4 h-4 ${activeTab === "assets" ? "text-[#A995FF]" : ""}`} />
           <span>Asset Library</span>
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "composer"}
           onClick={() => setActiveTab("composer")}
-          className={`flex items-center gap-2 pb-3 border-b-2 text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 pb-3 border-b-2 text-sm font-medium whitespace-nowrap shrink-0 transition-colors ${
             activeTab === "composer"
               ? "border-[#7C5CFF] text-[#E8EAF0]"
               : "border-transparent text-[#9AA1B2] hover:text-[#E8EAF0]"
           }`}
         >
-          <Sparkles className={`w-4 h-4 ${activeTab === "composer" ? "text-[#7C5CFF]" : ""}`} />
+          <Sparkles className={`w-4 h-4 ${activeTab === "composer" ? "text-[#A995FF]" : ""}`} />
           <span>Generation Composer</span>
         </button>
         <button
           type="button"
+          role="tab"
+          aria-selected={activeTab === "history"}
           onClick={() => setActiveTab("history")}
-          className={`flex items-center gap-2 pb-3 border-b-2 text-sm font-medium transition-colors ${
+          className={`flex items-center gap-2 pb-3 border-b-2 text-sm font-medium whitespace-nowrap shrink-0 transition-colors ${
             activeTab === "history"
               ? "border-[#7C5CFF] text-[#E8EAF0]"
               : "border-transparent text-[#9AA1B2] hover:text-[#E8EAF0]"
           }`}
         >
-          <History className={`w-4 h-4 ${activeTab === "history" ? "text-[#7C5CFF]" : ""}`} />
+          <History className={`w-4 h-4 ${activeTab === "history" ? "text-[#A995FF]" : ""}`} />
           <span>Job History</span>
         </button>
       </div>
 
       {/* Tab Panels */}
-      {activeTab === "assets" && <AssetLibrary projectId={projectId} />}
+      <div role="tabpanel" aria-label="Project workspace content">
+        {activeTab === "assets" && <AssetLibrary projectId={projectId} />}
 
-      {activeTab === "composer" && (
-        <GenerationComposer
-          key={seedAsset?.id ?? "composer"}
-          projectId={projectId}
-          initialAsset={seedAsset}
-        />
-      )}
+        {activeTab === "composer" && (
+          <GenerationComposer
+            key={seedAsset?.id ?? "composer"}
+            projectId={projectId}
+            initialAsset={seedAsset}
+          />
+        )}
 
-      {activeTab === "history" && (
-        <JobHistory
-          projectId={projectId}
-          onUseAsInput={(asset) => {
-            setSeedAsset(asset);
-            setActiveTab("composer");
-          }}
-        />
-      )}
+        {activeTab === "history" && (
+          <JobHistory
+            projectId={projectId}
+            onUseAsInput={(asset) => {
+              setSeedAsset(asset);
+              setActiveTab("composer");
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

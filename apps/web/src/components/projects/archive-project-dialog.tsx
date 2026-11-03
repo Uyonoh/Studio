@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useRef } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { type Project } from "@/hooks/use-projects";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface ArchiveProjectDialogProps {
   project: Project | null;
@@ -19,15 +20,9 @@ export function ArchiveProjectDialog({
   onClose,
   onConfirm,
 }: ArchiveProjectDialogProps) {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useFocusTrap(dialogRef, isOpen && Boolean(project), { onEscape: onClose });
 
   if (!isOpen || !project) return null;
 
@@ -40,9 +35,11 @@ export function ArchiveProjectDialog({
       />
 
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="archive-project-title"
+        tabIndex={-1}
         className="relative w-full max-w-md bg-[#14161C] border border-[#262A35] rounded-2xl p-6 shadow-card z-10 animate-in fade-in zoom-in-95 duration-150"
       >
         <div className="flex items-start gap-4">

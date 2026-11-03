@@ -41,7 +41,7 @@ test.describe("Generation flow E2E", () => {
     await expect(page.getByRole("heading", { name: /Brand Launch/i })).toBeVisible();
 
     // Composer: schema-driven form loads the fake model.
-    await page.getByRole("button", { name: /Generation Composer/i }).click();
+    await page.getByRole("tab", { name: /Generation Composer/i }).click();
     const modelSelect = page.getByLabel("Model");
     await expect(modelSelect).toBeVisible();
     await expect(modelSelect).toHaveValue("fake-image-fast");
@@ -54,7 +54,7 @@ test.describe("Generation flow E2E", () => {
     await expect(page.getByRole("status")).toContainText(/queued/i);
 
     // History shows the same job and receives status changes without a page reload.
-    await page.getByRole("button", { name: /Job History/i }).click();
+    await page.getByRole("tab", { name: /Job History/i }).click();
     await expect(page.getByText(prompt)).toBeVisible();
 
     await expect(page.getByText("succeeded", { exact: true })).toBeVisible({ timeout: 20_000 });

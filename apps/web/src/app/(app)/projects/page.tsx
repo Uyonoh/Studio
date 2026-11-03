@@ -99,7 +99,7 @@ export default function ProjectsPage() {
               Projects
             </h1>
             {!isLoading && (
-              <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-[#1B1E26] text-[#7C5CFF] border border-[#262A35]">
+              <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-[#1B1E26] text-[#A995FF] border border-[#262A35]">
                 {filteredProjects.length} Active
               </span>
             )}
@@ -115,6 +115,7 @@ export default function ProjectsPage() {
             <Search className="w-4 h-4 text-[#9AA1B2] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
+              aria-label="Filter projects"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Filter projects..."
@@ -136,7 +137,7 @@ export default function ProjectsPage() {
           <button
             type="button"
             onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-2 h-10 px-4 rounded-xl bg-[#7C5CFF] hover:bg-[#8F75FF] text-white text-xs font-semibold shadow-[0_0_16px_rgba(124,92,255,0.25)] transition-all active:scale-95"
+            className="flex items-center gap-2 h-10 px-4 rounded-xl bg-[#6C4CE8] hover:bg-[#5B3FD6] text-white text-xs font-semibold shadow-[0_0_16px_rgba(124,92,255,0.25)] transition-all active:scale-95"
           >
             <Plus className="w-4 h-4" />
             <span>New Project</span>

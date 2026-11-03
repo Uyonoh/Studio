@@ -148,7 +148,7 @@ export function AssetUploadZone({ projectId, onUploadSuccess }: AssetUploadZoneP
         aria-label="Upload media files"
         className={`group relative border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center gap-3 focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] ${
           isDragging
-            ? "border-[#7C5CFF] bg-[#7C5CFF]/10 scale-[0.99]"
+            ? "border-[#7C5CFF] bg-[#6C4CE8]/10 scale-[0.99]"
             : "border-[#262A35] bg-[#14161C]/50 hover:bg-[#14161C] hover:border-[#7C5CFF]/50"
         }`}
       >
@@ -165,13 +165,13 @@ export function AssetUploadZone({ projectId, onUploadSuccess }: AssetUploadZoneP
           }}
         />
 
-        <div className="w-12 h-12 rounded-2xl bg-[#1B1E26] border border-[#262A35] group-hover:border-[#7C5CFF]/30 flex items-center justify-center text-[#7C5CFF] transition-all group-hover:scale-110">
+        <div className="w-12 h-12 rounded-2xl bg-[#1B1E26] border border-[#262A35] group-hover:border-[#7C5CFF]/30 flex items-center justify-center text-[#A995FF] transition-all group-hover:scale-110">
           <UploadCloud className="w-6 h-6" />
         </div>
 
         <div>
           <h4 className="text-sm font-semibold text-[#E8EAF0]">
-            Drag & drop media here, or <span className="text-[#7C5CFF]">browse</span>
+            Drag & drop media here, or <span className="text-[#A995FF]">browse</span>
           </h4>
           <p className="text-xs text-[#9AA1B2] mt-1">
             Supports PNG, JPEG, WebP, MP4, WebM up to 200MB.
@@ -210,7 +210,7 @@ export function AssetUploadZone({ projectId, onUploadSuccess }: AssetUploadZoneP
                           ? "bg-red-500"
                           : item.status === "success"
                           ? "bg-emerald-500"
-                          : "bg-[#7C5CFF]"
+                          : "bg-[#6C4CE8]"
                       }`}
                       style={{ width: `${item.progress}%` }}
                     />
@@ -221,7 +221,7 @@ export function AssetUploadZone({ projectId, onUploadSuccess }: AssetUploadZoneP
 
               <div className="shrink-0 flex items-center gap-2">
                 {(item.status === "uploading" || item.status === "processing") && (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#7C5CFF]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[#A995FF]" />
                 )}
                 {item.status === "success" && (
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
@@ -237,7 +237,7 @@ export function AssetUploadZone({ projectId, onUploadSuccess }: AssetUploadZoneP
                     title="Retry upload"
                     className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#1B1E26] border border-[#262A35] text-[11px] font-medium text-[#E8EAF0] hover:border-[#7C5CFF]/50 transition-colors"
                   >
-                    <RotateCcw className="w-3.5 h-3.5 text-[#7C5CFF]" />
+                    <RotateCcw className="w-3.5 h-3.5 text-[#A995FF]" />
                     <span>Retry</span>
                   </button>
                 )}

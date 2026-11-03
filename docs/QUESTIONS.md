@@ -35,4 +35,13 @@ This document records ambiguous requirements, environment differences, questions
 - **Composer remount:** The project page stores the chosen asset as `seedAsset` and remounts the composer with `key={seedAsset?.id ?? "composer"}` so the initial asset is applied without adding effect-driven state syncing.
 - **E2E without Realtime:** The Playwright mock backend has no Realtime server, so `e2e/generation.spec.ts` deliberately exercises the polling fallback by advancing job state in `GET /v1/generations/{id}` (queued → running → succeeded) and asserting the card reaches `succeeded` and shows the output without a reload.
 
+### T6.6 — Accessibility, responsiveness, and polish notes
+- **Axe tooling:** Added `@axe-core/playwright` and `e2e/a11y.spec.ts`, which scans `/login`, `/projects`, and the project workspace across the assets/composer/history tabs using the WCAG 2.0/2.1 A/AA rule sets.
+- **Contrast tokens:** Axe flagged white text on the old primary violet (`#7C5CFF`, 4.35:1) and small violet-on-dark labels. Primary fills moved to `#6C4CE8` (hover `#5B3FD6`) and violet text on dark surfaces moved to `#A995FF`; muted text moved from `#6B7280` to `#9AA1B2`. The brand accent remains `#7C5CFF` for borders, rings, icons, and decorative fills.
+- **Focus management:** A shared `useFocusTrap` hook now handles Tab/Shift+Tab wrapping, initial focus, Escape, and focus restoration for the create/rename/archive dialogs and the asset drawer. It captures the trigger during render so the dialog's own autofocus cannot overwrite the restore target.
+- **Responsive navigation:** The sidebar is off-canvas below `lg` with a backdrop, a menu button in the top bar, and a close button; `AppShell` also adds a skip link and a single `main` landmark. Content padding no longer conflicts with the fixed top bar (`pt-16` lives on the shell wrapper).
+- **Empty states:** Existing project/asset/job empty states were kept and re-checked under the new contrast values; no new placeholder screens were required.
+- **Mock backend:** Added `GET /v1/workspaces/{id}/projects` so the projects page (and the axe scan for it) renders against the same self-contained mock as the other E2E flows.
+
+
 

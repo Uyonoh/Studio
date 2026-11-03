@@ -154,6 +154,25 @@ export function startMockBackend(port = 3101) {
       });
     }
 
+    // 3b. Project list (used by the a11y and projects-page flows)
+    if (url.pathname === "/v1/workspaces/ws-e2e/projects" && method === "GET") {
+      return sendJson({
+        items: [
+          {
+            id: "proj-e2e",
+            workspace_id: "ws-e2e",
+            name: "Brand Launch",
+            description: "E2E workspace test project",
+            cover_asset_id: null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            archived_at: null,
+          },
+        ],
+        next_cursor: null,
+      });
+    }
+
     // 4. List assets
     if (url.pathname === "/v1/projects/proj-e2e/assets" && method === "GET") {
       return sendJson({

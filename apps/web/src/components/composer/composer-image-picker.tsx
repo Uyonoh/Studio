@@ -43,7 +43,7 @@ export function ComposerImagePicker({
             type="button"
             onClick={() => setTab("library")}
             className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-              tab === "library" ? "bg-[#7C5CFF] text-white" : "text-[#9AA1B2] hover:text-[#E8EAF0]"
+              tab === "library" ? "bg-[#6C4CE8] text-white" : "text-[#9AA1B2] hover:text-[#E8EAF0]"
             }`}
           >
             From library
@@ -52,7 +52,7 @@ export function ComposerImagePicker({
             type="button"
             onClick={() => setTab("upload")}
             className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-              tab === "upload" ? "bg-[#7C5CFF] text-white" : "text-[#9AA1B2] hover:text-[#E8EAF0]"
+              tab === "upload" ? "bg-[#6C4CE8] text-white" : "text-[#9AA1B2] hover:text-[#E8EAF0]"
             }`}
           >
             Upload new
@@ -109,12 +109,12 @@ export function ComposerImagePicker({
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={src} alt={name} className="w-full h-full object-cover" />
                     ) : (
-                      <span className="flex w-full h-full items-center justify-center text-[#6B7280]">
+                      <span className="flex w-full h-full items-center justify-center text-[#9AA1B2]">
                         <ImageIcon className="w-5 h-5" />
                       </span>
                     )}
                     {selected && (
-                      <span className="absolute top-1 right-1 rounded-full bg-[#7C5CFF] p-0.5 text-white">
+                      <span className="absolute top-1 right-1 rounded-full bg-[#6C4CE8] p-0.5 text-white">
                         <Check className="w-3 h-3" />
                       </span>
                     )}
@@ -139,9 +139,9 @@ export function ComposerImagePicker({
       )}
 
       {value && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-[#7C5CFF]/40 bg-[#7C5CFF]/5 px-3 py-2">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-[#7C5CFF]/40 bg-[#6C4CE8]/5 px-3 py-2">
           <div className="flex items-center gap-2 min-w-0">
-            <UploadCloud className="w-4 h-4 text-[#7C5CFF] shrink-0" />
+            <UploadCloud className="w-4 h-4 text-[#A995FF] shrink-0" />
             <span className="text-xs text-[#E8EAF0] truncate">{assetFilename(value)}</span>
           </div>
           <button

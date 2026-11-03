@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { type Asset, type LineageAssetRef, useAsset, useDeleteAsset } from "@/hooks/use-assets";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface AssetDetailDrawerProps {
   assetId: string | null;
@@ -67,7 +68,7 @@ function LineageAssetTile({ asset, label }: { asset: LineageAssetRef; label: str
           // eslint-disable-next-line @next/next/no-img-element
           <img src={src} alt={label} className="w-full h-full object-cover" loading="lazy" />
         ) : (
-          <Layers className="w-4 h-4 text-[#7C5CFF]" />
+          <Layers className="w-4 h-4 text-[#A995FF]" />
         )}
       </div>
       <div className="min-w-0">
@@ -87,6 +88,7 @@ export function AssetDetailDrawer({ assetId, projectId, onClose }: AssetDetailDr
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copied, setCopied] = useState(false);
   const refreshedMedia = useRef(false);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Reset per-asset state when a different asset is opened.
@@ -95,13 +97,7 @@ export function AssetDetailDrawer({ assetId, projectId, onClose }: AssetDetailDr
     refreshedMedia.current = false;
   }, [assetId]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  useFocusTrap(drawerRef, Boolean(assetId), { onEscape: onClose });
 
   /** Signed URLs expire; refetch once to obtain a fresh one. */
   const handleMediaError = useCallback(() => {
@@ -165,15 +161,17 @@ export function AssetDetailDrawer({ assetId, projectId, onClose }: AssetDetailDr
 
       {/* Drawer */}
       <div
+        ref={drawerRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="asset-drawer-title"
+        tabIndex={-1}
         className="relative w-full max-w-xl bg-[#14161C] border-l border-[#262A35] h-full shadow-2xl z-10 flex flex-col justify-between overflow-y-auto animate-in slide-in-from-right duration-200"
       >
         {/* Header */}
         <div className="p-6 border-b border-[#262A35] flex items-center justify-between sticky top-0 bg-[#14161C]/95 backdrop-blur-md z-20">
           <div className="flex items-center gap-2.5 min-w-0">
-            <span className="px-2.5 py-0.5 rounded-full bg-[#1B1E26] border border-[#262A35] text-xs font-mono capitalize text-[#7C5CFF] shrink-0">
+            <span className="px-2.5 py-0.5 rounded-full bg-[#1B1E26] border border-[#262A35] text-xs font-mono capitalize text-[#A995FF] shrink-0">
               {asset?.kind || "Asset"}
             </span>
             <h3
@@ -197,7 +195,7 @@ export function AssetDetailDrawer({ assetId, projectId, onClose }: AssetDetailDr
         <div className="p-6 space-y-6 flex-1">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3 text-[#9AA1B2]">
-              <Loader2 className="w-8 h-8 animate-spin text-[#7C5CFF]" />
+              <Loader2 className="w-8 h-8 animate-spin text-[#A995FF]" />
               <p className="text-xs">Loading asset details...</p>
             </div>
           ) : isError || !asset ? (
@@ -248,7 +246,7 @@ export function AssetDetailDrawer({ assetId, projectId, onClose }: AssetDetailDr
                   disabled={!asset.signed_url}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#1B1E26] hover:bg-[#232732] border border-[#262A35] text-xs font-medium text-[#E8EAF0] transition-colors disabled:opacity-50"
                 >
-                  <Download className="w-4 h-4 text-[#7C5CFF]" />
+                  <Download className="w-4 h-4 text-[#A995FF]" />
                   <span>Download Original</span>
                 </button>
                 <button
@@ -332,30 +330,30 @@ export function AssetDetailDrawer({ assetId, projectId, onClose }: AssetDetailDr
                 </h4>
                 <div className="grid grid-cols-2 gap-3">
                   <DetailCell
-                    icon={<HardDrive className="w-3.5 h-3.5 text-[#7C5CFF]" />}
+                    icon={<HardDrive className="w-3.5 h-3.5 text-[#A995FF]" />}
                     label="File Size"
                     value={formatBytes(asset.size_bytes)}
                   />
                   <DetailCell
-                    icon={<Layers className="w-3.5 h-3.5 text-[#7C5CFF]" />}
+                    icon={<Layers className="w-3.5 h-3.5 text-[#A995FF]" />}
                     label="Resolution"
                     value={
                       asset.width && asset.height ? `${asset.width} × ${asset.height} px` : "N/A"
                     }
                   />
                   <DetailCell
-                    icon={<FileCode className="w-3.5 h-3.5 text-[#7C5CFF]" />}
+                    icon={<FileCode className="w-3.5 h-3.5 text-[#A995FF]" />}
                     label="Format"
                     value={asset.mime_type || "N/A"}
                   />
                   <DetailCell
-                    icon={<Calendar className="w-3.5 h-3.5 text-[#7C5CFF]" />}
+                    icon={<Calendar className="w-3.5 h-3.5 text-[#A995FF]" />}
                     label="Created"
                     value={new Date(asset.created_at).toLocaleString()}
                   />
                   {isVideo && (
                     <DetailCell
-                      icon={<SlidersHorizontal className="w-3.5 h-3.5 text-[#7C5CFF]" />}
+                      icon={<SlidersHorizontal className="w-3.5 h-3.5 text-[#A995FF]" />}
                       label="Duration"
                       value={`${formatDuration(asset.duration_ms)}${
                         asset.fps ? ` · ${Number(asset.fps).toFixed(0)} fps` : ""
@@ -364,14 +362,14 @@ export function AssetDetailDrawer({ assetId, projectId, onClose }: AssetDetailDr
                   )}
                   {modelLabel && (
                     <DetailCell
-                      icon={<Cpu className="w-3.5 h-3.5 text-[#7C5CFF]" />}
+                      icon={<Cpu className="w-3.5 h-3.5 text-[#A995FF]" />}
                       label="Model"
                       value={modelLabel}
                     />
                   )}
                   {seed !== null && seed !== undefined && (
                     <DetailCell
-                      icon={<Sparkles className="w-3.5 h-3.5 text-[#7C5CFF]" />}
+                      icon={<Sparkles className="w-3.5 h-3.5 text-[#A995FF]" />}
                       label="Seed"
                       value={String(seed)}
                     />
@@ -402,7 +400,7 @@ export function AssetDetailDrawer({ assetId, projectId, onClose }: AssetDetailDr
                   {asset.source_job_id && (
                     <div className="flex items-center justify-between text-xs border-t border-[#262A35]/60 pt-2.5 gap-4">
                       <span className="text-[#9AA1B2] shrink-0">Job ID:</span>
-                      <span className="font-mono text-[#7C5CFF] text-[11px] truncate">
+                      <span className="font-mono text-[#A995FF] text-[11px] truncate">
                         {asset.source_job_id}
                       </span>
                     </div>
@@ -429,7 +427,7 @@ export function AssetDetailDrawer({ assetId, projectId, onClose }: AssetDetailDr
                 {lineage && lineage.inputs.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-[#9AA1B2]">
-                      <ArrowDownLeft className="w-3.5 h-3.5 text-[#7C5CFF]" />
+                      <ArrowDownLeft className="w-3.5 h-3.5 text-[#A995FF]" />
                       <span>Made from</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

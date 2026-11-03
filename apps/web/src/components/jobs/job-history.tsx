@@ -95,7 +95,7 @@ export function JobHistory({ projectId, onUseAsInput, realtimeTimeoutMs }: JobHi
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <History className="w-4 h-4 text-[#7C5CFF]" />
+          <History className="w-4 h-4 text-[#A995FF]" />
           <h2 className="text-sm font-semibold text-[#E8EAF0]">Job history</h2>
           <span
             className="inline-flex items-center gap-1.5 rounded-full border border-[#262A35] bg-[#14161C] px-2 py-0.5 text-[10px] text-[#9AA1B2]"
@@ -104,7 +104,7 @@ export function JobHistory({ projectId, onUseAsInput, realtimeTimeoutMs }: JobHi
             <span className={`h-1.5 w-1.5 rounded-full ${connection.className}`} />
             {connection.text}
           </span>
-          {isFetching && !isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#6B7280]" />}
+          {isFetching && !isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#9AA1B2]" />}
         </div>
 
         <div className="flex items-center gap-2">

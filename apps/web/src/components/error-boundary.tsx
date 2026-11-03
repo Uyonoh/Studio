@@ -48,7 +48,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 this.setState({ hasError: false, error: null });
                 window.location.reload();
               }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#7C5CFF] hover:bg-[#8F75FF] text-white rounded-lg text-sm font-medium transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-[#6C4CE8] hover:bg-[#5B3FD6] text-white rounded-lg text-sm font-medium transition-colors"
             >
               <RefreshCw className="w-4 h-4" />
               Reload Page

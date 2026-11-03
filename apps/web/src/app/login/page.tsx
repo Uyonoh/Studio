@@ -68,8 +68,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#0B0C10] flex flex-col items-center justify-between p-6 relative overflow-hidden">
       {/* Subtle ambient violet radial glow */}
       <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-        <div className="w-[600px] h-[600px] rounded-full bg-[#7C5CFF] opacity-[0.08] blur-[140px] -translate-y-6"></div>
-        <div className="w-[300px] h-[300px] rounded-full bg-[#7C5CFF] opacity-[0.12] blur-[80px] -translate-y-6"></div>
+        <div className="w-[600px] h-[600px] rounded-full bg-[#6C4CE8] opacity-[0.08] blur-[140px] -translate-y-6"></div>
+        <div className="w-[300px] h-[300px] rounded-full bg-[#6C4CE8] opacity-[0.12] blur-[80px] -translate-y-6"></div>
       </div>
 
       {/* Top spacer */}
@@ -94,7 +94,7 @@ export default function LoginPage() {
 
             <h1 className="text-2xl font-bold tracking-tight text-[#E8EAF0] mb-1.5 flex items-center gap-2">
               <span>Studio</span>
-              <span className="text-[10px] uppercase font-mono tracking-wider px-1.5 py-0.5 rounded bg-[#1B1E26] text-[#7C5CFF] border border-[#7C5CFF]/30">
+              <span className="text-[10px] uppercase font-mono tracking-wider px-1.5 py-0.5 rounded bg-[#1B1E26] text-[#A995FF] border border-[#7C5CFF]/30">
                 PRO
               </span>
             </h1>
@@ -177,7 +177,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading || isGoogleLoading || !email}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#7C5CFF] hover:bg-[#8F75FF] text-white font-medium text-sm transition-all shadow-[0_0_20px_rgba(124,92,255,0.25)] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] focus:ring-offset-2 focus:ring-offset-[#14161C] disabled:opacity-50 disabled:pointer-events-none"
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#6C4CE8] hover:bg-[#5B3FD6] text-white font-medium text-sm transition-all shadow-[0_0_20px_rgba(124,92,255,0.25)] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] focus:ring-offset-2 focus:ring-offset-[#14161C] disabled:opacity-50 disabled:pointer-events-none"
               >
                 {isLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

@@ -53,7 +53,7 @@ const sectionClasses = "rounded-2xl border border-[#262A35] bg-[#14161C] p-5 spa
 
 const segmentButton = (active: boolean) =>
   `flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] ${
-    active ? "bg-[#7C5CFF] text-white" : "text-[#9AA1B2] hover:text-[#E8EAF0]"
+    active ? "bg-[#6C4CE8] text-white" : "text-[#9AA1B2] hover:text-[#E8EAF0]"
   }`;
 
 /** Schema-driven composer for every text/image → image/video flow. */
@@ -325,7 +325,7 @@ export function GenerationComposer({
                 ? "A cinematic still of a lighthouse at dusk, soft fog, 35mm"
                 : "Slow dolly-in over a misty forest, golden hour, gentle camera shake"
             }
-            className="w-full px-3 py-2 rounded-xl bg-[#0F1117] border border-[#262A35] text-sm text-[#E8EAF0] placeholder:text-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] resize-y"
+            className="w-full px-3 py-2 rounded-xl bg-[#0F1117] border border-[#262A35] text-sm text-[#E8EAF0] placeholder:text-[#9AA1B2] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] resize-y"
           />
         </section>
 
@@ -357,7 +357,7 @@ export function GenerationComposer({
       <aside className="space-y-4 lg:sticky lg:top-6 self-start">
         <div className={sectionClasses}>
           <div className="flex items-center gap-2">
-            <Wand2 className="w-4 h-4 text-[#7C5CFF]" />
+            <Wand2 className="w-4 h-4 text-[#A995FF]" />
             <h2 className="text-sm font-semibold text-[#E8EAF0]">Model</h2>
           </div>
 
@@ -409,7 +409,7 @@ export function GenerationComposer({
           <button
             type="submit"
             disabled={mutation.isPending || !selectedModel}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#7C5CFF] text-white text-sm font-semibold hover:bg-[#6B4CF0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#14161C] focus:ring-[#7C5CFF]"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#6C4CE8] text-white text-sm font-semibold hover:bg-[#6B4CF0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#14161C] focus:ring-[#7C5CFF]"
           >
             {mutation.isPending ? (
               <>
@@ -444,7 +444,7 @@ export function GenerationComposer({
           )}
         </div>
 
-        <p className="text-[11px] text-[#6B7280] px-1">
+        <p className="text-[11px] text-[#9AA1B2] px-1">
           Submissions are deduplicated: retrying an unchanged request will not start a second job.
         </p>
       </aside>

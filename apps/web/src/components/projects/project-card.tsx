@@ -24,10 +24,11 @@ export function ProjectCard({ project, onRename, onArchive }: ProjectCardProps) 
       {/* Cover / Preview Area */}
       <Link
         href={`/projects/${project.id}`}
+        aria-label={`Open ${project.name}`}
         className="block aspect-[16/9] bg-[#0E1015] relative overflow-hidden group-hover:opacity-95 transition-opacity"
       >
         <div className="absolute inset-0 bg-gradient-to-t from-[#14161C] via-transparent to-transparent z-10" />
-        <div className="absolute inset-0 flex items-center justify-center text-[#7C5CFF]/30 group-hover:text-[#7C5CFF]/50 transition-colors">
+        <div className="absolute inset-0 flex items-center justify-center text-[#A995FF]/30 group-hover:text-[#A995FF]/50 transition-colors">
           <Folder className="w-12 h-12" />
         </div>
       </Link>
@@ -38,7 +39,7 @@ export function ProjectCard({ project, onRename, onArchive }: ProjectCardProps) 
           <div className="flex items-start justify-between gap-2">
             <Link
               href={`/projects/${project.id}`}
-              className="text-sm font-semibold text-[#E8EAF0] hover:text-[#7C5CFF] transition-colors line-clamp-1"
+              className="text-sm font-semibold text-[#E8EAF0] hover:text-[#A995FF] transition-colors line-clamp-1"
             >
               {project.name}
             </Link>
@@ -108,7 +109,7 @@ export function ProjectCard({ project, onRename, onArchive }: ProjectCardProps) 
             <Calendar className="w-3 h-3 text-[#9AA1B2]/60" />
             <span>Updated {formattedDate}</span>
           </span>
-          <span className="text-[10px] uppercase font-semibold text-[#7C5CFF] tracking-wider px-1.5 py-0.5 rounded bg-[#1B1E26]">
+          <span className="text-[10px] uppercase font-semibold text-[#A995FF] tracking-wider px-1.5 py-0.5 rounded bg-[#1B1E26]">
             Active
           </span>
         </div>

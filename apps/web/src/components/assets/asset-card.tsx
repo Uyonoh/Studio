@@ -83,12 +83,12 @@ export function AssetCard({ asset, onClick, onMediaError }: AssetCardProps) {
               />
             ) : (
               <div className="flex flex-col items-center justify-center gap-2 text-[#9AA1B2]">
-                <Film className="w-8 h-8 text-[#7C5CFF]" />
+                <Film className="w-8 h-8 text-[#A995FF]" />
                 <span className="text-[10px] font-mono">Video</span>
               </div>
             )}
             <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center gap-1.5 text-[10px] font-medium text-white z-10">
-              <Video className="w-3 h-3 text-[#7C5CFF]" />
+              <Video className="w-3 h-3 text-[#A995FF]" />
               <span>{asset.duration_ms ? `${(asset.duration_ms / 1000).toFixed(1)}s` : "Video"}</span>
             </div>
           </>
@@ -103,7 +103,7 @@ export function AssetCard({ asset, onClick, onMediaError }: AssetCardProps) {
           />
         ) : (
           <div className="flex flex-col items-center justify-center gap-2 text-[#9AA1B2]">
-            <ImageIcon className="w-8 h-8 text-[#7C5CFF]" />
+            <ImageIcon className="w-8 h-8 text-[#A995FF]" />
             <span className="text-[10px] font-mono">Image</span>
           </div>
         )}
@@ -115,7 +115,7 @@ export function AssetCard({ asset, onClick, onMediaError }: AssetCardProps) {
           }`}
         >
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#14161C]/90 border border-white/10 text-xs font-medium text-[#E8EAF0] shadow-lg">
-            <Eye className="w-3.5 h-3.5 text-[#7C5CFF]" />
+            <Eye className="w-3.5 h-3.5 text-[#A995FF]" />
             <span>View Details</span>
           </div>
         </div>

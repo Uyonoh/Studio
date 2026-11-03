@@ -26,7 +26,7 @@ const STATUS_STYLES: Record<string, string> = {
   queued: "border-[#3A3F4D] bg-[#1B1E26] text-[#9AA1B2]",
   submitting: "border-[#4A6CF7]/40 bg-[#4A6CF7]/10 text-[#8FA4FF]",
   running: "border-[#4A6CF7]/40 bg-[#4A6CF7]/10 text-[#8FA4FF]",
-  finalizing: "border-[#7C5CFF]/40 bg-[#7C5CFF]/10 text-[#A995FF]",
+  finalizing: "border-[#7C5CFF]/40 bg-[#6C4CE8]/10 text-[#A995FF]",
   succeeded: "border-emerald-500/40 bg-emerald-500/10 text-emerald-300",
   failed: "border-red-500/40 bg-red-500/10 text-red-300",
   canceled: "border-[#3A3F4D] bg-[#1B1E26] text-[#9AA1B2]",
@@ -131,7 +131,7 @@ export function JobCard({ job, projectId, poll, onUseAsInput }: JobCardProps) {
               {statusIcon(current.status)}
               {current.status}
             </span>
-            <span className="text-[11px] text-[#6B7280] capitalize">{taskLabel}</span>
+            <span className="text-[11px] text-[#9AA1B2] capitalize">{taskLabel}</span>
             {elapsed && <span className="text-[11px] font-mono text-[#9AA1B2]">{elapsed}</span>}
           </div>
           <p className="text-sm text-[#E8EAF0] line-clamp-2">
@@ -197,7 +197,7 @@ export function JobCard({ job, projectId, poll, onUseAsInput }: JobCardProps) {
             disabled={retryMutation.isPending}
             className="inline-flex items-center gap-1.5 rounded-lg border border-[#262A35] bg-[#1B1E26] px-2.5 py-1.5 text-[11px] font-medium text-[#E8EAF0] hover:border-[#7C5CFF]/50 disabled:opacity-50 transition-colors"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-[#7C5CFF]" />
+            <RotateCcw className="w-3.5 h-3.5 text-[#A995FF]" />
             Retry
           </button>
         )}
@@ -208,7 +208,7 @@ export function JobCard({ job, projectId, poll, onUseAsInput }: JobCardProps) {
             onClick={() => onUseAsInput(outputToAsset(current.id, imageOutput))}
             className="inline-flex items-center gap-1.5 rounded-lg border border-[#262A35] bg-[#1B1E26] px-2.5 py-1.5 text-[11px] font-medium text-[#E8EAF0] hover:border-[#7C5CFF]/50 transition-colors"
           >
-            <ImageUp className="w-3.5 h-3.5 text-[#7C5CFF]" />
+            <ImageUp className="w-3.5 h-3.5 text-[#A995FF]" />
             Use as input
           </button>
         )}

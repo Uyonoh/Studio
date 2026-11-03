@@ -498,10 +498,10 @@ ENVIRONMENT=local|staging|production
 - [x] No duplicate subscriptions after navigation (cleanup verified).
 **Verify:** `pnpm --filter web test -k jobs && pnpm --filter web e2e -g generation`
 
-### [ ] T6.6 Polish: accessibility, responsiveness, empty states
+### [x] T6.6 Polish: accessibility, responsiveness, empty states
 **Depends:** T6.5
 **DoD**
-- [ ] Axe checks pass on main pages; usable at 375px width; focus management in dialogs/drawers; dark mode works.
+- [x] Axe checks pass on main pages; usable at 375px width; focus management in dialogs/drawers; dark mode works.
 **Verify:** `pnpm --filter web e2e -g a11y`
 
 ---

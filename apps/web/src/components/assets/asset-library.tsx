@@ -88,7 +88,7 @@ export function AssetLibrary({ projectId }: AssetLibraryProps) {
               onClick={() => setKindFilter(null)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 kindFilter === null
-                  ? "bg-[#7C5CFF] text-white"
+                  ? "bg-[#6C4CE8] text-white"
                   : "text-[#9AA1B2] hover:text-[#E8EAF0]"
               }`}
             >
@@ -99,7 +99,7 @@ export function AssetLibrary({ projectId }: AssetLibraryProps) {
               onClick={() => setKindFilter("image")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 kindFilter === "image"
-                  ? "bg-[#7C5CFF] text-white"
+                  ? "bg-[#6C4CE8] text-white"
                   : "text-[#9AA1B2] hover:text-[#E8EAF0]"
               }`}
             >
@@ -111,7 +111,7 @@ export function AssetLibrary({ projectId }: AssetLibraryProps) {
               onClick={() => setKindFilter("video")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 kindFilter === "video"
-                  ? "bg-[#7C5CFF] text-white"
+                  ? "bg-[#6C4CE8] text-white"
                   : "text-[#9AA1B2] hover:text-[#E8EAF0]"
               }`}
             >
@@ -138,7 +138,7 @@ export function AssetLibrary({ projectId }: AssetLibraryProps) {
               onClick={() => setOriginFilter("generation")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 originFilter === "generation"
-                  ? "bg-[#1B1E26] text-[#7C5CFF] border border-[#7C5CFF]/30"
+                  ? "bg-[#1B1E26] text-[#A995FF] border border-[#7C5CFF]/30"
                   : "text-[#9AA1B2] hover:text-[#E8EAF0]"
               }`}
             >
@@ -150,7 +150,7 @@ export function AssetLibrary({ projectId }: AssetLibraryProps) {
               onClick={() => setOriginFilter("upload")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 originFilter === "upload"
-                  ? "bg-[#1B1E26] text-[#7C5CFF] border border-[#7C5CFF]/30"
+                  ? "bg-[#1B1E26] text-[#A995FF] border border-[#7C5CFF]/30"
                   : "text-[#9AA1B2] hover:text-[#E8EAF0]"
               }`}
             >
@@ -164,7 +164,7 @@ export function AssetLibrary({ projectId }: AssetLibraryProps) {
         <button
           type="button"
           onClick={() => setIsUploadOpen((prev) => !prev)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#7C5CFF] hover:bg-[#8F75FF] text-white text-xs font-semibold shadow-[0_0_16px_rgba(124,92,255,0.25)] transition-all"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#6C4CE8] hover:bg-[#5B3FD6] text-white text-xs font-semibold shadow-[0_0_16px_rgba(124,92,255,0.25)] transition-all"
         >
           <UploadCloud className="w-4 h-4" />
           <span>{isUploadOpen ? "Hide Upload" : "Upload Assets"}</span>
@@ -208,7 +208,7 @@ export function AssetLibrary({ projectId }: AssetLibraryProps) {
         </div>
       ) : allAssets.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[#262A35] bg-[#14161C]/50 p-16 text-center flex flex-col items-center justify-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-[#1B1E26] border border-[#262A35] flex items-center justify-center text-[#7C5CFF]">
+          <div className="w-12 h-12 rounded-2xl bg-[#1B1E26] border border-[#262A35] flex items-center justify-center text-[#A995FF]">
             <Layers className="w-6 h-6" />
           </div>
           <div>
@@ -220,7 +220,7 @@ export function AssetLibrary({ projectId }: AssetLibraryProps) {
           <button
             type="button"
             onClick={() => setIsUploadOpen(true)}
-            className="mt-2 px-4 py-2 rounded-xl bg-[#7C5CFF] text-white text-xs font-semibold"
+            className="mt-2 px-4 py-2 rounded-xl bg-[#6C4CE8] text-white text-xs font-semibold"
           >
             Upload First Asset
           </button>
@@ -248,7 +248,7 @@ export function AssetLibrary({ projectId }: AssetLibraryProps) {
                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#14161C] border border-[#262A35] hover:border-[#383E4E] text-xs font-medium text-[#E8EAF0] transition-colors disabled:opacity-50"
               >
                 {isFetchingNextPage ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-[#7C5CFF]" />
+                  <Loader2 className="w-4 h-4 animate-spin text-[#A995FF]" />
                 ) : null}
                 <span>{isFetchingNextPage ? "Loading more..." : "Load More Assets"}</span>
               </button>

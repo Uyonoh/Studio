@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X, Loader2, Sparkles } from "lucide-react";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
 
 interface CreateProjectDialogProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export function CreateProjectDialog({
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -27,15 +29,7 @@ export function CreateProjectDialog({
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  useFocusTrap(dialogRef, isOpen, { initialFocusRef: inputRef, onEscape: onClose });
 
   if (!isOpen) return null;
 
@@ -70,14 +64,16 @@ export function CreateProjectDialog({
 
       {/* Dialog card */}
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="create-project-title"
+        tabIndex={-1}
         className="relative w-full max-w-lg bg-[#14161C] border border-[#262A35] rounded-2xl p-6 shadow-card z-10 animate-in fade-in zoom-in-95 duration-150"
       >
         <div className="flex items-center justify-between pb-4 border-b border-[#262A35]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#1B1E26] border border-[#262A35] flex items-center justify-center text-[#7C5CFF]">
+            <div className="w-8 h-8 rounded-lg bg-[#1B1E26] border border-[#262A35] flex items-center justify-center text-[#A995FF]">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
@@ -154,7 +150,7 @@ export function CreateProjectDialog({
             <button
               type="submit"
               disabled={isLoading || !name.trim()}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#7C5CFF] hover:bg-[#8F75FF] text-white text-xs font-semibold shadow-[0_0_16px_rgba(124,92,255,0.25)] transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#6C4CE8] hover:bg-[#5B3FD6] text-white text-xs font-semibold shadow-[0_0_16px_rgba(124,92,255,0.25)] transition-all disabled:opacity-50"
             >
               {isLoading ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />

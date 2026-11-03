@@ -14,7 +14,7 @@ interface SchemaParamsFormProps {
 
 const inputClasses =
   "w-full px-3 py-2 rounded-xl bg-[#0F1117] border border-[#262A35] text-sm text-[#E8EAF0] " +
-  "placeholder:text-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] " +
+  "placeholder:text-[#9AA1B2] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] " +
   "disabled:opacity-50";
 
 function renderControl(
@@ -62,7 +62,7 @@ function renderControl(
             type="checkbox"
             checked={value === true}
             onChange={(event) => onChange(name, event.target.checked)}
-            className="h-4 w-4 rounded border-[#262A35] bg-[#0F1117] text-[#7C5CFF] focus:ring-[#7C5CFF]"
+            className="h-4 w-4 rounded border-[#262A35] bg-[#0F1117] text-[#A995FF] focus:ring-[#7C5CFF]"
           />
           <span>Enabled</span>
         </label>
@@ -136,7 +136,7 @@ export function SchemaParamsForm({
             {renderControl(name, property, values[name], onChange, inputId, describedBy || undefined, Boolean(error))}
 
             {property.description && (
-              <p id={descriptionId} className="text-[11px] text-[#6B7280]">
+              <p id={descriptionId} className="text-[11px] text-[#9AA1B2]">
                 {property.description}
               </p>
             )}
