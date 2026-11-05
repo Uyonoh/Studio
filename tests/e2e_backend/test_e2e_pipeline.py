@@ -137,6 +137,19 @@ class E2EState:
                 proj = self.projects.get(proj_id)
                 return dict(proj) if proj else None
 
+            if "FROM public.generation_jobs" in query and ("WHERE id = $1" in query or "WHERE j.id = $1" in query):
+                job_found = self.jobs.get(params[0])
+                if not job_found:
+                    return None
+                res = dict(job_found)
+                # Attach model info if joined
+                for model_val in self.models.values():
+                    if model_val.get("id") == res.get("model_id"):
+                        res["model_slug"] = model_val.get("slug")
+                        res["model_display_name"] = model_val.get("display_name")
+                        break
+                return res
+
             if "public.models" in query:
                 if "slug =" in query:
                     model_found = self.models.get(params[0])

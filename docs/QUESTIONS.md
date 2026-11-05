@@ -91,3 +91,24 @@ This document records ambiguous requirements, environment differences, questions
 - **Flake measurement:** 20 consecutive production-mode repeats (300 tests) passed with zero failures in 23.7 minutes, i.e. 0% flake against the < 2% target.
 - **Static guards:** `tests/infra/test_t75_e2e.py` asserts the failure-artifact settings, the CI job's build/run/upload steps and `E2E_USE_PROD`, the production-server switch, and the presence of each launch-flow marker in the specs.
 - **Limitation:** Because no preview/staging deployment exists yet, the suite was not run against a deployed environment. When T7.3/T7.4 infrastructure is available, pointing Playwright's `baseURL` at the preview is the remaining integration step; the mock is intentionally self-contained so CI does not depend on external services.
+
+
+### T7.6 — Documentation and runbooks notes
+- **ADRs created:**
+  - `docs/adr/001-postgres-job-source-of-truth.md`: Captures the architectural decision that PostgreSQL (`generation_jobs`) is the single source of truth for job lifecycle, lineage, and credit reservations, while queues (Redis/ARQ) act as an ephemeral transport mechanism.
+  - `docs/adr/002-arq-vs-celery.md`: Documents why ARQ was selected over Celery for async Python workloads, citing native `asyncio`, non-blocking `asyncpg` compatibility, lower container resource overhead, and built-in cron scheduling.
+  - `docs/adr/003-initial-models.md`: Re-verified that the existing model selection ADR aligns with the system's provider redundancy and credit conversion formulas.
+- **Runbooks created:**
+  - `docs/runbooks/stuck-jobs.md`: Detailed diagnostics using `/v1/admin/stats` and SQL queries, explanation of the automatic 60s `reconcile_jobs` cron, Python re-enqueueing script, and atomic manual fail/refund procedure.
+  - `docs/runbooks/provider-outage.md`: Covers upstream provider failure detection, instant model/provider disablement via `enabled = false` in `models`/`providers` tables without code redeployment, multi-provider redundancy fallback mapping, in-flight job reconciliation, and recovery smoke testing.
+  - `docs/runbooks/webhook-replay.md`: Details the two-tier webhook security (per-job HMAC and provider signature), idempotency mechanisms (queue deduplication and deterministic asset UUIDs), reconciler polling fallback, and manual replay commands.
+  - `docs/runbooks/credit-correction.md`: Covers the `credit_ledger` and `workspace_credit_balance` accounting architecture, auditing queries for missing refunds, and SQL snippets for granting courtesy credits or correcting balances.
+  - `docs/runbooks/rotate-secrets.md`: Step-by-step procedures to rotate AI provider keys (`REPLICATE_API_TOKEN`, `FAL_KEY`), `WEBHOOK_SIGNING_SECRET`, database passwords, and Supabase JWT secrets with minimal downtime.
+  - `docs/runbooks/restore-from-backup.md`: Outlines disaster recovery via Supabase Point-in-Time Recovery (PITR) and logical snapshot restore, storage bucket verification, and automatic worker startup reconciliation.
+- **Developer Onboarding in README.md:**
+  - Substantially expanded `README.md` to guide new developers from zero to a running development stack in < 30 minutes.
+  - Includes prerequisites, `.env` setup, `dev-up` scripts for Redis/Supabase, database seeding (`seed_dev_user.py`), individual service startup commands (`make dev-api`, `make dev-worker`, `make dev-web`), links to interactive Swagger UI (`/docs`) and ReDoc (`/redoc`), testing suites, and troubleshooting FAQs.
+- **OpenAPI Synchronization:**
+  - Ran `scripts/export_openapi.py` to regenerate `docs/openapi.json` with the `/v1/admin/stats` endpoint added in T7.2, and built `packages/api-client`.
+- **Static Guards:**
+  - Created `tests/infra/test_t76_docs.py` to continuously validate the presence, format, and core keywords of all ADRs, runbooks, README onboarding sections, and OpenAPI paths.

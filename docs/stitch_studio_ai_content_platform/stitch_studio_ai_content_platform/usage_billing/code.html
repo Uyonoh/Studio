@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-container-high":"#292a2e","on-surface-variant":"#c9c4d8","error":"#ffb4ab","on-primary-fixed-variant":"#4816cb","secondary-fixed-dim":"#c4c6d1","on-background":"#e3e2e8","on-primary-container":"#2a0088","secondary-container":"#444750","outline":"#938ea1","tertiary-fixed":"#dfe2f1","on-primary":"#31009a","background":"#121317","primary-fixed-dim":"#cabeff","on-surface":"#e3e2e8","surface-container-lowest":"#0d0e12","on-error":"#690005","outline-variant":"#484555","inverse-primary":"#603ce2","on-error-container":"#ffdad6","primary-container":"#947dff","tertiary":"#c3c6d4","on-primary-fixed":"#1c0062","inverse-on-surface":"#2f3035","on-tertiary":"#2c303b","secondary-fixed":"#e0e2ed","surface-variant":"#343439","on-secondary-container":"#b3b5bf","surface":"#121317","on-secondary-fixed":"#181b23","on-secondary":"#2d3039","tertiary-container":"#8d909e","tertiary-fixed-dim":"#c3c6d4","on-secondary-fixed-variant":"#444750","secondary":"#c4c6d1","surface-container-low":"#1a1b20","inverse-surface":"#e3e2e8","primary-fixed":"#e6deff","on-tertiary-fixed":"#171b26","on-tertiary-fixed-variant":"#434652","on-tertiary-container":"#262a34","surface-dim":"#121317","error-container":"#93000a","surface-container":"#1f1f24","surface-tint":"#cabeff","surface-bright":"#38393e","surface-container-highest":"#343439","primary":"#cabeff"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-xl":"1.5rem","margin-mobile":"0.75rem","margin":"1.5rem","gutter":"1rem","space-lg":"1rem","gutter-mobile":"0.5rem","space-sm":"0.5rem","space-md":"0.75rem","space-xs":"0.25rem"},fontFamily:{"headline-lg":["Inter"],"headline-sm":["Inter"],"code-md":["JetBrains Mono"],"body-lg":["Inter"],"headline-xl":["Inter"],"body-sm":["Inter"],"headline-xl-mobile":["Inter"],"body-md":["Inter"],"code-sm":["JetBrains Mono"],"label-caps":["Inter"]},fontSize:{"headline-lg":["22px",{lineHeight:"28px",letterSpacing:"-0.02em",fontWeight:"600"}],"headline-sm":["16px",{lineHeight:"24px",letterSpacing:"-0.015em",fontWeight:"500"}],"code-md":["12px",{lineHeight:"16px",letterSpacing:"-0.01em",fontWeight:"500"}],"body-lg":["14px",{lineHeight:"22px",letterSpacing:"-0.01em",fontWeight:"400"}],"headline-xl":["32px",{lineHeight:"40px",letterSpacing:"-0.025em",fontWeight:"600"}],"body-sm":["12px",{lineHeight:"16px",letterSpacing:"0em",fontWeight:"400"}],"headline-xl-mobile":["26px",{lineHeight:"34px",letterSpacing:"-0.02em",fontWeight:"600"}],"body-md":["13px",{lineHeight:"18px",letterSpacing:"-0.005em",fontWeight:"400"}],"code-sm":["11px",{lineHeight:"14px",letterSpacing:"0em",fontWeight:"400"}],"label-caps":["10px",{lineHeight:"12px",letterSpacing:"0.06em",fontWeight:"600"}]}}}}</script></head><body class="bg-surface-container-lowest font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-60 bg-surface-container-low border-r border-outline-variant/30 z-50 flex flex-col justify-between select-none"><div class="flex flex-col"><div class="h-14 px-space-md border-b border-outline-variant/30 flex items-center justify-between"><button class="flex items-center gap-space-sm w-full py-space-xs px-space-xs rounded-xl hover:bg-surface-container hover:text-on-surface text-left transition-colors group" type="button"><img alt="Studio Logo" class="h-8 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1WP5iZb2N4t2pJImoaMG3tT0lr6IFlBJdh3iRqpCHi5ZPc0hCszR-z6GhbJlW7yxsDdzKRn5ooUpi2OX8J8A0lvf-NMtTq6rj-c4f7PQZJOyu2Ye7l4XPwZQv19RYNZy4dyyIzeR1iVAQ2g9VTNXWTuGeqHnwli3rFq-gw6qtdMlOkBG4VXHlMDlw0mDp_s2-MYXzTRceCiFmuDHRWAvDVS0zHHtOtm2yX2MrSs2H2whr1-FVcWSMwuaVrF"/><div class="flex flex-col min-w-0 flex-1"><span class="font-headline-sm text-body-sm font-semibold truncate text-on-surface leading-tight">Acme Creative Studio</span><span class="font-code-sm text-code-sm text-on-surface-variant leading-none">Studio Pro</span></div><span class="material-symbols-outlined text-outline group-hover:text-on-surface transition-colors text-base flex-shrink-0">unfold_more</span></button></div><div class="px-space-md pt-space-md pb-space-xs"><span class="font-label-caps text-label-caps text-outline uppercase tracking-wider px-space-xs">Workspace</span></div><nav class="flex flex-col gap-0.5 px-space-sm" data-active-classes="bg-surface-container text-on-surface border-l-2 border-primary-container font-medium"><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" data-path="projects" href="#"><span class="material-symbols-outlined text-lg text-outline group-hover:text-on-surface transition-colors">folder_open</span><span class="flex-1">Projects</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" data-path="editor" href="#"><span class="material-symbols-outlined text-lg text-outline group-hover:text-on-surface transition-colors">auto_fix_high</span><span class="flex-1">Editor Canvas</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" data-path="generations" href="#"><span class="material-symbols-outlined text-lg text-outline group-hover:text-on-surface transition-colors">dynamic_feed</span><span class="flex-1">Generations</span><span class="font-code-sm text-code-sm px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">12</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" data-path="assets-and-models" href="#"><span class="material-symbols-outlined text-lg text-outline group-hover:text-on-surface transition-colors">view_in_ar</span><span class="flex-1">Assets &amp; Models</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" data-path="usage-and-billing" href="#"><span class="material-symbols-outlined text-lg text-outline group-hover:text-on-surface transition-colors">finance_chip</span><span class="flex-1">Usage &amp; Billing</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" data-path="settings" href="#"><span class="material-symbols-outlined text-lg text-outline group-hover:text-on-surface transition-colors">settings</span><span class="flex-1">Settings</span></a></nav></div><div class="p-space-md border-t border-outline-variant/30 flex flex-col gap-space-md"><div class="p-space-md rounded-xl bg-surface-container border border-outline-variant/30 flex flex-col gap-space-xs"><div class="flex items-center justify-between font-code-sm text-code-sm"><span class="text-on-surface-variant">GPU Compute</span><span class="text-on-surface font-medium">78%</span></div><div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-primary-container rounded-full" style="width: 78%;"></div></div><div class="flex items-center justify-between pt-0.5"><span class="font-code-sm text-code-sm text-outline">780 / 1000 hrs</span><button class="font-code-sm text-code-sm text-primary hover:underline hover:text-on-surface" type="button">Top-up</button></div></div><div class="flex items-center justify-between text-on-surface-variant pt-space-xs"><div class="flex items-center gap-space-xs font-code-sm text-code-sm text-outline"><span class="w-2 h-2 rounded-full bg-primary-container inline-block animate-pulse"></span><span>Engine v2.4</span></div><button class="p-space-xs rounded-lg hover:bg-surface-container hover:text-on-surface text-outline transition-colors" title="Collapse Sidebar" type="button"><span class="material-symbols-outlined text-lg block">first_page</span></button></div></div></aside><div class="pl-60"><header class="fixed top-0 left-60 right-0 h-14 bg-surface-container-lowest/80 backdrop-blur-xl border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-lg select-none"><nav aria-label="Breadcrumb" class="flex items-center gap-space-xs font-body-md text-body-sm"><span class="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">Acme Creative</span><span class="text-outline/60 text-xs">/</span><span class="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">Projects</span><span class="text-outline/60 text-xs">/</span><span class="text-on-surface font-medium truncate max-w-xs">Neon Cyberpunk Campaign</span></nav><div class="flex items-center gap-space-md"><div class="relative flex items-center"><button class="flex items-center gap-space-md h-8 px-space-md rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:border-outline/50 transition-all font-body-sm text-body-sm w-52" type="button"><span class="material-symbols-outlined text-base text-outline">search</span><span class="flex-1 text-left text-outline">Search or prompt...</span><kbd class="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline border border-outline-variant/40 leading-none">⌘K</kbd></button></div><div class="h-4 w-px bg-outline-variant/30"></div><div class="flex items-center gap-1.5 h-8 px-space-md rounded-lg bg-surface-container border border-outline-variant/30 font-code-sm text-code-sm"><span class="material-symbols-outlined text-sm text-primary-container">bolt</span><span class="text-on-surface font-medium">1,420</span><span class="text-outline">Credits</span></div><button class="h-8 px-space-md rounded-lg bg-primary-container text-on-primary-container font-body-sm text-body-sm font-semibold flex items-center gap-space-xs hover:opacity-95 transition-all shadow-[0_0_12px_rgba(148,125,255,0.35)]" type="button"><span class="material-symbols-outlined text-base">add</span><span>Generate</span></button><div class="flex items-center gap-space-xs"><button class="h-8 w-8 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors" title="Theme Toggle" type="button"><span class="material-symbols-outlined text-lg">dark_mode</span></button><button class="relative h-8 w-8 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors" title="Notifications" type="button"><span class="material-symbols-outlined text-lg">notifications</span><span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary-container"></span></button></div><div class="relative flex items-center pl-space-xs"><button class="relative focus:outline-none" type="button"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-outline-variant/50 hover:ring-primary-container transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlKxZGco-oVF2DJt5KlR6KmtS-bV66JK-Lfg_V8GbwI9WzmtdzV-AVy5DUQttPWt7xqTt3-xsKpDAfaI6BOZj0-0JvIp8Eq_qlGK4qmVC5Q7DHAret5EWxpaD0YWZRZo1GERmIFmam8UPlUTpoe7Y-GvGCnGBxscg4J3M3IuVNzYB4WDozaRyDPEqBD_ITWDBnXrd99sbiuGSUstVkvzpN5auZUQ1ZBlsiQxzK9MRHZ2TVy0l8puonyQ"/><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-primary-container ring-2 ring-surface-container-lowest"></span></button></div></div></header><main class="relative pt-14 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full">
+<div class="px-space-xl py-space-lg flex flex-col gap-space-lg max-w-[1520px] mx-auto w-full">
+<!-- Top Action / Title Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Usage &amp; Billing</h1>
+<div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span class="font-code-sm text-code-sm font-medium">Pro Plan · Active</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm self-start md:self-auto">
+<!-- Auto-recharge toggle chip -->
+<button class="flex items-center gap-2 h-9 px-3 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[17px] text-primary-container">autorenew</span>
+<span class="font-body-sm text-body-sm">Auto-recharge:</span>
+<span class="font-code-sm text-code-sm text-on-surface font-semibold bg-surface-container-highest px-1.5 py-0.5 rounded">ON</span>
+</button>
+<!-- Buy Credits CTA -->
+<button class="flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary-container text-on-primary-container font-body-sm text-body-sm font-semibold hover:opacity-95 shadow-[0_0_16px_rgba(148,125,255,0.25)] transition-all" type="button">
+<span class="material-symbols-outlined text-lg">add</span>
+<span>Buy credits</span>
+</button>
+</div>
+</div>
+<!-- Balance & Telemetry Summary Cards Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md">
+<!-- Primary Card: Available Balance -->
+<div class="lg:col-span-6 p-space-lg rounded-xl bg-surface-container-low shadow-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute -right-8 -top-8 w-44 h-44 rounded-full bg-primary-container/10 blur-2xl pointer-events-none"></div>
+<div>
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps uppercase text-outline tracking-wider">Available Balance</span>
+<span class="inline-flex items-center gap-1 text-primary-container font-code-sm text-code-sm bg-surface-container px-2 py-0.5 rounded">
+<span class="material-symbols-outlined text-xs">bolt</span>
+              Standard Tier
+            </span>
+</div>
+<div class="mt-3 flex items-baseline gap-2">
+<span class="font-headline-xl text-headline-xl text-on-surface font-bold tracking-tight">142</span>
+<span class="font-headline-sm text-headline-sm text-outline font-normal">credits</span>
+</div>
+<p class="mt-2 font-body-sm text-body-sm text-on-surface-variant max-w-lg">
+            Credits are used per generation and refunded if a job fails.
+          </p>
+</div>
+<div class="mt-6 pt-4 bg-surface-container-low">
+<div class="flex items-center justify-between font-code-sm text-code-sm text-outline mb-1.5">
+<span>Monthly allowance: 500 / mo</span>
+<span class="text-on-surface">Next reset Nov 1, 2024</span>
+</div>
+<!-- Progress bar -->
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden flex">
+<div class="h-full bg-primary-container rounded-full" style="width: 28.4%;"></div>
+</div>
+<div class="flex justify-between items-center mt-1 text-[11px] font-code-sm text-outline">
+<span>142 remaining</span>
+<span>358 utilized this period</span>
+</div>
+</div>
+</div>
+<!-- Secondary Card 1: GPU Compute Hours -->
+<div class="lg:col-span-3 p-space-lg rounded-xl bg-surface-container-low shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps uppercase text-outline tracking-wider">Compute Hours (GPU)</span>
+<span class="material-symbols-outlined text-on-surface-variant text-base">memory</span>
+</div>
+<div class="mt-3 flex items-baseline gap-1.5">
+<span class="font-headline-lg text-headline-lg text-on-surface font-semibold">780</span>
+<span class="font-code-md text-code-md text-outline">/ 1,000 hrs</span>
+</div>
+<span class="inline-block mt-1 font-code-sm text-code-sm text-primary">78% fleet allocation</span>
+</div>
+<div class="mt-4">
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden mb-2">
+<div class="h-full bg-primary-container rounded-full" style="width: 78%;"></div>
+</div>
+<div class="flex items-center justify-between font-code-sm text-code-sm text-outline">
+<span>Dedicated H100s</span>
+<span class="text-on-surface-variant font-medium">220 hrs free</span>
+</div>
+</div>
+</div>
+<!-- Secondary Card 2: 30-Day Activity Stats -->
+<div class="lg:col-span-3 p-space-lg rounded-xl bg-surface-container-low shadow-sm flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between">
+<span class="font-label-caps text-label-caps uppercase text-outline tracking-wider">30-Day Activity</span>
+<span class="material-symbols-outlined text-on-surface-variant text-base">analytics</span>
+</div>
+<div class="mt-3">
+<span class="font-headline-lg text-headline-lg text-on-surface font-semibold">284</span>
+<span class="font-body-sm text-body-sm text-outline ml-1">Generations</span>
+</div>
+</div>
+<div class="mt-4 space-y-2 font-code-sm text-code-sm">
+<div class="flex items-center justify-between p-2 rounded bg-surface-container">
+<span class="text-on-surface-variant">Failed runs</span>
+<span class="text-emerald-400 font-medium">6 (Refunded 100%)</span>
+</div>
+<div class="flex items-center justify-between px-2 text-outline">
+<span>Efficiency rate</span>
+<span class="text-on-surface font-medium">Avg. 1.8 credits/run</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Filter & Ledger Controls Bar -->
+<div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-space-sm pt-2">
+<!-- Search and filter pills -->
+<div class="flex flex-wrap items-center gap-space-sm flex-1">
+<div class="relative min-w-[240px] max-w-sm flex-1">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-base">search</span>
+<input class="w-full h-8 pl-8 pr-3 rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline/70 font-body-sm text-body-sm focus:outline-none focus:ring-1 focus:ring-primary shadow-sm" placeholder="Filter transactions or job IDs..." type="text"/>
+</div>
+<!-- Filter pills -->
+<div class="inline-flex p-0.5 rounded-lg bg-surface-container-low">
+<button class="px-2.5 py-1 rounded font-body-sm text-body-sm font-medium bg-surface-container-high text-on-surface shadow-xs" type="button">All activity</button>
+<button class="px-2.5 py-1 rounded font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" type="button">Generations</button>
+<button class="px-2.5 py-1 rounded font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" type="button">Refunds</button>
+<button class="px-2.5 py-1 rounded font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" type="button">Purchases</button>
+</div>
+</div>
+<!-- Date Range Selector & Export Action -->
+<div class="flex items-center gap-space-sm">
+<button class="flex items-center gap-2 h-8 px-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-sm text-outline">calendar_today</span>
+<span>Last 30 days</span>
+<span class="material-symbols-outlined text-xs text-outline">expand_more</span>
+</button>
+<button class="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-sm">download</span>
+<span>Export CSV</span>
+</button>
+</div>
+</div>
+<!-- Ledger Table Container -->
+<div class="rounded-xl bg-surface-container-low overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high/60 text-outline font-label-caps text-label-caps uppercase tracking-wider">
+<th class="py-2.5 px-4 font-semibold">Date &amp; Time</th>
+<th class="py-2.5 px-4 font-semibold">Description</th>
+<th class="py-2.5 px-4 font-semibold">Job / Artifact</th>
+<th class="py-2.5 px-4 font-semibold text-right">Change</th>
+<th class="py-2.5 px-4 font-semibold text-right">Balance</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 text-on-surface">
+<!-- Row 1: Image · Fast v1 -->
+<tr class="hover:bg-surface-container/50 transition-colors">
+<td class="py-3 px-4 font-code-sm text-code-sm text-on-surface-variant whitespace-nowrap">
+                Oct 28, 2024 <span class="text-outline">14:22:04</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-primary-container">image</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">Image · Fast v1</span>
+</div>
+</td>
+<td class="py-3 px-4">
+<a class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-highest transition-colors font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface max-w-[210px] truncate" href="#">
+<span class="material-symbols-outlined text-xs text-outline">tag</span>
+<span>job-98241 · Quantum Monolith</span>
+</a>
+</td>
+<td class="py-3 px-4 text-right font-code-md text-code-md font-semibold text-rose-400">
+                -1
+              </td>
+<td class="py-3 px-4 text-right font-code-md text-code-md text-on-surface">
+                142
+              </td>
+</tr>
+<!-- Row 2: Video · Cinematic -->
+<tr class="bg-surface-container/20 hover:bg-surface-container/50 transition-colors">
+<td class="py-3 px-4 font-code-sm text-code-sm text-on-surface-variant whitespace-nowrap">
+                Oct 28, 2024 <span class="text-outline">11:08:19</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-primary-container">movie</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">Video · Cinematic</span>
+</div>
+</td>
+<td class="py-3 px-4">
+<a class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-highest transition-colors font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface max-w-[210px] truncate" href="#">
+<span class="material-symbols-outlined text-xs text-outline">tag</span>
+<span>job-89402 · Anamorphic flare</span>
+</a>
+</td>
+<td class="py-3 px-4 text-right font-code-md text-code-md font-semibold text-rose-400">
+                -4
+              </td>
+<td class="py-3 px-4 text-right font-code-md text-code-md text-on-surface">
+                143
+              </td>
+</tr>
+<!-- Row 3: Refund (Requested explicit row) -->
+<tr class="hover:bg-surface-container/50 transition-colors">
+<td class="py-3 px-4 font-code-sm text-code-sm text-on-surface-variant whitespace-nowrap">
+                Oct 27, 2024 <span class="text-outline">19:45:11</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-emerald-400">currency_exchange</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">Refund</span>
+<span class="inline-flex items-center gap-1 font-code-sm text-[10px] px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-300">
+<span class="w-1 h-1 rounded-full bg-emerald-400"></span>
+                    Error 504 refunded
+                  </span>
+</div>
+</td>
+<td class="py-3 px-4">
+<a class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-highest transition-colors font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface max-w-[210px] truncate" href="#">
+<span class="material-symbols-outlined text-xs text-outline">tag</span>
+<span>job-89402 · Anamorphic flare</span>
+</a>
+</td>
+<td class="py-3 px-4 text-right font-code-md text-code-md font-semibold text-emerald-400">
+                +4
+              </td>
+<td class="py-3 px-4 text-right font-code-md text-code-md text-on-surface">
+                147
+              </td>
+</tr>
+<!-- Row 4: Image · Studio Quality v2 -->
+<tr class="bg-surface-container/20 hover:bg-surface-container/50 transition-colors">
+<td class="py-3 px-4 font-code-sm text-code-sm text-on-surface-variant whitespace-nowrap">
+                Oct 27, 2024 <span class="text-outline">19:42:01</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-primary-container">auto_awesome</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">Image · Studio Quality v2</span>
+</div>
+</td>
+<td class="py-3 px-4">
+<a class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-highest transition-colors font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface max-w-[210px] truncate" href="#">
+<span class="material-symbols-outlined text-xs text-outline">tag</span>
+<span>job-77312 · Cyberpunk Alley</span>
+</a>
+</td>
+<td class="py-3 px-4 text-right font-code-md text-code-md font-semibold text-rose-400">
+                -3
+              </td>
+<td class="py-3 px-4 text-right font-code-md text-code-md text-on-surface">
+                143
+              </td>
+</tr>
+<!-- Row 5: Video · Hyper-Motion v2.4 -->
+<tr class="hover:bg-surface-container/50 transition-colors">
+<td class="py-3 px-4 font-code-sm text-code-sm text-on-surface-variant whitespace-nowrap">
+                Oct 26, 2024 <span class="text-outline">16:15:33</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-primary-container">slow_motion_video</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">Video · Hyper-Motion v2.4</span>
+</div>
+</td>
+<td class="py-3 px-4">
+<a class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-highest transition-colors font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface max-w-[210px] truncate" href="#">
+<span class="material-symbols-outlined text-xs text-outline">tag</span>
+<span>job-66291 · Neon Rain Particle</span>
+</a>
+</td>
+<td class="py-3 px-4 text-right font-code-md text-code-md font-semibold text-rose-400">
+                -3
+              </td>
+<td class="py-3 px-4 text-right font-code-md text-code-md text-on-surface">
+                146
+              </td>
+</tr>
+<!-- Row 6: Video upscale · 4K HDR -->
+<tr class="bg-surface-container/20 hover:bg-surface-container/50 transition-colors">
+<td class="py-3 px-4 font-code-sm text-code-sm text-on-surface-variant whitespace-nowrap">
+                Oct 25, 2024 <span class="text-outline">09:30:12</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-primary-container">high_density</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">Video upscale · 4K HDR</span>
+</div>
+</td>
+<td class="py-3 px-4">
+<a class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-highest transition-colors font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface max-w-[210px] truncate" href="#">
+<span class="material-symbols-outlined text-xs text-outline">tag</span>
+<span>job-55109 · Title Sequence Master</span>
+</a>
+</td>
+<td class="py-3 px-4 text-right font-code-md text-code-md font-semibold text-rose-400">
+                -2
+              </td>
+<td class="py-3 px-4 text-right font-code-md text-code-md text-on-surface">
+                149
+              </td>
+</tr>
+<!-- Row 7: Refund · Cancelled job -->
+<tr class="hover:bg-surface-container/50 transition-colors">
+<td class="py-3 px-4 font-code-sm text-code-sm text-on-surface-variant whitespace-nowrap">
+                Oct 24, 2024 <span class="text-outline">22:04:50</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-emerald-400">undo</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">Refund · Cancelled job</span>
+</div>
+</td>
+<td class="py-3 px-4">
+<a class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container hover:bg-surface-container-highest transition-colors font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface max-w-[210px] truncate" href="#">
+<span class="material-symbols-outlined text-xs text-outline">tag</span>
+<span>job-44190 · Synthetic Voice Matrix</span>
+</a>
+</td>
+<td class="py-3 px-4 text-right font-code-md text-code-md font-semibold text-emerald-400">
+                +1
+              </td>
+<td class="py-3 px-4 text-right font-code-md text-code-md text-on-surface">
+                151
+              </td>
+</tr>
+<!-- Row 8: Monthly plan credit refill -->
+<tr class="bg-surface-container/20 hover:bg-surface-container/50 transition-colors">
+<td class="py-3 px-4 font-code-sm text-code-sm text-on-surface-variant whitespace-nowrap">
+                Oct 01, 2024 <span class="text-outline">00:00:01</span>
+</td>
+<td class="py-3 px-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-base text-emerald-400">card_membership</span>
+<span class="font-body-md text-body-md font-medium text-on-surface">Monthly Pro Top-up</span>
+<span class="font-code-sm text-[10px] px-1.5 py-0.2 rounded bg-surface-container-high text-on-surface-variant">Tier Allowance</span>
+</div>
+</td>
+<td class="py-3 px-4">
+<span class="font-code-sm text-code-sm text-outline pl-2">—</span>
+</td>
+<td class="py-3 px-4 text-right font-code-md text-code-md font-semibold text-emerald-400">
+                +500
+              </td>
+<td class="py-3 px-4 text-right font-code-md text-code-md text-on-surface">
+                150
+              </td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="px-space-md py-space-sm bg-surface-container-low flex flex-col sm:flex-row items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-md">
+<span class="font-body-sm text-body-sm text-outline">
+            Showing <span class="text-on-surface font-medium">1–10</span> of <span class="text-on-surface font-medium">148</span> transactions
+          </span>
+<div class="hidden sm:flex items-center gap-1.5 font-body-sm text-body-sm text-outline">
+<span>Show:</span>
+<button class="px-2 py-0.5 rounded bg-surface-container text-on-surface font-code-sm text-code-sm hover:bg-surface-container-high flex items-center gap-1" type="button">
+<span>10 / page</span>
+<span class="material-symbols-outlined text-xs">expand_more</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-1">
+<button class="h-8 px-2.5 rounded font-body-sm text-body-sm text-outline hover:text-on-surface hover:bg-surface-container transition-colors disabled:opacity-40" disabled="" type="button">
+            Previous
+          </button>
+<button class="h-8 w-8 rounded font-code-sm text-code-sm bg-primary-container text-on-primary-container font-medium flex items-center justify-center" type="button">
+            1
+          </button>
+<button class="h-8 w-8 rounded font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container flex items-center justify-center transition-colors" type="button">
+            2
+          </button>
+<button class="h-8 w-8 rounded font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container flex items-center justify-center transition-colors" type="button">
+            3
+          </button>
+<span class="h-8 w-6 font-code-sm text-code-sm text-outline flex items-center justify-center">...</span>
+<button class="h-8 w-8 rounded font-code-sm text-code-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container flex items-center justify-center transition-colors" type="button">
+            15
+          </button>
+<button class="h-8 px-2.5 rounded font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" type="button">
+            Next
+          </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function updateShellNav() {
+    // Synchronize breadcrumbs in shell header
+    const breadcrumbNav = document.querySelector('header nav[aria-label="Breadcrumb"]');
+    if (breadcrumbNav) {
+      breadcrumbNav.innerHTML = `
+        <span class="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">Acme Creative</span>
+        <span class="text-outline/60 text-xs">/</span>
+        <span class="text-on-surface font-medium truncate max-w-xs">Usage &amp; Billing</span>
+      `;
+    }
+
+    // Set 'Usage & Billing' as active item in the studio sidebar
+    const navLinks = document.querySelectorAll('aside nav a');
+    navLinks.forEach(link => {
+      const isTarget = link.getAttribute('data-path') === 'usage-and-billing';
+      if (isTarget) {
+        link.classList.remove('text-on-surface-variant');
+        link.classList.add('bg-surface-container', 'text-on-surface', 'font-medium');
+        const icon = link.querySelector('.material-symbols-outlined');
+        if (icon) {
+          icon.classList.remove('text-outline');
+          icon.classList.add('text-primary-container');
+        }
+      } else {
+        link.classList.remove('bg-surface-container', 'text-on-surface', 'font-medium');
+        link.classList.add('text-on-surface-variant');
+        const icon = link.querySelector('.material-symbols-outlined');
+        if (icon) {
+          icon.classList.remove('text-primary-container');
+          icon.classList.add('text-outline');
+        }
+      }
+    });
+  })();
+</script></main></div></body></html>

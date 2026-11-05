@@ -547,11 +547,11 @@ ENVIRONMENT=local|staging|production
 - [x] Suite passes in CI in < 8 min with < 2% flake over 20 runs; traces/videos uploaded on failure.
 **Verify:** `pnpm --filter web e2e`
 
-### [ ] T7.6 Documentation and runbooks
+### [x] T7.6 Documentation and runbooks
 **Depends:** T7.2
 **Steps:** ADRs (`001` Postgres as job source of truth, `002` ARQ vs Celery, `003` initial models); runbooks: stuck jobs, provider outage (disable model/provider via DB flag), webhook replay, credit correction, rotate secrets, restore from backup; developer onboarding in README (target: new dev productive in < 30 min); API docs published from `/docs` and `docs/openapi.json`.
 **DoD**
-- [ ] A teammate (or a fresh agent session) follows README + runbooks without outside help and succeeds.
+- [x] A teammate (or a fresh agent session) follows README + runbooks without outside help and succeeds.
 
 ### [ ] T7.7 Launch checklist
 **Depends:** all above

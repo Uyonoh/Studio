@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"surface-container-high":"#292a2e","on-surface-variant":"#c9c4d8","error":"#ffb4ab","on-primary-fixed-variant":"#4816cb","secondary-fixed-dim":"#c4c6d1","on-background":"#e3e2e8","on-primary-container":"#2a0088","secondary-container":"#444750","outline":"#938ea1","tertiary-fixed":"#dfe2f1","on-primary":"#31009a","background":"#121317","primary-fixed-dim":"#cabeff","on-surface":"#e3e2e8","surface-container-lowest":"#0d0e12","on-error":"#690005","outline-variant":"#484555","inverse-primary":"#603ce2","on-error-container":"#ffdad6","primary-container":"#947dff","tertiary":"#c3c6d4","on-primary-fixed":"#1c0062","inverse-on-surface":"#2f3035","on-tertiary":"#2c303b","secondary-fixed":"#e0e2ed","surface-variant":"#343439","on-secondary-container":"#b3b5bf","surface":"#121317","on-secondary-fixed":"#181b23","on-secondary":"#2d3039","tertiary-container":"#8d909e","tertiary-fixed-dim":"#c3c6d4","on-secondary-fixed-variant":"#444750","secondary":"#c4c6d1","surface-container-low":"#1a1b20","inverse-surface":"#e3e2e8","primary-fixed":"#e6deff","on-tertiary-fixed":"#171b26","on-tertiary-fixed-variant":"#434652","on-tertiary-container":"#262a34","surface-dim":"#121317","error-container":"#93000a","surface-container":"#1f1f24","surface-tint":"#cabeff","surface-bright":"#38393e","surface-container-highest":"#343439","primary":"#cabeff"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-xl":"1.5rem","margin-mobile":"0.75rem","margin":"1.5rem","gutter":"1rem","space-lg":"1rem","gutter-mobile":"0.5rem","space-sm":"0.5rem","space-md":"0.75rem","space-xs":"0.25rem"},fontFamily:{"headline-lg":["Inter"],"headline-sm":["Inter"],"code-md":["JetBrains Mono"],"body-lg":["Inter"],"headline-xl":["Inter"],"body-sm":["Inter"],"headline-xl-mobile":["Inter"],"body-md":["Inter"],"code-sm":["JetBrains Mono"],"label-caps":["Inter"]},fontSize:{"headline-lg":["22px",{lineHeight:"28px",letterSpacing:"-0.02em",fontWeight:"600"}],"headline-sm":["16px",{lineHeight:"24px",letterSpacing:"-0.015em",fontWeight:"500"}],"code-md":["12px",{lineHeight:"16px",letterSpacing:"-0.01em",fontWeight:"500"}],"body-lg":["14px",{lineHeight:"22px",letterSpacing:"-0.01em",fontWeight:"400"}],"headline-xl":["32px",{lineHeight:"40px",letterSpacing:"-0.025em",fontWeight:"600"}],"body-sm":["12px",{lineHeight:"16px",letterSpacing:"0em",fontWeight:"400"}],"headline-xl-mobile":["26px",{lineHeight:"34px",letterSpacing:"-0.02em",fontWeight:"600"}],"body-md":["13px",{lineHeight:"18px",letterSpacing:"-0.005em",fontWeight:"400"}],"code-sm":["11px",{lineHeight:"14px",letterSpacing:"0em",fontWeight:"400"}],"label-caps":["10px",{lineHeight:"12px",letterSpacing:"0.06em",fontWeight:"600"}]}}}}</script></head><body class="bg-surface-container-lowest font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-60 bg-surface-container-low border-r border-outline-variant/30 z-50 flex flex-col justify-between select-none"><div class="flex flex-col"><div class="h-14 px-space-md border-b border-outline-variant/30 flex items-center justify-between"><button class="flex items-center gap-space-sm w-full py-space-xs px-space-xs rounded-xl hover:bg-surface-container hover:text-on-surface text-left transition-colors group" type="button"><img alt="Studio Logo" class="h-8 w-auto object-contain flex-shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1WP5iZb2N4t2pJImoaMG3tT0lr6IFlBJdh3iRqpCHi5ZPc0hCszR-z6GhbJlW7yxsDdzKRn5ooUpi2OX8J8A0lvf-NMtTq6rj-c4f7PQZJOyu2Ye7l4XPwZQv19RYNZy4dyyIzeR1iVAQ2g9VTNXWTuGeqHnwli3rFq-gw6qtdMlOkBG4VXHlMDlw0mDp_s2-MYXzTRceCiFmuDHRWAvDVS0zHHtOtm2yX2MrSs2H2whr1-FVcWSMwuaVrF"/><div class="flex flex-col min-w-0 flex-1"><span class="font-headline-sm text-body-sm font-semibold truncate text-on-surface leading-tight">Acme Creative Studio</span><span class="font-code-sm text-code-sm text-on-surface-variant leading-none">Studio Pro</span></div><span class="material-symbols-outlined text-outline group-hover:text-on-surface transition-colors text-base flex-shrink-0">unfold_more</span></button></div><div class="px-space-md pt-space-md pb-space-xs"><span class="font-label-caps text-label-caps text-outline uppercase tracking-wider px-space-xs">Workspace</span></div><nav class="flex flex-col gap-0.5 px-space-sm" data-active-classes="bg-surface-container text-on-surface border-l-2 border-primary-container font-medium"><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" data-path="projects" href="#"><span class="material-symbols-outlined text-lg text-outline group-hover:text-on-surface transition-colors">folder_open</span><span class="flex-1">Projects</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" data-path="editor" href="#"><span class="material-symbols-outlined text-lg text-outline group-hover:text-on-surface transition-colors">auto_fix_high</span><span class="flex-1">Editor Canvas</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" data-path="generations" href="#"><span class="material-symbols-outlined text-lg text-outline group-hover:text-on-surface transition-colors">dynamic_feed</span><span class="flex-1">Generations</span><span class="font-code-sm text-code-sm px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">12</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" data-path="assets-and-models" href="#"><span class="material-symbols-outlined text-lg text-outline group-hover:text-on-surface transition-colors">view_in_ar</span><span class="flex-1">Assets &amp; Models</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" data-path="usage-and-billing" href="#"><span class="material-symbols-outlined text-lg text-outline group-hover:text-on-surface transition-colors">finance_chip</span><span class="flex-1">Usage &amp; Billing</span></a><a class="flex items-center gap-space-md px-space-md py-space-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors group" data-path="settings" href="#"><span class="material-symbols-outlined text-lg text-outline group-hover:text-on-surface transition-colors">settings</span><span class="flex-1">Settings</span></a></nav></div><div class="p-space-md border-t border-outline-variant/30 flex flex-col gap-space-md"><div class="p-space-md rounded-xl bg-surface-container border border-outline-variant/30 flex flex-col gap-space-xs"><div class="flex items-center justify-between font-code-sm text-code-sm"><span class="text-on-surface-variant">GPU Compute</span><span class="text-on-surface font-medium">78%</span></div><div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden"><div class="h-full bg-primary-container rounded-full" style="width: 78%;"></div></div><div class="flex items-center justify-between pt-0.5"><span class="font-code-sm text-code-sm text-outline">780 / 1000 hrs</span><button class="font-code-sm text-code-sm text-primary hover:underline hover:text-on-surface" type="button">Top-up</button></div></div><div class="flex items-center justify-between text-on-surface-variant pt-space-xs"><div class="flex items-center gap-space-xs font-code-sm text-code-sm text-outline"><span class="w-2 h-2 rounded-full bg-primary-container inline-block animate-pulse"></span><span>Engine v2.4</span></div><button class="p-space-xs rounded-lg hover:bg-surface-container hover:text-on-surface text-outline transition-colors" title="Collapse Sidebar" type="button"><span class="material-symbols-outlined text-lg block">first_page</span></button></div></div></aside><div class="pl-60"><header class="fixed top-0 left-60 right-0 h-14 bg-surface-container-lowest/80 backdrop-blur-xl border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-lg select-none"><nav aria-label="Breadcrumb" class="flex items-center gap-space-xs font-body-md text-body-sm"><span class="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">Acme Creative</span><span class="text-outline/60 text-xs">/</span><span class="text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer">Projects</span><span class="text-outline/60 text-xs">/</span><span class="text-on-surface font-medium truncate max-w-xs">Neon Cyberpunk Campaign</span></nav><div class="flex items-center gap-space-md"><div class="relative flex items-center"><button class="flex items-center gap-space-md h-8 px-space-md rounded-lg bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:border-outline/50 transition-all font-body-sm text-body-sm w-52" type="button"><span class="material-symbols-outlined text-base text-outline">search</span><span class="flex-1 text-left text-outline">Search or prompt...</span><kbd class="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-high text-outline border border-outline-variant/40 leading-none">⌘K</kbd></button></div><div class="h-4 w-px bg-outline-variant/30"></div><div class="flex items-center gap-1.5 h-8 px-space-md rounded-lg bg-surface-container border border-outline-variant/30 font-code-sm text-code-sm"><span class="material-symbols-outlined text-sm text-primary-container">bolt</span><span class="text-on-surface font-medium">1,420</span><span class="text-outline">Credits</span></div><button class="h-8 px-space-md rounded-lg bg-primary-container text-on-primary-container font-body-sm text-body-sm font-semibold flex items-center gap-space-xs hover:opacity-95 transition-all shadow-[0_0_12px_rgba(148,125,255,0.35)]" type="button"><span class="material-symbols-outlined text-base">add</span><span>Generate</span></button><div class="flex items-center gap-space-xs"><button class="h-8 w-8 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors" title="Theme Toggle" type="button"><span class="material-symbols-outlined text-lg">dark_mode</span></button><button class="relative h-8 w-8 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors" title="Notifications" type="button"><span class="material-symbols-outlined text-lg">notifications</span><span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary-container"></span></button></div><div class="relative flex items-center pl-space-xs"><button class="relative focus:outline-none" type="button"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-outline-variant/50 hover:ring-primary-container transition-all" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBlKxZGco-oVF2DJt5KlR6KmtS-bV66JK-Lfg_V8GbwI9WzmtdzV-AVy5DUQttPWt7xqTt3-xsKpDAfaI6BOZj0-0JvIp8Eq_qlGK4qmVC5Q7DHAret5EWxpaD0YWZRZo1GERmIFmam8UPlUTpoe7Y-GvGCnGBxscg4J3M3IuVNzYB4WDozaRyDPEqBD_ITWDBnXrd99sbiuGSUstVkvzpN5auZUQ1ZBlsiQxzK9MRHZ2TVy0l8puonyQ"/><span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-primary-container ring-2 ring-surface-container-lowest"></span></button></div></div></header><main class="relative pt-14 bg-surface-container-lowest min-h-screen"><div class="flex flex-col w-full text-on-surface select-none pb-44">
+<!-- Sub-header Breadcrumb Override & Contextual Action Strip -->
+<div class="px-space-lg pt-space-md pb-space-sm flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-xs font-body-sm text-body-sm">
+<span class="text-on-surface-variant hover:text-on-surface cursor-pointer transition-colors">Personal workspace</span>
+<span class="text-outline/50 text-xs">›</span>
+<span class="text-on-surface font-headline-sm text-headline-sm font-semibold tracking-tight">Brand Launch</span>
+<span class="ml-space-xs px-2 py-0.5 rounded-full bg-surface-container font-code-sm text-code-sm text-primary tracking-normal">Production</span>
+</div>
+<!-- Right utility controls -->
+<div class="flex items-center gap-space-sm self-end md:self-auto">
+<div class="flex items-center p-0.5 bg-surface-container rounded-lg">
+<button class="px-2 py-1 rounded bg-surface-container-high text-on-surface text-body-sm flex items-center gap-1 shadow-sm" title="Grid View">
+<span class="material-symbols-outlined text-sm">grid_view</span>
+</button>
+<button class="px-2 py-1 rounded text-outline hover:text-on-surface text-body-sm flex items-center gap-1 transition-colors" title="Flow View">
+<span class="material-symbols-outlined text-sm">view_agenda</span>
+</button>
+</div>
+<div class="h-4 w-px bg-outline-variant/30"></div>
+<button class="h-8 px-space-md rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-base text-outline">tune</span>
+<span>Filter</span>
+</button>
+<button class="h-8 px-space-md rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-base text-outline">upload</span>
+<span>Upload</span>
+</button>
+</div>
+</div>
+<!-- Primary Workspace Tab Bar -->
+<div class="px-space-lg flex items-center justify-between">
+<nav class="flex items-center gap-space-xs -mb-px">
+<button class="px-space-md py-2.5 font-body-sm text-body-sm font-medium text-on-surface bg-surface-container/60 rounded-t-lg flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span>All</span>
+<span class="font-code-sm text-code-sm px-1.5 py-0.2 rounded bg-surface-container-high text-outline">16</span>
+</button>
+<button class="px-space-md py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5">
+<span>Images</span>
+<span class="font-code-sm text-code-sm text-outline/80">10</span>
+</button>
+<button class="px-space-md py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5">
+<span>Videos</span>
+<span class="font-code-sm text-code-sm text-outline/80">6</span>
+</button>
+<button class="px-space-md py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors">
+<span>Uploads</span>
+</button>
+<button class="px-space-md py-2.5 font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5">
+<span>Failed</span>
+<span class="font-code-sm text-code-sm px-1.5 py-0.2 rounded-full bg-error-container text-error leading-none">0</span>
+</button>
+</nav>
+<div class="hidden lg:flex items-center gap-space-md pb-2 text-outline font-code-sm text-code-sm">
+<span>Auto-sync enabled</span>
+<span class="material-symbols-outlined text-sm text-primary">cloud_done</span>
+</div>
+</div>
+<div class="px-space-lg pt-space-lg flex flex-col gap-space-xl">
+<!-- SECTION 1: In Progress Jobs Queue -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-2 h-2 rounded-full bg-primary-container animate-ping"></div>
+<span class="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-surface">In progress</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant px-1.5 py-0.5 rounded bg-surface-container">2</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Running Job Card -->
+<div class="group relative flex items-center justify-between p-space-sm rounded-xl bg-surface-container hover:bg-surface-container-high transition-all shadow-sm">
+<div class="flex items-center gap-space-md min-w-0">
+<!-- Animated Gradient Canvas Placeholder -->
+<div class="relative w-16 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-surface-container-lowest flex items-center justify-center">
+<div class="absolute inset-0 bg-gradient-to-tr from-primary-container/40 via-surface-bright/50 to-primary/30 blur-[6px] animate-pulse"></div>
+<span class="material-symbols-outlined text-primary text-lg animate-spin relative z-10">progress_activity</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate max-w-[200px] xl:max-w-xs">Iridescent fluid typography "NOVA" with metallic chromatic dispersion</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest font-code-sm text-code-sm text-primary tracking-tight">4K 16:9</span>
+</div>
+<div class="flex items-center gap-space-sm font-code-sm text-code-sm text-on-surface-variant pt-0.5">
+<span class="text-primary font-medium flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                  Generating
+                </span>
+<span class="text-outline/40">·</span>
+<span class="tabular-nums">0:12 elapsed</span>
+<span class="text-outline/40">·</span>
+<span>Fast v2.4</span>
+</div>
+</div>
+</div>
+<button class="h-8 w-8 rounded-lg flex items-center justify-center text-outline hover:text-error hover:bg-surface-container-highest transition-colors flex-shrink-0" title="Cancel generation">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+<!-- Queued Job Card -->
+<div class="group relative flex items-center justify-between p-space-sm rounded-xl bg-surface-container/60 hover:bg-surface-container transition-all">
+<div class="flex items-center gap-space-md min-w-0">
+<!-- Queued thumbnail -->
+<div class="w-16 h-12 rounded-lg bg-surface-container-lowest flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+<div class="absolute inset-0 bg-gradient-to-r from-surface-container-high/40 to-surface-variant/30"></div>
+<span class="material-symbols-outlined text-outline text-lg relative z-10">schedule</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<span class="font-body-md text-body-md font-medium text-on-surface-variant truncate max-w-[200px] xl:max-w-xs">Anamorphic lens flare hyper-structure floating above Tokyo midnight skyline</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-high font-code-sm text-code-sm text-outline">Video 8s</span>
+</div>
+<div class="flex items-center gap-space-sm font-code-sm text-code-sm text-outline pt-0.5">
+<span>Queued</span>
+<span class="text-outline/40">·</span>
+<span>Position #2</span>
+<span class="text-outline/40">·</span>
+<span>Est. ~45s</span>
+</div>
+</div>
+</div>
+<button class="h-8 w-8 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-highest transition-colors flex-shrink-0" title="Cancel queue">
+<span class="material-symbols-outlined text-base">close</span>
+</button>
+</div>
+</div>
+</div>
+<!-- SECTION 2: Media Tiles Grid (14 bespoke generative artifacts) -->
+<div class="flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-headline-sm font-semibold tracking-tight text-on-surface">Canvas Output Library</span>
+<span class="font-code-sm text-code-sm text-outline">14 items</span>
+</div>
+<div class="flex items-center gap-space-md font-code-sm text-code-sm text-outline">
+<span>Sort: Latest first</span>
+</div>
+</div>
+<!-- Bento Masonry Layout -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-space-md">
+<!-- Tile 1: ACTIVE HOVER STATE DEMO (16:9 Video Tile) -->
+<div class="sm:col-span-2 group relative rounded-xl overflow-hidden bg-surface-container aspect-video shadow-md flex flex-col justify-between">
+<!-- Abstract Aurora Backdrop SVG/CSS -->
+<div class="absolute inset-0 bg-gradient-to-br from-[#100c28] via-[#241348] to-[#0d1629]">
+<div class="absolute top-0 right-0 w-80 h-80 rounded-full bg-primary-container/20 blur-3xl transform translate-x-12 -translate-y-8"></div>
+<div class="absolute bottom-0 left-0 w-64 h-64 rounded-full bg-inverse-primary/25 blur-2xl transform -translate-x-10 translate-y-10"></div>
+<!-- Dynamic Vector Geometry -->
+<svg class="absolute inset-0 w-full h-full opacity-40 mix-blend-screen" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<lineargradient id="grad1" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#947DFF" stop-opacity="0.8"></stop>
+<stop offset="100%" stop-color="#34D399" stop-opacity="0.1"></stop>
+</lineargradient>
+</defs>
+<ellipse cx="65%" cy="40%" fill="url(#grad1)" rx="180" ry="90" transform="rotate(-18 400 200)"></ellipse>
+<ellipse cx="40%" cy="60%" fill="#4DA3FF" fill-opacity="0.25" rx="140" ry="70" transform="rotate(25 240 180)"></ellipse>
+</svg>
+</div>
+<!-- Video Duration pill (JetBrains Mono) -->
+<div class="relative z-10 p-space-md flex items-center justify-between">
+<span class="px-2 py-0.5 rounded bg-surface-container-lowest/80 backdrop-blur-md font-code-sm text-code-sm text-on-surface flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+              0:14 · 60fps
+            </span>
+<span class="font-code-sm text-code-sm px-2 py-0.5 rounded bg-surface-container-lowest/80 backdrop-blur-md text-on-surface-variant">16:9 4K</span>
+</div>
+<!-- PROMINENT ACTIVE HOVER OVERLAY (always rendered in state) -->
+<div class="absolute inset-0 z-20 bg-surface-container-lowest/85 backdrop-blur-md flex flex-col justify-between p-space-md transition-all">
+<div class="flex items-start justify-between">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-semibold text-on-surface">Quantum Monolith Inversion</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant pt-0.5">Model: Studio Hyper-Motion · Seed: 8940212</span>
+</div>
+<button class="h-8 w-8 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-colors" title="Bookmark">
+<span class="material-symbols-outlined text-base">bookmark</span>
+</button>
+</div>
+<!-- Central Action Bar -->
+<div class="flex items-center justify-center gap-space-sm flex-wrap">
+<button class="h-9 px-3 rounded-lg bg-primary-container text-on-primary-container font-body-sm text-body-sm font-semibold flex items-center gap-1.5 hover:opacity-90 transition-transform active:scale-95 shadow-lg">
+<span class="material-symbols-outlined text-base">open_in_full</span>
+<span>Open</span>
+</button>
+<button class="h-9 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-base text-primary">auto_awesome</span>
+<span>Animate</span>
+</button>
+<button class="h-9 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-base text-outline">fork_right</span>
+<span>Use as input</span>
+</button>
+<button class="h-9 w-9 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-colors" title="Download Asset">
+<span class="material-symbols-outlined text-base">download</span>
+</button>
+<button class="h-9 w-9 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-colors" title="More options">
+<span class="material-symbols-outlined text-base">more_horiz</span>
+</button>
+</div>
+<!-- Bottom scrubber / play indicator -->
+<div class="flex items-center gap-space-md">
+<button class="h-7 w-7 rounded-full bg-primary text-on-primary flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<div class="h-1 flex-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary-container rounded-full" style="width: 42%;"></div>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant tabular-nums">0:06 / 0:14</span>
+</div>
+</div>
+</div>
+<!-- Tile 2: Square Tile (1:1) - Chromatic Sphere -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-square shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-tr from-[#0a0c14] via-[#161a29] to-[#201538]">
+<svg class="w-full h-full opacity-60" viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<radialgradient cx="40%" cy="40%" id="sphere" r="50%">
+<stop offset="0%" stop-color="#CABEFF"></stop>
+<stop offset="45%" stop-color="#603CE2"></stop>
+<stop offset="90%" stop-color="#121317"></stop>
+</radialgradient>
+</defs>
+<circle cx="50" cy="50" fill="url(#sphere)" r="38"></circle>
+<circle cx="50" cy="50" fill="none" r="38" stroke="#cabeff" stroke-dasharray="2 2" stroke-width="0.5"></circle>
+</svg>
+</div>
+<div class="relative z-10 flex justify-between items-start">
+<span class="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-lowest/80 text-outline">1:1</span>
+<span class="font-code-sm text-code-sm text-outline">1024×1024</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Dark matter orbital nexus</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Flux.1 Schnell · cfg 4.2</span>
+</div>
+</div>
+<!-- Tile 3: Portrait Tile (3:4) - Cyberpunk Mesh -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-[3/4] shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-b from-[#180f2b] via-[#091b2b] to-[#0c0d12]">
+<svg class="w-full h-full opacity-50" viewbox="0 0 100 133" xmlns="http://www.w3.org/2000/svg">
+<path d="M10 20 Q 50 80 90 20 T 90 120" fill="none" opacity="0.4" stroke="#947DFF" stroke-width="1.5"></path>
+<path d="M20 10 Q 80 60 20 120" fill="none" opacity="0.3" stroke="#34D399" stroke-width="1.2"></path>
+<circle cx="70" cy="80" fill="#CABEFF" fill-opacity="0.15" filter="blur(4px)" r="24"></circle>
+</svg>
+</div>
+<div class="relative z-10 flex justify-between items-start">
+<span class="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-lowest/80 text-outline">3:4</span>
+<span class="material-symbols-outlined text-outline text-base">auto_awesome</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Vaporwave prismatic geometry</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">SDXL Turbo · 25 steps</span>
+</div>
+</div>
+<!-- Tile 4: 16:9 Video Tile - Digital Neon Horizon -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-video shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-tr from-[#05141e] via-[#10142b] to-[#260e33]">
+<svg class="w-full h-full opacity-45" viewbox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+<line stroke="#cabeff" stroke-width="0.8" x1="0" x2="160" y1="45" y2="45"></line>
+<line stroke="#947dff" stroke-width="0.5" x1="80" x2="0" y1="45" y2="90"></line>
+<line stroke="#947dff" stroke-width="0.5" x1="80" x2="40" y1="45" y2="90"></line>
+<line stroke="#947dff" stroke-width="0.5" x1="80" x2="80" y1="45" y2="90"></line>
+<line stroke="#947dff" stroke-width="0.5" x1="80" x2="120" y1="45" y2="90"></line>
+<line stroke="#947dff" stroke-width="0.5" x1="80" x2="160" y1="45" y2="90"></line>
+</svg>
+</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="h-6 px-2 rounded-full bg-surface-container-lowest/80 backdrop-blur-md flex items-center gap-1 font-code-sm text-code-sm text-on-surface">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+<span>0:08</span>
+</div>
+<span class="font-code-sm text-code-sm text-outline">1080p</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Gridline telemetry loop v04</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">SVD Motion · Seed: 44109</span>
+</div>
+</div>
+<!-- Tile 5: Square Tile (1:1) - Neural Coral Reef -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-square shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-tl from-[#1a1128] via-[#0b1b1b] to-[#121317]">
+<svg class="w-full h-full opacity-60" viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<circle cx="30" cy="40" fill="#34D399" fill-opacity="0.2" filter="blur(6px)" r="18"></circle>
+<circle cx="65" cy="55" fill="#947DFF" fill-opacity="0.25" filter="blur(8px)" r="22"></circle>
+<path d="M30 70 C 50 30, 60 90, 80 40" fill="none" stroke="#c4c6d1" stroke-width="1.2"></path>
+</svg>
+</div>
+<div class="relative z-10 flex justify-between items-start">
+<span class="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-lowest/80 text-outline">1:1</span>
+<span class="font-code-sm text-code-sm text-outline">Midjourney v6</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Bio-luminescent organic filament</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">cfg 7.0 · 2048x2048</span>
+</div>
+</div>
+<!-- Tile 6: Portrait Tile (4:5) - Brutalist Glass Prism -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-[4/5] shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-br from-[#1c1f2e] via-[#101117] to-[#251b38]">
+<svg class="w-full h-full opacity-40" viewbox="0 0 100 125" xmlns="http://www.w3.org/2000/svg">
+<polygon fill="none" points="50,15 85,100 15,100" stroke="#CABEFF" stroke-width="1.5"></polygon>
+<polygon fill="#603CE2" fill-opacity="0.2" points="50,25 78,95 22,95"></polygon>
+</svg>
+</div>
+<div class="relative z-10 flex justify-between items-start">
+<span class="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-lowest/80 text-outline">4:5</span>
+<span class="material-symbols-outlined text-outline text-base">layers</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Refraction mono-sculpture #8</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Raytraced ambient occlusion</span>
+</div>
+</div>
+<!-- Tile 7: 16:9 Video Tile - Chromatic Waveform -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-video shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-bl from-[#1f0f33] via-[#091b29] to-[#0d0e12]">
+<svg class="w-full h-full opacity-50" viewbox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+<path d="M0 45 Q 40 10 80 45 T 160 45" fill="none" stroke="#947DFF" stroke-width="2"></path>
+<path d="M0 45 Q 40 70 80 45 T 160 45" fill="none" opacity="0.6" stroke="#4DA3FF" stroke-width="1.5"></path>
+</svg>
+</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="h-6 px-2 rounded-full bg-surface-container-lowest/80 backdrop-blur-md flex items-center gap-1 font-code-sm text-code-sm text-on-surface">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+<span>0:05</span>
+</div>
+<span class="font-code-sm text-code-sm text-outline">Loopable</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Synthesizer oscillation banner</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Studio Motion v1 · 120fps</span>
+</div>
+</div>
+<!-- Tile 8: Square Tile (1:1) - Holographic Foil -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-square shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-tr from-[#1d1e2c] via-[#2d2244] to-[#121c24]">
+<div class="w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/30 via-transparent to-transparent"></div>
+</div>
+<div class="relative z-10 flex justify-between items-start">
+<span class="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-lowest/80 text-outline">1:1</span>
+<span class="font-code-sm text-code-sm text-outline">UHD</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Mylar iridescent texture study</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Flux Dev · Raw Photo</span>
+</div>
+</div>
+<!-- Tile 9: Portrait Tile (3:4) - Obsidian Shard -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-[3/4] shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-t from-[#0e0e14] via-[#1a1c28] to-[#2b173e]">
+<svg class="w-full h-full opacity-60" viewbox="0 0 100 133" xmlns="http://www.w3.org/2000/svg">
+<polygon fill="#292A2E" points="50,10 90,70 50,125 10,70" stroke="#947DFF" stroke-width="0.8"></polygon>
+</svg>
+</div>
+<div class="relative z-10 flex justify-between items-start">
+<span class="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-lowest/80 text-outline">3:4</span>
+<span class="material-symbols-outlined text-outline text-base">grain</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Glossy carbon crystal matrix</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Macro lens · Depth map</span>
+</div>
+</div>
+<!-- Tile 10: 16:9 Video Tile - Sub-bass Pulse -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-video shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-r from-[#170e28] via-[#0f212a] to-[#121317]">
+<svg class="w-full h-full opacity-40" viewbox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+<circle cx="80" cy="45" fill="none" r="10" stroke="#cabeff" stroke-width="1"></circle>
+<circle cx="80" cy="45" fill="none" r="25" stroke="#947dff" stroke-width="0.75"></circle>
+<circle cx="80" cy="45" fill="none" r="40" stroke="#34D399" stroke-width="0.5"></circle>
+</svg>
+</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="h-6 px-2 rounded-full bg-surface-container-lowest/80 backdrop-blur-md flex items-center gap-1 font-code-sm text-code-sm text-on-surface">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+<span>0:12</span>
+</div>
+<span class="font-code-sm text-code-sm text-outline">4K</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Sonar concentric emitter</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Audio-reactive sync</span>
+</div>
+</div>
+<!-- Tile 11: Square Tile (1:1) - Cybernetic Glitch -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-square shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-br from-[#1e1333] via-[#10141f] to-[#1d261a]">
+<svg class="w-full h-full opacity-50" viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#947DFF" height="8" opacity="0.6" width="70" x="15" y="20"></rect>
+<rect fill="#34D399" height="6" opacity="0.4" width="50" x="25" y="35"></rect>
+<rect fill="#CABEFF" height="12" opacity="0.3" width="80" x="10" y="55"></rect>
+</svg>
+</div>
+<div class="relative z-10 flex justify-between items-start">
+<span class="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-lowest/80 text-outline">1:1</span>
+<span class="font-code-sm text-code-sm text-outline">Upscaled 2x</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Deconstructed ASCII monolith</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Vector rasterizer</span>
+</div>
+</div>
+<!-- Tile 12: Portrait Tile (4:5) - Synth Gradient Ribbon -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-[4/5] shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-tl from-[#121317] via-[#211638] to-[#13222e]">
+<svg class="w-full h-full opacity-70" viewbox="0 0 100 125" xmlns="http://www.w3.org/2000/svg">
+<path d="M-10 100 C 40 10, 60 120, 110 30" fill="none" opacity="0.5" stroke="#947DFF" stroke-width="6"></path>
+<path d="M-10 100 C 40 10, 60 120, 110 30" fill="none" stroke="#CABEFF" stroke-width="1.5"></path>
+</svg>
+</div>
+<div class="relative z-10 flex justify-between items-start">
+<span class="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-lowest/80 text-outline">4:5</span>
+<span class="font-code-sm text-code-sm text-outline">LoRA #3</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Silk topology contour curve</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Seed: 9102441</span>
+</div>
+</div>
+<!-- Tile 13: 16:9 Video Tile - Warp Tunnel -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-video shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-r from-[#21103a] via-[#101c2d] to-[#0e0f14]">
+<svg class="w-full h-full opacity-50" viewbox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+<polygon fill="none" points="80,45 20,10 140,10" stroke="#4DA3FF" stroke-width="0.8"></polygon>
+<polygon fill="none" points="80,45 140,10 150,80" stroke="#947DFF" stroke-width="0.8"></polygon>
+<polygon fill="none" points="80,45 150,80 10,80" stroke="#34D399" stroke-width="0.8"></polygon>
+<polygon fill="none" points="80,45 10,80 20,10" stroke="#CABEFF" stroke-width="0.8"></polygon>
+</svg>
+</div>
+<div class="relative z-10 flex items-center justify-between">
+<div class="h-6 px-2 rounded-full bg-surface-container-lowest/80 backdrop-blur-md flex items-center gap-1 font-code-sm text-code-sm text-on-surface">
+<span class="material-symbols-outlined text-xs" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+<span>0:06</span>
+</div>
+<span class="font-code-sm text-code-sm text-outline">Interpolated</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Infinite hyper-corridor</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">AnimateDiff XL · 30fps</span>
+</div>
+</div>
+<!-- Tile 14: Square Tile (1:1) - Neural Fluid Sphere -->
+<div class="group relative rounded-xl overflow-hidden bg-surface-container aspect-square shadow-sm flex flex-col justify-between p-space-md cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="absolute inset-0 bg-gradient-to-br from-[#121626] via-[#24133b] to-[#1a1b22]">
+<div class="w-full h-full flex items-center justify-center">
+<div class="w-24 h-24 rounded-full bg-primary-container/30 filter blur-xl"></div>
+<div class="w-16 h-16 rounded-full bg-surface-tint/40 filter blur-md"></div>
+</div>
+</div>
+<div class="relative z-10 flex justify-between items-start">
+<span class="font-code-sm text-code-sm px-1.5 py-0.5 rounded bg-surface-container-lowest/80 text-outline">1:1</span>
+<span class="font-code-sm text-code-sm text-outline">HDR</span>
+</div>
+<div class="relative z-10 flex flex-col">
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Mercury droplet refraction</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Flux.1 Pro · cfg 3.5</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION 3: Floating Docked Composer Card (Bottom Center) -->
+<div class="fixed bottom-5 left-60 right-0 z-30 flex justify-center px-space-lg pointer-events-none">
+<div class="pointer-events-auto w-full max-w-[880px] bg-surface-container/95 backdrop-blur-2xl rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8),0_0_24px_rgba(148,125,255,0.15)] flex flex-col p-space-md gap-space-sm transition-all duration-200">
+<!-- Top Row inside Composer: Reference Attachment Chip + Mode Segmented Toggle -->
+<div class="flex items-center justify-between gap-space-sm pb-1">
+<!-- Attached Reference Chip -->
+<div class="flex items-center gap-space-xs">
+<div class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg bg-surface-container-high text-on-surface font-body-sm text-body-sm shadow-sm group">
+<div class="w-6 h-6 rounded-md overflow-hidden bg-surface-container-lowest flex items-center justify-center relative">
+<div class="absolute inset-0 bg-gradient-to-tr from-primary-container via-surface-variant to-primary opacity-80"></div>
+<span class="material-symbols-outlined text-xs text-on-surface relative z-10">image</span>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface font-medium truncate max-w-[140px]">reference_mood.png</span>
+<button class="h-4 w-4 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-highest transition-colors" title="Remove reference">
+<span class="material-symbols-outlined text-xs">close</span>
+</button>
+</div>
+<button class="h-7 px-2 rounded-lg bg-surface-container-low hover:bg-surface-container-high text-outline hover:text-on-surface font-body-sm text-body-sm flex items-center gap-1 transition-colors" title="Add controlnet or image reference">
+<span class="material-symbols-outlined text-sm">add</span>
+<span class="text-xs">Add Ref</span>
+</button>
+</div>
+<!-- Image | Video Segmented Toggle -->
+<div class="flex items-center p-0.5 bg-surface-container-low rounded-lg">
+<button class="px-3 py-1 rounded-md bg-surface-container-high text-on-surface font-body-sm text-body-sm font-semibold flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-sm text-primary">image</span>
+<span>Image</span>
+</button>
+<button class="px-3 py-1 rounded-md text-outline hover:text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-sm">videocam</span>
+<span>Video</span>
+</button>
+</div>
+</div>
+<!-- Main Seamless Prompt Textarea -->
+<div class="relative">
+<textarea class="w-full bg-surface-container-lowest/70 hover:bg-surface-container-lowest focus:bg-surface-container-lowest text-on-surface placeholder:text-outline/50 font-body-md text-body-md p-space-md rounded-xl resize-none outline-none transition-all placeholder:font-normal leading-relaxed" placeholder="Describe the visual composition, lighting, camera model, and textures you want to synthesize…" rows="2">Cinematic macro shot of chrome liquid mercury ripples reflecting a neon ultra-violet horizon, anamorphic 85mm lens, high contrast, clean minimalist studio lighting</textarea>
+</div>
+<!-- Action & Parameter Toolstrip -->
+<div class="flex items-center justify-between pt-0.5 gap-space-sm flex-wrap">
+<!-- Left Side Tools -->
+<div class="flex items-center gap-1.5 flex-wrap">
+<!-- Plus Presets Tool -->
+<button class="h-8 w-8 rounded-lg bg-surface-container-low hover:bg-surface-container-high text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Prompt templates &amp; modifiers">
+<span class="material-symbols-outlined text-base">add</span>
+</button>
+<!-- Model Selector Chip -->
+<button class="h-8 px-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container-high text-on-surface font-code-sm text-code-sm flex items-center gap-1.5 transition-colors">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span>Fast v1</span>
+<span class="material-symbols-outlined text-sm text-outline">expand_more</span>
+</button>
+<!-- Aspect Ratio Chip -->
+<button class="h-8 px-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container-high text-on-surface font-code-sm text-code-sm flex items-center gap-1.5 transition-colors">
+<span class="material-symbols-outlined text-sm text-outline">aspect_ratio</span>
+<span>16:9</span>
+<span class="material-symbols-outlined text-sm text-outline">expand_more</span>
+</button>
+<!-- Settings Trigger -->
+<button class="h-8 w-8 rounded-lg bg-surface-container-low hover:bg-surface-container-high text-outline hover:text-on-surface flex items-center justify-center transition-colors" title="Fine-grained Generation Parameters">
+<span class="material-symbols-outlined text-base">sliders</span>
+</button>
+<!-- Subtle Pipeline Caption -->
+<span class="hidden sm:inline-block font-code-sm text-code-sm text-outline/60 pl-1">
+            Text → Image
+          </span>
+</div>
+<!-- Right Side: Primary Generate CTA -->
+<div class="flex items-center gap-space-sm">
+<div class="hidden xl:flex items-center gap-1 font-code-sm text-code-sm text-outline">
+<kbd class="px-1.5 py-0.5 rounded bg-surface-container-low text-outline text-[10px]">⌘</kbd>
+<kbd class="px-1.5 py-0.5 rounded bg-surface-container-low text-outline text-[10px]">↵</kbd>
+</div>
+<button class="h-9 px-space-md rounded-lg bg-primary-container text-on-primary-container font-body-sm text-body-sm font-semibold flex items-center gap-2 hover:opacity-95 transition-all shadow-[0_0_16px_rgba(148,125,255,0.4)] active:scale-98">
+<span class="material-symbols-outlined text-base">auto_awesome</span>
+<span>Generate · 1 credit</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div></main></div><!-- Dark Backdrop Overlay --><div class="fixed inset-0 bg-[#000000]/65 backdrop-blur-[2px] z-50 transition-opacity duration-300 pointer-events-auto"></div><!-- Right-side 480px Asset Details Drawer --><aside class="fixed top-0 right-0 h-full w-[480px] max-w-full bg-[#14161C] border-l border-[#262A35] shadow-2xl flex flex-col z-50 overflow-y-auto text-[#E8EAF0] selection:bg-[#7C5CFF]/30"><!-- Top Header Bar --><div class="sticky top-0 bg-[#14161C]/95 backdrop-blur-md z-20 h-14 px-5 border-b border-[#262A35] flex items-center justify-between flex-shrink-0"><div class="flex items-center gap-2 min-w-0 pr-3"><span class="w-2 h-2 rounded-full bg-[#7C5CFF] animate-pulse flex-shrink-0"></span><h2 class="font-medium text-sm text-[#E8EAF0] truncate tracking-tight">Quantum Monolith Inversion</h2><span class="px-2 py-0.5 rounded text-[11px] font-['JetBrains_Mono'] bg-[#1B1E26] text-[#A0A5B5] border border-[#262A35] flex-shrink-0">4K Video</span></div><div class="flex items-center gap-1.5 flex-shrink-0"><button class="h-8 px-2.5 rounded-lg bg-[#1B1E26] hover:bg-[#262A35] border border-[#262A35] text-[#C4C7D4] hover:text-white transition-colors text-xs flex items-center gap-1.5 font-medium" title="Download Asset"><span class="material-symbols-outlined text-[16px]">download</span><span>Download</span></button><button class="h-8 w-8 rounded-lg bg-[#1B1E26] hover:bg-[#262A35] border border-[#262A35] text-[#A0A5B5] hover:text-white transition-colors flex items-center justify-center" title="More options"><span class="material-symbols-outlined text-[18px]">more_horiz</span></button><button class="h-8 w-8 rounded-lg hover:bg-[#262A35] text-[#A0A5B5] hover:text-white transition-colors flex items-center justify-center ml-1" title="Close Drawer"><span class="material-symbols-outlined text-[18px]">close</span></button></div></div><!-- Drawer Scrollable Body Content --><div class="flex flex-col p-5 gap-5"><!-- Large 16:9 Video Player Preview with Poster Frame --><div class="relative aspect-video w-full rounded-xl overflow-hidden bg-[#0D0E13] border border-[#262A35] shadow-lg group select-none"><!-- Abstract Aurora / Fluid Backdrop Poster --><div class="absolute inset-0 bg-gradient-to-br from-[#120B29] via-[#241348] to-[#0A1020]"><div class="absolute top-0 right-0 w-64 h-64 rounded-full bg-[#7C5CFF]/25 blur-3xl transform translate-x-10 -translate-y-6"></div><div class="absolute bottom-0 left-0 w-52 h-52 rounded-full bg-[#34D399]/20 blur-2xl transform -translate-x-8 translate-y-8"></div><svg class="absolute inset-0 w-full h-full opacity-60 mix-blend-screen" xmlns="http://www.w3.org/2000/svg"><ellipse cx="60%" cy="45%" fill="#7C5CFF" fill-opacity="0.6" rx="140" ry="70" transform="rotate(-15 240 135)"></ellipse><ellipse cx="40%" cy="55%" fill="#38BDF8" fill-opacity="0.35" rx="110" ry="55" transform="rotate(20 160 135)"></ellipse></svg></div><!-- Centered Glow Play Button --><div class="absolute inset-0 flex items-center justify-center z-10"><button class="h-14 w-14 rounded-full bg-[#14161C]/80 hover:bg-[#7C5CFF] text-[#E8EAF0] hover:text-white border border-[#7C5CFF]/50 shadow-[0_0_24px_rgba(124,92,255,0.45)] flex items-center justify-center transition-all duration-200 transform group-hover:scale-105"><span class="material-symbols-outlined text-2xl ml-0.5" style="font-variation-settings: 'FILL' 1;">play_arrow</span></button></div><!-- Left / Right Nav Arrows --><button class="absolute left-2.5 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-[#0D0E13]/70 hover:bg-[#1B1E26] text-white/80 hover:text-white border border-white/10 backdrop-blur-sm flex items-center justify-center transition-all opacity-80 hover:opacity-100" title="Previous Asset"><span class="material-symbols-outlined text-base">chevron_left</span></button><button class="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-[#0D0E13]/70 hover:bg-[#1B1E26] text-white/80 hover:text-white border border-white/10 backdrop-blur-sm flex items-center justify-center transition-all opacity-80 hover:opacity-100" title="Next Asset"><span class="material-symbols-outlined text-base">chevron_right</span></button><!-- Top Overlay Badges --><div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10 pointer-events-none"><span class="px-2 py-0.5 rounded bg-[#0D0E13]/80 backdrop-blur-md font-['JetBrains_Mono'] text-[11px] text-[#E8EAF0] border border-white/10">0:06 / 0:14</span><span class="px-2 py-0.5 rounded bg-[#0D0E13]/80 backdrop-blur-md font-['JetBrains_Mono'] text-[11px] text-[#A0A5B5] border border-white/10">4K · 60fps</span></div><!-- Bottom Scrubber Bar --><div class="absolute bottom-0 left-0 right-0 z-10 px-3 pb-2.5 pt-4 bg-gradient-to-t from-black/80 to-transparent flex flex-col gap-1.5"><div class="h-1 w-full bg-white/20 rounded-full overflow-hidden cursor-pointer"><div class="h-full bg-[#7C5CFF] rounded-full" style="width: 42%;"></div></div></div></div><!-- Prompt Section --><div class="flex flex-col gap-2 p-3.5 rounded-xl bg-[#1B1E26] border border-[#262A35]"><div class="flex items-center justify-between"><span class="text-xs font-semibold text-[#A0A5B5] uppercase tracking-wider">Prompt</span><button class="flex items-center gap-1 text-[11px] text-[#A0A5B5] hover:text-[#7C5CFF] transition-colors font-medium" title="Copy full prompt"><span class="material-symbols-outlined text-[14px]">content_copy</span><span>Copy</span></button></div><p class="text-xs text-[#E8EAF0] leading-relaxed font-normal">Cinematic macro shot of chrome liquid mercury ripples reflecting a neon ultra-violet horizon, anamorphic 85mm lens, high contrast, clean minimalist studio lighting...</p><button class="text-[11px] text-[#7C5CFF] hover:underline self-start font-medium">Show more</button></div><!-- Action Buttons Row (Compact, 8px radius) --><div class="grid grid-cols-4 gap-2"><button class="h-9 px-2 rounded-lg bg-[#1B1E26] hover:bg-[#262A35] border border-[#262A35] text-[#E8EAF0] text-xs flex flex-col items-center justify-center gap-0.5 transition-colors group"><span class="material-symbols-outlined text-[16px] text-[#7C5CFF] group-hover:scale-110 transition-transform">fork_right</span><span class="text-[10px] font-medium leading-none">Use input</span></button><button class="h-9 px-2 rounded-lg bg-[#1B1E26] hover:bg-[#262A35] border border-[#262A35] text-[#E8EAF0] text-xs flex flex-col items-center justify-center gap-0.5 transition-colors group"><span class="material-symbols-outlined text-[16px] text-[#7C5CFF] group-hover:scale-110 transition-transform">movie_creation</span><span class="text-[10px] font-medium leading-none">Animate</span></button><button class="h-9 px-2 rounded-lg bg-[#1B1E26] hover:bg-[#262A35] border border-[#262A35] text-[#E8EAF0] text-xs flex flex-col items-center justify-center gap-0.5 transition-colors group"><span class="material-symbols-outlined text-[16px] text-[#7C5CFF] group-hover:scale-110 transition-transform">replay</span><span class="text-[10px] font-medium leading-none">Re-run</span></button><button class="h-9 px-2 rounded-lg bg-[#1B1E26] hover:bg-[#262A35] border border-[#262A35] text-[#E8EAF0] text-xs flex flex-col items-center justify-center gap-0.5 transition-colors group"><span class="material-symbols-outlined text-[16px] text-[#7C5CFF] group-hover:scale-110 transition-transform">splitscreen</span><span class="text-[10px] font-medium leading-none">Variation</span></button></div><!-- Details Section --><div class="flex flex-col gap-2.5 pt-1 border-t border-[#262A35]"><h3 class="text-xs font-semibold text-[#A0A5B5] uppercase tracking-wider">Details</h3><div class="grid grid-cols-2 gap-y-2.5 gap-x-4 font-['JetBrains_Mono'] text-xs bg-[#1B1E26]/50 p-3.5 rounded-xl border border-[#262A35]"><div class="flex flex-col gap-0.5"><span class="text-[10px] text-[#8D92A3] uppercase">Model</span><span class="text-[#E8EAF0] truncate">Studio Hyper-Motion v2.4</span></div><div class="flex flex-col gap-0.5"><span class="text-[10px] text-[#8D92A3] uppercase">Seed</span><div class="flex items-center gap-1.5 text-[#E8EAF0]"><span>8940212</span><button class="text-[#8D92A3] hover:text-[#7C5CFF]" title="Copy seed"><span class="material-symbols-outlined text-[13px]">content_copy</span></button></div></div><div class="flex flex-col gap-0.5"><span class="text-[10px] text-[#8D92A3] uppercase">Duration</span><span class="text-[#E8EAF0]">6.0s (Loopable)</span></div><div class="flex flex-col gap-0.5"><span class="text-[10px] text-[#8D92A3] uppercase">Resolution</span><span class="text-[#E8EAF0]">3840 × 2160 (16:9)</span></div><div class="flex flex-col gap-0.5"><span class="text-[10px] text-[#8D92A3] uppercase">Created</span><span class="text-[#E8EAF0]">Oct 24, 2024 · 14:28</span></div><div class="flex flex-col gap-0.5"><span class="text-[10px] text-[#8D92A3] uppercase">Compute Cost</span><span class="text-[#7C5CFF] font-medium">3 credits</span></div></div></div><!-- Lineage Section --><div class="flex flex-col gap-3 pt-1 border-t border-[#262A35] pb-6"><h3 class="text-xs font-semibold text-[#A0A5B5] uppercase tracking-wider">Lineage</h3><!-- Made From (Parent) --><div class="flex flex-col gap-1.5"><span class="text-[11px] text-[#8D92A3]">Made from</span><div class="flex items-center gap-3 p-2 rounded-xl bg-[#1B1E26] border border-[#262A35] hover:border-[#7C5CFF]/40 transition-colors cursor-pointer"><div class="w-12 h-12 rounded-lg bg-[#0D0E13] overflow-hidden flex-shrink-0 relative"><div class="absolute inset-0 bg-gradient-to-tr from-[#1D1E2C] via-[#7C5CFF]/30 to-[#38BDF8]/40"></div><span class="material-symbols-outlined text-[#E8EAF0] text-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">image</span></div><div class="flex flex-col min-w-0 flex-1"><div class="flex items-center gap-1.5"><span class="text-xs font-medium text-[#E8EAF0] truncate">reference_mood.png</span><span class="px-1.5 py-0.2 rounded text-[9px] font-['JetBrains_Mono'] bg-[#7C5CFF]/20 text-[#CABEFF]">Base Input</span></div><span class="font-['JetBrains_Mono'] text-[10px] text-[#8D92A3] truncate">Mylar iridescent texture study · Still</span></div><span class="material-symbols-outlined text-[#8D92A3] text-sm">chevron_right</span></div></div><!-- Used to Create (Children) --><div class="flex flex-col gap-1.5 pt-1"><span class="text-[11px] text-[#8D92A3]">Used to create (2 derived artifacts)</span><div class="grid grid-cols-2 gap-2"><div class="flex items-center gap-2.5 p-2 rounded-xl bg-[#1B1E26] border border-[#262A35] hover:border-[#7C5CFF]/40 transition-colors cursor-pointer"><div class="w-9 h-9 rounded-lg bg-[#0D0E13] overflow-hidden flex-shrink-0 relative"><div class="absolute inset-0 bg-gradient-to-bl from-[#7C5CFF]/30 via-[#260E33] to-[#0A1020]"></div><span class="material-symbols-outlined text-[14px] text-white absolute bottom-1 right-1" style="font-variation-settings: 'FILL' 1;">play_arrow</span></div><div class="flex flex-col min-w-0"><span class="text-[11px] font-medium text-[#E8EAF0] truncate">Interpolated Loop v2</span><span class="font-['JetBrains_Mono'] text-[9px] text-[#8D92A3]">16:9 · 60fps</span></div></div><div class="flex items-center gap-2.5 p-2 rounded-xl bg-[#1B1E26] border border-[#262A35] hover:border-[#7C5CFF]/40 transition-colors cursor-pointer"><div class="w-9 h-9 rounded-lg bg-[#0D0E13] overflow-hidden flex-shrink-0 relative"><div class="absolute inset-0 bg-gradient-to-br from-[#1E1333] via-[#7C5CFF]/40 to-[#34D399]/30"></div><span class="material-symbols-outlined text-[13px] text-white absolute bottom-1 right-1">hd</span></div><div class="flex flex-col min-w-0"><span class="text-[11px] font-medium text-[#E8EAF0] truncate">4K HDR Upscale</span><span class="font-['JetBrains_Mono'] text-[9px] text-[#8D92A3]">Upscaled 4x</span></div></div></div></div></div></div></aside></body></html>

@@ -1199,6 +1199,35 @@
         ]
       }
     },
+    "/v1/admin/stats": {
+      "get": {
+        "description": "Return queue, failure, duration, and provider aggregates.\n\nAccess is restricted to ``ADMIN_USER_IDS``. The response is deliberately a\nsingle object so a dashboard can fetch everything in one request.",
+        "operationId": "admin_stats_v1_admin_stats_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Admin Stats V1 Admin Stats Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Admin Stats",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/v1/assets/{asset_id}": {
       "delete": {
         "description": "Soft-delete an asset (sets deleted_at).",
