@@ -191,3 +191,85 @@ The script exits non-zero on failure, so CI can gate a deploy on it.
 Keep separate Supabase projects and provider tokens for staging and
 production. Never share the service-role key or webhook secret between
 environments.
+
+## 8. CI/CD pipelines
+
+`.github/workflows/deploy.yml` implements:
+
+| Trigger | Job | Result |
+| --- | --- | --- |
+| `pull_request` → `main` | `preview` | Optional Supabase preview branch and Vercel preview |
+| `push` → `main` | `staging` | Migrations → Render API/worker → Vercel → readiness → smoke |
+| `workflow_dispatch` (`target=staging`) | `staging` | Same as a merge to `main` |
+| `workflow_dispatch` (`target=production`) | `production` | Protected environment; migrations → Render → Vercel → readiness → smoke |
+
+Create GitHub Environments named `preview`, `staging`, and `production`. Add
+required reviewers to `production`; a manual dispatch then pauses until someone
+approves it. The workflow reads credentials only from `${{ secrets.* }}` and
+non-sensitive settings from `${{ vars.* }}`.
+
+### Required configuration
+
+Secrets:
+
+- `SUPABASE_ACCESS_TOKEN`
+- `SUPABASE_STAGING_PROJECT_REF`, `SUPABASE_STAGING_DB_PASSWORD`
+- `SUPABASE_PRODUCTION_PROJECT_REF`, `SUPABASE_PRODUCTION_DB_PASSWORD`
+- `RENDER_STAGING_API_DEPLOY_HOOK`, `RENDER_STAGING_WORKER_DEPLOY_HOOK`
+- `RENDER_PRODUCTION_API_DEPLOY_HOOK`, `RENDER_PRODUCTION_WORKER_DEPLOY_HOOK`
+- `VERCEL_STAGING_DEPLOY_HOOK`, `VERCEL_PRODUCTION_DEPLOY_HOOK`
+- `STAGING_SUPABASE_ANON_KEY`, `STAGING_SMOKE_USER_EMAIL`,
+  `STAGING_SMOKE_USER_PASSWORD`, `STAGING_SMOKE_PROJECT_ID`
+- production equivalents for the smoke test
+- `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` only when
+  `VERCEL_PREVIEWS_VIA_CLI` is enabled
+
+Variables:
+
+- `STAGING_API_BASE_URL`, `STAGING_WEB_BASE_URL`, `STAGING_SUPABASE_URL`,
+  `STAGING_SMOKE_MODEL`
+- production equivalents
+- `SUPABASE_BRANCHING_ENABLED=true` to create preview branch databases
+- `VERCEL_PREVIEWS_VIA_CLI=true` only when the Vercel Git integration is
+  disabled
+
+Vercel's Git integration already creates preview deployments for pull requests.
+Leave `VERCEL_PREVIEWS_VIA_CLI` unset unless you disable that integration;
+otherwise PRs receive duplicate deployments. Likewise, Supabase's GitHub
+integration is the preferred way to provision PR branch databases;
+`SUPABASE_BRANCHING_ENABLED` enables the CLI fallback only.
+
+The staging job waits up to ten minutes for `/readyz`, then runs
+`scripts/smoke_staging.sh` with a freshly minted Supabase access token (password
+grant). The smoke user must be a workspace editor, and `STAGING_SMOKE_PROJECT_ID`
+must belong to that workspace. The same flow runs against production after
+approval.
+
+## 9. Migration policy (expand → migrate → contract)
+
+1. **Expand:** add tables, nullable columns, indexes (concurrently where
+   possible), and backward-compatible functions. Apply the migration before
+   deploying code that needs it.
+2. **Migrate:** deploy code that writes the new shape and backfills old rows.
+   Reads must tolerate both shapes during the transition.
+3. **Contract:** only after every deployed service stops using the old shape,
+   ship a separate release that drops or renames it.
+
+Never combine a destructive migration with the code change that stops using the
+column. Migrations run from CI against the direct connection; the API never
+runs them.
+
+## 10. Rollback rehearsal
+
+Rehearse this on staging before the first production deploy, then record the
+date and commit here:
+
+1. Note the current staging commit and confirm `/readyz` and the smoke test pass.
+2. Revert a trivial change (or redeploy the previous Render image and Vercel
+   deployment) and dispatch the workflow with `target=staging`.
+3. Confirm `/readyz` is green and `scripts/smoke_staging.sh` passes on the
+   rolled-back commit.
+4. Re-apply the change and confirm the pipeline returns to green.
+
+Production rollback follows section 6 and is additionally gated by the
+`production` environment approval.

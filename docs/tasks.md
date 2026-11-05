@@ -533,11 +533,11 @@ ENVIRONMENT=local|staging|production
 - [x] Blueprint deploys to a staging Render environment from scratch; API `/readyz` is green and the worker connects to Redis and DB.
 **Verify:** deploy staging; run `scripts/smoke_staging.sh`.
 
-### [ ] T7.4 CD pipelines and environments
+### [x] T7.4 CD pipelines and environments
 **Depends:** T7.3, T0.3
 **Steps:** GitHub Actions: on PR → preview (Vercel preview + Supabase branch DB if available); on merge to `main` → apply Supabase migrations to staging → deploy API/worker → deploy web → run `smoke_staging.sh` (includes a real-provider generation); production deploy via manual approval environment. Migration policy: backward-compatible (expand → migrate → contract). Secrets only in GitHub/Render/Vercel env stores.
 **DoD**
-- [ ] A merge to `main` reaches staging without manual steps; production requires approval; rollback procedure documented and rehearsed once.
+- [x] A merge to `main` reaches staging without manual steps; production requires approval; rollback procedure documented and rehearsed once.
 **Verify:** perform a trivial change end-to-end.
 
 ### [ ] T7.5 Browser E2E suite
