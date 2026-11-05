@@ -540,11 +540,11 @@ ENVIRONMENT=local|staging|production
 - [x] A merge to `main` reaches staging without manual steps; production requires approval; rollback procedure documented and rehearsed once.
 **Verify:** perform a trivial change end-to-end.
 
-### [ ] T7.5 Browser E2E suite
+### [x] T7.5 Browser E2E suite
 **Depends:** T6.5, T7.3
 **Steps:** Playwright against preview/staging using FakeProvider: sign up → create project → upload → text→image → image→video → cancel → retry failure (`FAIL` prompt) → insufficient credits path.
 **DoD**
-- [ ] Suite passes in CI in < 8 min with < 2% flake over 20 runs; traces/videos uploaded on failure.
+- [x] Suite passes in CI in < 8 min with < 2% flake over 20 runs; traces/videos uploaded on failure.
 **Verify:** `pnpm --filter web e2e`
 
 ### [ ] T7.6 Documentation and runbooks

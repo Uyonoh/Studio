@@ -1,34 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-
-const SUPABASE_URL = "http://127.0.0.1:3101";
-const STORAGE_KEY = `sb-${new URL(SUPABASE_URL).hostname.split(".")[0]}-auth-token`;
-
-function makeSessionCookie() {
-  const session = {
-    access_token: "e2e-access-token",
-    token_type: "bearer",
-    expires_in: 3600,
-    expires_at: Math.floor(Date.now() / 1000) + 3600,
-    refresh_token: "e2e-refresh-token",
-    user: {
-      id: "usr-e2e-123",
-      aud: "authenticated",
-      role: "authenticated",
-      email: "e2e@example.com",
-    },
-  };
-  const encoded = Buffer.from(JSON.stringify(session)).toString("base64url");
-  return {
-    name: STORAGE_KEY,
-    value: `base64-${encoded}`,
-    domain: "127.0.0.1",
-    path: "/",
-    httpOnly: false,
-    secure: false,
-    sameSite: "Lax" as const,
-  };
-}
+import { makeSessionCookie, resetMockBackend } from "./helpers";
 
 async function expectNoA11yViolations(page: Page) {
   const results = await new AxeBuilder({ page })
@@ -45,7 +17,8 @@ async function expectNoA11yViolations(page: Page) {
 }
 
 test.describe("Accessibility and responsiveness", () => {
-  test.beforeEach(async ({ context }) => {
+  test.beforeEach(async ({ context, request }) => {
+    await resetMockBackend(request);
     await context.addCookies([makeSessionCookie()]);
   });
 

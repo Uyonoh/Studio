@@ -65,4 +65,5 @@ pnpm --filter web e2e -g upload # Run a single E2E spec by title
 The Playwright suite starts its own Next.js server plus an in-process mock backend
 (`apps/web/e2e/mock-backend.mjs`), so it does not require Supabase, Redis, or the
 FastAPI service to be running. Run `pnpm --filter web build` first if you prefer
-serving an optimized build.
+serving an optimized build; CI does this and sets `E2E_USE_PROD=1` so the suite
+runs against `next start` instead of paying for on-demand dev compilation.

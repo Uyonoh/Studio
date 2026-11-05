@@ -208,6 +208,13 @@ required reviewers to `production`; a manual dispatch then pauses until someone
 approves it. The workflow reads credentials only from `${{ secrets.* }}` and
 non-sensitive settings from `${{ vars.* }}`.
 
+`.github/workflows/ci.yml` runs the browser suite in a separate `e2e` job. It
+builds `@studio/api-client` and `@studio/web`, installs Chromium, and runs
+Playwright with `E2E_USE_PROD=1` against the local mock backend and `next start`.
+Traces, videos, screenshots, the HTML report, and `test-results` are uploaded
+when the job fails. The job does not need Supabase, Redis, Render, or Vercel
+credentials.
+
 ### Required configuration
 
 Secrets:

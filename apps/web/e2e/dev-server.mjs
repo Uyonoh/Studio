@@ -19,11 +19,20 @@ const env = {
   NEXT_TELEMETRY_DISABLED: "1",
 };
 
-const child = spawn(process.execPath, [nextBin, "dev", "-H", "127.0.0.1", "-p", "3100"], {
-  cwd: appRoot,
-  stdio: "inherit",
-  env,
-});
+// CI builds the app first and runs `next start`, which avoids the multi-minute
+// on-demand compilation of `next dev` and keeps the suite under its time budget.
+const useProductionBuild = process.env.E2E_USE_PROD === "1";
+const nextCommand = useProductionBuild ? "start" : "dev";
+
+const child = spawn(
+  process.execPath,
+  [nextBin, nextCommand, "-H", "127.0.0.1", "-p", "3100"],
+  {
+    cwd: appRoot,
+    stdio: "inherit",
+    env,
+  }
+);
 
 function cleanup() {
   try {
