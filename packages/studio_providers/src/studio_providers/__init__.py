@@ -14,7 +14,6 @@ from studio_providers.base import (
     TransientProviderError,
     WebhookEvent,
 )
-from studio_providers.contract import ProviderContractSuite
 from studio_providers.fake import FakeProvider
 from studio_providers.fal import FalProvider
 from studio_providers.google import GoogleProvider
@@ -30,7 +29,6 @@ __all__ = [
     "GenerationProvider",
     "GoogleProvider",
     "PermanentProviderError",
-    "ProviderContractSuite",
     "ProviderError",
     "ProviderInput",
     "ProviderJobRef",

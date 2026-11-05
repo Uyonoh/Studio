@@ -1,0 +1,138 @@
+# Render Blueprint for the AI Content Studio staging environment.
+#
+# The API and worker are Docker services built from the repository root so the
+# Dockerfiles can copy the shared `packages/` sources. The web app is deployed
+# separately to Vercel (see docs/runbooks/deployment.md).
+#
+# Secrets are marked `sync: false`: Render prompts for them when the Blueprint
+# is first created and never stores them in git.
+#
+# Database guidance:
+#   * api    -> Supabase connection pooler, transaction mode (port 6543)
+#   * worker -> direct Supabase connection (port 5432); ARQ jobs are long-lived
+#               and use session-level features, so the pooler is not suitable.
+#   * migrations run against the direct connection from CI, never from the API.
+
+services:
+  - type: web
+    name: studio-api
+    runtime: docker
+    plan: starter
+    region: oregon
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /readyz
+    numInstances: 1
+    autoDeployTrigger: 'off'
+    envVars:
+      - fromGroup: studio-shared
+      - fromGroup: studio-providers
+      - fromGroup: studio-api
+      - key: DATABASE_URL
+        sync: false # Supabase pooler, transaction mode, port 6543
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: studio-redis
+          property: connectionString
+
+  - type: worker
+    name: studio-worker
+    runtime: docker
+    plan: starter
+    region: oregon
+    dockerfilePath: ./apps/worker/Dockerfile
+    dockerContext: .
+    numInstances: 1
+    autoDeployTrigger: 'off'
+    envVars:
+      - fromGroup: studio-shared
+      - fromGroup: studio-providers
+      - fromGroup: studio-worker
+      - key: DATABASE_URL
+        sync: false # Direct Supabase connection, port 5432
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: studio-redis
+          property: connectionString
+
+  - type: keyvalue
+    name: studio-redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: noeviction
+    ipAllowList: [] # internal Render traffic only
+
+envVarGroups:
+  - name: studio-shared
+    envVars:
+      - key: ENVIRONMENT
+        value: staging
+      - key: LOG_LEVEL
+        value: INFO
+      - key: STORAGE_BUCKET
+        value: media
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: WEBHOOK_SIGNING_SECRET
+        sync: false
+      - key: PUBLIC_API_URL
+        sync: false # e.g. https://studio-api.onrender.com
+      - key: SENTRY_DSN
+        sync: false
+      - key: SENTRY_RELEASE
+        sync: false # set to the deployed git SHA
+      - key: SENTRY_TRACES_SAMPLE_RATE
+        value: "0.1"
+      - key: ADMIN_USER_IDS
+        sync: false # comma-separated Supabase user IDs
+
+  - name: studio-providers
+    envVars:
+      - key: REPLICATE_API_TOKEN
+        sync: false
+      - key: REPLICATE_WEBHOOK_SECRET
+        sync: false
+      - key: FAL_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+  - name: studio-api
+    envVars:
+      - key: MAX_ACTIVE_JOBS_PER_WORKSPACE
+        value: "5"
+      - key: MAX_PROMPT_CHARS
+        value: "4000"
+      - key: RATE_LIMIT_ENABLED
+        value: "true"
+      - key: RATE_LIMIT_SUBMIT_PER_MINUTE
+        value: "20"
+      - key: RATE_LIMIT_UPLOAD_PER_MINUTE
+        value: "30"
+
+  - name: studio-worker
+    envVars:
+      - key: WORKER_MAX_JOBS
+        value: "10"
+      - key: WORKER_JOB_TIMEOUT
+        value: "1800"
+      - key: PROVIDER_CONCURRENCY_FAKE
+        value: "10"
+      - key: PROVIDER_CONCURRENCY_REPLICATE
+        value: "5"
+      - key: PROVIDER_CONCURRENCY_FAL
+        value: "5"
+      - key: MAX_RUNTIME_IMAGE_SECONDS
+        value: "600"
+      - key: MAX_RUNTIME_VIDEO_SECONDS
+        value: "1800"
+      - key: RECONCILE_CRON_INTERVAL_SECONDS
+        value: "60"

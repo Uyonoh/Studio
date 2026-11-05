@@ -522,7 +522,7 @@ ENVIRONMENT=local|staging|production
 - [x] Forced exception in each service appears in Sentry with request/job context; dashboard/alerts described in `docs/runbooks/observability.md`.
 **Verify:** trigger test errors on staging.
 
-### [ ] T7.3 Containers and `render.yaml`
+### [x] T7.3 Containers and `render.yaml`
 **Depends:** T4.5
 **Steps**
 1. Multi-stage Dockerfiles for `api` and `worker` (uv, non-root user, ffmpeg installed, healthcheck).
@@ -530,7 +530,7 @@ ENVIRONMENT=local|staging|production
 3. Vercel project config for `apps/web` (env vars, root directory, build command).
 4. Pooler note: use the Supabase connection pooler (transaction mode) for the API if connection counts grow; keep direct connection for migrations/worker—document settings.
 **DoD**
-- [ ] Blueprint deploys to a staging Render environment from scratch; API `/readyz` is green and the worker connects to Redis and DB.
+- [x] Blueprint deploys to a staging Render environment from scratch; API `/readyz` is green and the worker connects to Redis and DB.
 **Verify:** deploy staging; run `scripts/smoke_staging.sh`.
 
 ### [ ] T7.4 CD pipelines and environments

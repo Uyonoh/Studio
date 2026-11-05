@@ -32,6 +32,8 @@ dev = [
     "asyncpg-stubs>=0.32.0",
     "types-jsonschema>=4.26.0.20261006",
     "respx>=0.23.1",
+    "pyyaml>=6.0",
+    "types-pyyaml>=6.0.12",
 ]
 
 [tool.ruff]
@@ -77,4 +79,5 @@ testpaths = [
     "packages/studio_providers/tests",
     "packages/studio_media/tests",
     "tests/e2e_backend",
+    "tests/infra",
 ]

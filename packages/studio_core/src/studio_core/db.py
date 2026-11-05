@@ -5,8 +5,22 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
+from urllib.parse import urlparse
 
 import asyncpg
+
+
+def _is_transaction_pooler(dsn: str) -> bool:
+    """Return True for the Supabase/Supavisor transaction pooler (port 6543).
+
+    Transaction-mode pooling can hand each statement to a different backend, so
+    asyncpg's named prepared statements are not safe there. Session mode (5432)
+    and direct connections keep the default cache.
+    """
+    try:
+        return urlparse(dsn).port == 6543
+    except ValueError:
+        return False
 
 
 async def create_pool(
@@ -16,6 +30,8 @@ async def create_pool(
     **kwargs: Any,
 ) -> asyncpg.Pool[asyncpg.Record]:
     """Create and return an asyncpg connection pool."""
+    if "statement_cache_size" not in kwargs and _is_transaction_pooler(dsn):
+        kwargs["statement_cache_size"] = 0
     pool = await asyncpg.create_pool(
         dsn=dsn,
         min_size=min_size,
