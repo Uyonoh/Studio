@@ -39,12 +39,15 @@ export function WorkspaceProvider({
       try {
         const client = getApiClient();
         const { data } = await client.GET("/v1/workspaces");
-        if (data && "workspaces" in data && Array.isArray((data as any).workspaces)) {
-          const list = (data as any).workspaces;
+        let list: Workspace[] = [];
+        if (Array.isArray(data)) {
+          list = data as Workspace[];
+        } else if (data && "workspaces" in data && Array.isArray((data as any).workspaces)) {
+          list = (data as any).workspaces;
+        }
+        if (list.length > 0) {
           setWorkspaces(list);
-          if (list.length > 0) {
-            setCurrentWorkspace((prev) => prev || list[0]);
-          }
+          setCurrentWorkspace((prev) => prev || list[0]);
         }
       } catch (e) {
         // Fallback for mock/test environments
