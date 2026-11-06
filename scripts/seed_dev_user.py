@@ -184,7 +184,7 @@ def main() -> None:
         with urllib.request.urlopen(grant_req) as resp:
             print("Successfully granted credits!")
     else:
-        print("Dev user already has ≥ 1000 credits.")
+        print("Dev user already has >= 1000 credits.")
 
     print("\nDev user seeding complete!")
     print(f"Email: {email}")

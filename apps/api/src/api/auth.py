@@ -16,6 +16,15 @@ logger = logging.getLogger(__name__)
 
 _bearer = HTTPBearer(auto_error=False)
 
+_jwks_clients: dict[str, jwt.PyJWKClient] = {}
+
+
+def _get_jwks_client(supabase_url: str) -> jwt.PyJWKClient:
+    jwks_url = f"{supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json"
+    if jwks_url not in _jwks_clients:
+        _jwks_clients[jwks_url] = jwt.PyJWKClient(jwks_url)
+    return _jwks_clients[jwks_url]
+
 
 class CurrentUser(BaseModel):
     """Authenticated caller extracted from the Supabase JWT."""
@@ -46,12 +55,28 @@ async def get_current_user(
 
     settings = get_settings()
     try:
-        payload = jwt.decode(
-            credentials.credentials,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            options={"verify_aud": False},  # Supabase does not set a standard 'aud'
-        )
+        try:
+            unverified_header = jwt.get_unverified_header(credentials.credentials)
+            alg = unverified_header.get("alg", "HS256")
+        except jwt.PyJWTError:
+            alg = "HS256"
+
+        if alg == "HS256":
+            payload = jwt.decode(
+                credentials.credentials,
+                settings.supabase_jwt_secret,
+                algorithms=["HS256"],
+                options={"verify_aud": False},  # Supabase does not set a standard 'aud'
+            )
+        else:
+            jwks_client = _get_jwks_client(settings.supabase_url)
+            signing_key = jwks_client.get_signing_key_from_jwt(credentials.credentials)
+            payload = jwt.decode(
+                credentials.credentials,
+                signing_key.key,
+                algorithms=[alg],
+                options={"verify_aud": False},
+            )
     except jwt.ExpiredSignatureError as exc:
         raise HTTPException(
             status_code=401,
@@ -65,6 +90,18 @@ async def get_current_user(
         ) from exc
     except jwt.PyJWTError as exc:
         logger.debug("JWT decode failure: %s", exc)
+        raise HTTPException(
+            status_code=401,
+            detail={
+                "type": "https://studio.example.com/errors/invalid_token",
+                "title": "Invalid Token",
+                "status": 401,
+                "detail": "The access token is invalid.",
+                "error_code": "INVALID_TOKEN",
+            },
+        ) from exc
+    except Exception as exc:
+        logger.debug("JWT validation error: %s", exc)
         raise HTTPException(
             status_code=401,
             detail={

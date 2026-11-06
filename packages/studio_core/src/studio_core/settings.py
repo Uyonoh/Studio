@@ -16,10 +16,19 @@ class Settings(BaseSettings):
     )
 
     # Supabase / Auth
-    supabase_url: str = Field(default="http://127.0.0.1:54321", validation_alias="SUPABASE_URL")
-    supabase_anon_key: str = Field(default="anon-key", validation_alias="SUPABASE_ANON_KEY")
+    supabase_url: str = Field(
+        default="http://127.0.0.1:54321",
+        validation_alias=AliasChoices("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL"),
+    )
+    supabase_anon_key: str = Field(
+        default="anon-key",
+        validation_alias=AliasChoices(
+            "SUPABASE_ANON_KEY", "SUPABASE_PUBLISHABLE_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY"
+        ),
+    )
     supabase_service_role_key: str = Field(
-        default="service-role-key", validation_alias="SUPABASE_SERVICE_ROLE_KEY"
+        default="service-role-key",
+        validation_alias=AliasChoices("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SECRET_KEY"),
     )
     supabase_jwt_secret: str = Field(
         default="super-secret-jwt-token-with-at-least-32-characters-long",

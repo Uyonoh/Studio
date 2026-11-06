@@ -1,16 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Mail, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { Mail, Lock, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 
 export default function LoginPage() {
+  const [authMode, setAuthMode] = useState<"magic-link" | "password">("magic-link");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const supabase = createClient();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const err = params.get("error");
+      if (err) {
+        setMessage({
+          type: "error",
+          text:
+            err === "auth_callback_failed"
+              ? "Authentication callback failed. Please try signing in again."
+              : err,
+        });
+      }
+    }
+  }, []);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +48,11 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setMessage({ type: "error", text: error.message });
+        let text = error.message;
+        if (text.toLowerCase().includes("rate limit")) {
+          text = "Email rate limit exceeded. Please sign in using password.";
+        }
+        setMessage({ type: "error", text });
       } else {
         setMessage({
           type: "success",
@@ -38,6 +62,34 @@ export default function LoginPage() {
     } catch (err: any) {
       setMessage({ type: "error", text: err?.message || "Failed to send magic link." });
     } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setMessage({ type: "error", text: error.message });
+        setIsLoading(false);
+      } else {
+        const params = new URLSearchParams(window.location.search);
+        const destination = params.get("redirectedFrom") || "/projects";
+        router.push(destination);
+        router.refresh();
+      }
+    } catch (err: any) {
+      setMessage({ type: "error", text: err?.message || "Failed to sign in." });
       setIsLoading(false);
     }
   };
@@ -55,7 +107,11 @@ export default function LoginPage() {
       });
 
       if (error) {
-        setMessage({ type: "error", text: error.message });
+        let text = error.message;
+        if (text.toLowerCase().includes("not enabled")) {
+          text = "Google sign-in is not enabled for this project. Please sign in with email/password.";
+        }
+        setMessage({ type: "error", text });
         setIsGoogleLoading(false);
       }
     } catch (err: any) {
@@ -152,43 +208,139 @@ export default function LoginPage() {
               </span>
             </div>
 
-            {/* Email Magic Link Form */}
-            <form onSubmit={handleEmailLogin} className="space-y-4">
-              <div className="space-y-1.5">
-                <label htmlFor="email" className="block text-xs font-medium text-[#9AA1B2]">
-                  Work email
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-[#9AA1B2] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@company.com"
-                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#0B0C10] border border-[#262A35] text-[#E8EAF0] placeholder-[#9AA1B2]/60 text-sm focus:outline-none focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF] transition-all"
-                  />
-                </div>
-              </div>
-
+            {/* Mode Switcher */}
+            <div className="flex rounded-xl bg-[#0B0C10] p-1 border border-[#262A35]" role="tablist" aria-label="Sign in method">
               <button
-                type="submit"
-                disabled={isLoading || isGoogleLoading || !email}
-                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#6C4CE8] hover:bg-[#5B3FD6] text-white font-medium text-sm transition-all shadow-[0_0_20px_rgba(124,92,255,0.25)] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] focus:ring-offset-2 focus:ring-offset-[#14161C] disabled:opacity-50 disabled:pointer-events-none"
+                type="button"
+                role="tab"
+                aria-selected={authMode === "magic-link"}
+                onClick={() => {
+                  setAuthMode("magic-link");
+                  setMessage(null);
+                }}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                  authMode === "magic-link"
+                    ? "bg-[#1B1E26] text-[#E8EAF0] shadow-sm border border-[#262A35]"
+                    : "text-[#9AA1B2] hover:text-[#E8EAF0]"
+                }`}
               >
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <span>Send Magic Link</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
+                Magic Link
               </button>
-            </form>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={authMode === "password"}
+                onClick={() => {
+                  setAuthMode("password");
+                  setMessage(null);
+                }}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                  authMode === "password"
+                    ? "bg-[#1B1E26] text-[#E8EAF0] shadow-sm border border-[#262A35]"
+                    : "text-[#9AA1B2] hover:text-[#E8EAF0]"
+                }`}
+              >
+                Password
+              </button>
+            </div>
+
+            {authMode === "magic-link" ? (
+              /* Email Magic Link Form */
+              <form onSubmit={handleEmailLogin} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="email" className="block text-xs font-medium text-[#9AA1B2]">
+                    Work email
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-[#9AA1B2] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@company.com"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#0B0C10] border border-[#262A35] text-[#E8EAF0] placeholder-[#9AA1B2]/60 text-sm focus:outline-none focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF] transition-all"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || isGoogleLoading || !email}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#6C4CE8] hover:bg-[#5B3FD6] text-white font-medium text-sm transition-all shadow-[0_0_20px_rgba(124,92,255,0.25)] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] focus:ring-offset-2 focus:ring-offset-[#14161C] disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <span>Send Magic Link</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              /* Email + Password Form */
+              <form onSubmit={handlePasswordLogin} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="email" className="block text-xs font-medium text-[#9AA1B2]">
+                    Work email
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-[#9AA1B2] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@company.com"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#0B0C10] border border-[#262A35] text-[#E8EAF0] placeholder-[#9AA1B2]/60 text-sm focus:outline-none focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF] transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="password" className="block text-xs font-medium text-[#9AA1B2]">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-[#9AA1B2] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      id="password"
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#0B0C10] border border-[#262A35] text-[#E8EAF0] placeholder-[#9AA1B2]/60 text-sm focus:outline-none focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF] transition-all"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || isGoogleLoading || !email || !password}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#6C4CE8] hover:bg-[#5B3FD6] text-white font-medium text-sm transition-all shadow-[0_0_20px_rgba(124,92,255,0.25)] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] focus:ring-offset-2 focus:ring-offset-[#14161C] disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <span>Sign In</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </main>

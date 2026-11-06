@@ -4,12 +4,23 @@ import LoginPage from "@/app/login/page";
 
 const mockSignInWithOtp = vi.fn();
 const mockSignInWithOAuth = vi.fn();
+const mockSignInWithPassword = vi.fn();
+const mockPush = vi.fn();
+const mockRefresh = vi.fn();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: mockPush,
+    refresh: mockRefresh,
+  }),
+}));
 
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     auth: {
       signInWithOtp: mockSignInWithOtp,
       signInWithOAuth: mockSignInWithOAuth,
+      signInWithPassword: mockSignInWithPassword,
     },
   }),
 }));
@@ -90,5 +101,34 @@ describe("LoginPage", () => {
     });
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Invalid email address");
+  });
+
+  it("switches to password mode and logs in with credentials", async () => {
+    mockSignInWithPassword.mockResolvedValueOnce({ error: null });
+
+    render(<LoginPage />);
+
+    const passwordTab = screen.getByRole("tab", { name: /password/i });
+    fireEvent.click(passwordTab);
+
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+
+    const emailInput = screen.getByLabelText(/work email/i);
+    const passwordInput = screen.getByLabelText(/password/i);
+
+    fireEvent.change(emailInput, { target: { value: "dev@example.com" } });
+    fireEvent.change(passwordInput, { target: { value: "DevPassword123!" } });
+
+    const submitBtn = screen.getByRole("button", { name: /sign in/i });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(mockSignInWithPassword).toHaveBeenCalledWith({
+        email: "dev@example.com",
+        password: "DevPassword123!",
+      });
+      expect(mockPush).toHaveBeenCalledWith("/projects");
+    });
   });
 });
