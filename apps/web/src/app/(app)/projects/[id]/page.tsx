@@ -16,7 +16,9 @@ export default function ProjectWorkspacePage() {
   const projectId = params?.id as string;
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"assets" | "composer" | "history">("assets");
+  const [activeTab, setActiveTab] = useState<"assets" | "composer" | "history">(
+    "assets",
+  );
   const [seedAsset, setSeedAsset] = useState<Asset | null>(null);
 
   useEffect(() => {
@@ -53,10 +55,12 @@ export default function ProjectWorkspacePage() {
         </Link>
         <div>
           <h1 className="text-xl font-bold tracking-tight text-[#E8EAF0]">
-            {project?.name || (isLoading ? "Loading project..." : "Project Workspace")}
+            {project?.name ||
+              (isLoading ? "Loading project..." : "Project Workspace")}
           </h1>
           <p className="text-xs text-[#9AA1B2] mt-0.5">
-            {project?.description || "Generative media workspace and asset pipeline."}
+            {project?.description ||
+              "Generative media workspace and asset pipeline."}
           </p>
         </div>
       </div>
@@ -78,7 +82,9 @@ export default function ProjectWorkspacePage() {
               : "border-transparent text-[#9AA1B2] hover:text-[#E8EAF0]"
           }`}
         >
-          <ImageIcon className={`w-4 h-4 ${activeTab === "assets" ? "text-[#A995FF]" : ""}`} />
+          <ImageIcon
+            className={`w-4 h-4 ${activeTab === "assets" ? "text-[#A995FF]" : ""}`}
+          />
           <span>Asset Library</span>
         </button>
         <button
@@ -92,7 +98,9 @@ export default function ProjectWorkspacePage() {
               : "border-transparent text-[#9AA1B2] hover:text-[#E8EAF0]"
           }`}
         >
-          <Sparkles className={`w-4 h-4 ${activeTab === "composer" ? "text-[#A995FF]" : ""}`} />
+          <Sparkles
+            className={`w-4 h-4 ${activeTab === "composer" ? "text-[#A995FF]" : ""}`}
+          />
           <span>Generation Composer</span>
         </button>
         <button
@@ -106,7 +114,9 @@ export default function ProjectWorkspacePage() {
               : "border-transparent text-[#9AA1B2] hover:text-[#E8EAF0]"
           }`}
         >
-          <History className={`w-4 h-4 ${activeTab === "history" ? "text-[#A995FF]" : ""}`} />
+          <History
+            className={`w-4 h-4 ${activeTab === "history" ? "text-[#A995FF]" : ""}`}
+          />
           <span>Job History</span>
         </button>
       </div>

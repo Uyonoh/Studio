@@ -60,9 +60,22 @@ class GoogleProvider(GenerationProvider):
         # Instance store fallback (also synchronizes with shared class store)
         self._jobs = self._shared_jobs
 
+    @classmethod
+    def is_gemini_model(cls, model: str) -> bool:
+        """Check if model uses :generateContent instead of Imagen :predict / Veo."""
+        lower = model.lower()
+        return any(
+            token in lower
+            for token in ("gemini", "banana", "omni", "gemma", "flash-image", "pro-image")
+        )
+
     async def submit(self, req: ProviderRequest) -> ProviderJobRef:
-        """Submit a generation request to Google AI (Imagen 3 for images, Veo for video)."""
+        """Submit a generation request to Google AI (Gemini, Imagen 3, or Veo)."""
         model = req.model.removeprefix("models/")
+
+        if self.is_gemini_model(model):
+            return await self._submit_gemini(req, model)
+
         is_video = (
             req.task_type in (TaskType.TEXT_TO_VIDEO, TaskType.IMAGE_TO_VIDEO)
             or "veo" in model.lower()
@@ -71,6 +84,120 @@ class GoogleProvider(GenerationProvider):
         if is_video:
             return await self._submit_video(req, model)
         return await self._submit_image(req, model)
+
+    async def _format_gemini_part(self, url: str) -> dict[str, Any]:
+        """Format an input image/video URL for Gemini generateContent contents part."""
+        if url.startswith("data:"):
+            parts = url.split(",", 1)
+            header = parts[0].removeprefix("data:")
+            mime = header.split(";")[0] if ";" in header else "image/png"
+            b64_data = parts[1] if len(parts) > 1 else ""
+            return {
+                "inlineData": {
+                    "mimeType": mime or "image/png",
+                    "data": b64_data,
+                }
+            }
+
+        # If already a Google File API URI, pass as fileData
+        if "generativelanguage.googleapis.com" in url:
+            return {"fileData": {"fileUri": url, "mimeType": "image/png"}}
+
+        # If HTTP/HTTPS URL, download and convert to inlineData base64
+        if url.startswith(("http://", "https://")):
+            try:
+                r = await self._client.get(url, timeout=15.0)
+                if r.is_success:
+                    import base64
+
+                    b64_data = base64.b64encode(r.content).decode("ascii")
+                    mime = r.headers.get("content-type", "image/png").split(";")[0]
+                    return {
+                        "inlineData": {
+                            "mimeType": mime or "image/png",
+                            "data": b64_data,
+                        }
+                    }
+            except Exception as exc:
+                logger.warning("Failed to fetch image input from %s for Gemini: %s", url, exc)
+
+        return {"fileData": {"fileUri": url, "mimeType": "image/png"}}
+
+    async def _submit_gemini(self, req: ProviderRequest, model: str) -> ProviderJobRef:
+        """Submit generation request to Gemini :generateContent endpoint."""
+        job_id = f"goog_{uuid.uuid4().hex[:16]}"
+
+        parts: list[dict[str, Any]] = []
+        if req.prompt:
+            parts.append({"text": req.prompt})
+
+        for inp in req.inputs:
+            if inp.role in ("init_image", "reference_image", "first_frame"):
+                part = await self._format_gemini_part(inp.url)
+                if part:
+                    parts.append(part)
+
+        is_video = (
+            req.task_type in (TaskType.TEXT_TO_VIDEO, TaskType.IMAGE_TO_VIDEO)
+            or "video" in model.lower()
+        )
+        modality = "VIDEO" if is_video else "IMAGE"
+        generation_config: dict[str, Any] = {
+            "responseModalities": [modality],
+        }
+
+        aspect_ratio = req.params.get("aspect_ratio") or req.params.get("aspectRatio")
+        if aspect_ratio and not is_video:
+            generation_config["imageConfig"] = {"aspectRatio": aspect_ratio}
+
+        sample_count = int(
+            req.params.get("num_images")
+            or req.params.get("sample_count")
+            or req.params.get("sampleCount")
+            or 1
+        )
+        if sample_count > 1:
+            generation_config["candidateCount"] = sample_count
+
+        if "seed" in req.params:
+            try:
+                generation_config["seed"] = int(req.params["seed"])
+            except (ValueError, TypeError):
+                pass
+
+        if "temperature" in req.params:
+            try:
+                generation_config["temperature"] = float(req.params["temperature"])
+            except (ValueError, TypeError):
+                pass
+
+        payload: dict[str, Any] = {
+            "contents": [{"parts": parts}],
+            "generationConfig": generation_config,
+        }
+
+        if req.negative_prompt:
+            payload["systemInstruction"] = {
+                "parts": [{"text": f"Negative prompt / avoid: {req.negative_prompt}"}]
+            }
+
+        endpoint = f"/v1beta/models/{model}:generateContent?key={self._api_key}"
+        headers = {"x-goog-api-key": self._api_key}
+        resp = await self._client.post(endpoint, json=payload, headers=headers)
+        self._check_response(resp)
+
+        data = resp.json()
+        outputs = self.normalize_output(data)
+        if not outputs:
+            raise PermanentProviderError("Google AI returned no outputs")
+
+        self._jobs[job_id] = {
+            "status": ProviderJobState.SUCCEEDED,
+            "outputs": outputs,
+            "canceled": False,
+        }
+
+        return ProviderJobRef(provider_id=self.id, provider_job_id=job_id)
 
     async def _submit_image(self, req: ProviderRequest, model: str) -> ProviderJobRef:
         """Submit image generation request to Imagen :predict endpoint."""
@@ -321,7 +448,8 @@ class GoogleProvider(GenerationProvider):
         """Normalize Google AI predictions, operations, or inlineData into ProviderOutput items."""
         outputs: list[ProviderOutput] = []
 
-        response_obj = raw.get("response") if isinstance(raw.get("response"), dict) else raw
+        resp_val = raw.get("response")
+        response_obj: dict[str, Any] = resp_val if isinstance(resp_val, dict) else raw
 
         # 1. Veo generateVideoResponse -> generatedSamples format
         gen_video_resp = response_obj.get("generateVideoResponse", {})
@@ -364,7 +492,7 @@ class GoogleProvider(GenerationProvider):
                             )
                         )
 
-        # 4. Gemini generateContent inlineData format
+        # 4. Gemini generateContent inlineData / fileData format
         for candidate in response_obj.get("candidates", raw.get("candidates", [])):
             content = candidate.get("content", {})
             for part in content.get("parts", []):
@@ -378,6 +506,24 @@ class GoogleProvider(GenerationProvider):
                             url=data_uri,
                             mime_type=mime,
                             kind=_guess_kind(mime, data_uri),
+                        )
+                    )
+                file_data = part.get("fileData", {})
+                file_uri = file_data.get("fileUri")
+                mime_f = file_data.get("mimeType", "image/png")
+                if file_uri:
+                    if (
+                        "generativelanguage.googleapis.com" in file_uri
+                        and "key=" not in file_uri
+                        and self._api_key
+                    ):
+                        sep = "&" if "?" in file_uri else "?"
+                        file_uri = f"{file_uri}{sep}key={self._api_key}"
+                    outputs.append(
+                        ProviderOutput(
+                            url=file_uri,
+                            mime_type=mime_f,
+                            kind=_guess_kind(mime_f, file_uri),
                         )
                     )
 

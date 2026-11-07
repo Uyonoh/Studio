@@ -39,6 +39,23 @@ IMAGEN_PREDICT_RESPONSE = {
     ]
 }
 
+GEMINI_GENERATE_CONTENT_RESPONSE = {
+    "candidates": [
+        {
+            "content": {
+                "parts": [
+                    {
+                        "inlineData": {
+                            "data": SAMPLE_PNG_B64,
+                            "mimeType": "image/png",
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
+
 
 def _make_provider() -> GoogleProvider:
     return GoogleProvider(api_key=API_KEY, base_url=GOOGLE_BASE)
@@ -203,6 +220,132 @@ class TestGoogleSubmit:
         assert img_payload["bytesBase64Encoded"] == SAMPLE_PNG_B64
         assert img_payload["mimeType"] == "image/png"
 
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_submit_gemini_text_to_image(self) -> None:
+        provider = _make_provider()
+        model_name = "gemini-nano-banana-2.1"
+        route = respx.post(
+            f"{GOOGLE_BASE}/v1beta/models/{model_name}:generateContent?key={API_KEY}"
+        ).mock(return_value=httpx.Response(200, json=GEMINI_GENERATE_CONTENT_RESPONSE))
+
+        req = ProviderRequest(
+            task_type=TaskType.TEXT_TO_IMAGE,
+            model=model_name,
+            prompt="futuristic hovercar",
+            params={"aspect_ratio": "16:9", "num_images": 1},
+        )
+        ref = await provider.submit(req)
+
+        assert ref.provider_id == "google"
+        assert ref.provider_job_id.startswith("goog_")
+
+        sent = json.loads(route.calls[0].request.content)
+        assert sent["contents"][0]["parts"][0]["text"] == "futuristic hovercar"
+        assert sent["generationConfig"]["responseModalities"] == ["IMAGE"]
+        assert sent["generationConfig"]["imageConfig"]["aspectRatio"] == "16:9"
+
+        # Check job store
+        status = await provider.get_status(ref)
+        assert status.state == ProviderJobState.SUCCEEDED
+        assert len(status.outputs) == 1
+        assert status.outputs[0].kind == AssetKind.IMAGE
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_submit_gemini_image_to_image_data_uri(self) -> None:
+        provider = _make_provider()
+        model_name = "gemini-nano-banana-2.1"
+        route = respx.post(
+            f"{GOOGLE_BASE}/v1beta/models/{model_name}:generateContent?key={API_KEY}"
+        ).mock(return_value=httpx.Response(200, json=GEMINI_GENERATE_CONTENT_RESPONSE))
+
+        req = ProviderRequest(
+            task_type=TaskType.IMAGE_TO_IMAGE,
+            model=model_name,
+            prompt="cyberpunk variant",
+            inputs=[
+                ProviderInput(role="init_image", url=f"data:image/png;base64,{SAMPLE_PNG_B64}"),
+            ],
+        )
+        ref = await provider.submit(req)
+        assert ref.provider_job_id.startswith("goog_")
+
+        sent = json.loads(route.calls[0].request.content)
+        parts = sent["contents"][0]["parts"]
+        assert parts[0]["text"] == "cyberpunk variant"
+        assert parts[1]["inlineData"]["data"] == SAMPLE_PNG_B64
+        assert parts[1]["inlineData"]["mimeType"] == "image/png"
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_submit_gemini_external_image_url(self) -> None:
+        provider = _make_provider()
+        model_name = "gemini-3.1-flash-lite-image"
+        # Mock external image download
+        respx.get("https://storage.example.com/asset.png").mock(
+            return_value=httpx.Response(
+                200,
+                content=b"\x89PNG\r\n\x1a\nfake_bytes",
+                headers={"content-type": "image/png"},
+            )
+        )
+        route = respx.post(
+            f"{GOOGLE_BASE}/v1beta/models/{model_name}:generateContent?key={API_KEY}"
+        ).mock(return_value=httpx.Response(200, json=GEMINI_GENERATE_CONTENT_RESPONSE))
+
+        req = ProviderRequest(
+            task_type=TaskType.IMAGE_TO_IMAGE,
+            model=model_name,
+            prompt="watercolor effect",
+            inputs=[
+                ProviderInput(role="init_image", url="https://storage.example.com/asset.png"),
+            ],
+        )
+        ref = await provider.submit(req)
+        assert ref.provider_job_id.startswith("goog_")
+
+        sent = json.loads(route.calls[0].request.content)
+        parts = sent["contents"][0]["parts"]
+        assert "inlineData" in parts[1]
+        assert parts[1]["inlineData"]["mimeType"] == "image/png"
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_submit_gemini_video_modality(self) -> None:
+        provider = _make_provider()
+        model_name = "gemini-omni-1.2-flash"
+        route = respx.post(
+            f"{GOOGLE_BASE}/v1beta/models/{model_name}:generateContent?key={API_KEY}"
+        ).mock(return_value=httpx.Response(200, json=GEMINI_GENERATE_CONTENT_RESPONSE))
+
+        req = ProviderRequest(
+            task_type=TaskType.TEXT_TO_VIDEO,
+            model=model_name,
+            prompt="A rolling ocean wave",
+        )
+        await provider.submit(req)
+
+        sent = json.loads(route.calls[0].request.content)
+        assert sent["generationConfig"]["responseModalities"] == ["VIDEO"]
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_submit_gemini_empty_response_raises_permanent(self) -> None:
+        provider = _make_provider()
+        model_name = "gemini-nano-banana-2.1"
+        respx.post(
+            f"{GOOGLE_BASE}/v1beta/models/{model_name}:generateContent?key={API_KEY}"
+        ).mock(return_value=httpx.Response(200, json={"candidates": []}))
+
+        req = ProviderRequest(
+            task_type=TaskType.TEXT_TO_IMAGE,
+            model=model_name,
+            prompt="test",
+        )
+        with pytest.raises(PermanentProviderError, match="no outputs"):
+            await provider.submit(req)
+
 
 class TestGoogleGetStatus:
     """Tests for GoogleProvider.get_status()."""
@@ -303,6 +446,7 @@ class TestGoogleGetStatus:
         status = await provider.get_status(ref)
         assert status.state == ProviderJobState.FAILED
         assert status.error_code == "400"
+        assert status.error_message is not None
         assert "Content moderation" in status.error_message
 
 

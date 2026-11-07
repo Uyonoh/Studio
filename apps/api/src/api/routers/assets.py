@@ -153,11 +153,8 @@ def _supabase_signed_upload_url(
 
 def _supabase_signed_download_url(storage_path: str) -> str:
     """Return a signed download URL for an existing storage object."""
-    import os
     settings = get_settings()
     full_path = f"{settings.storage_bucket}/{storage_path}"
-    if os.environ.get("PYTEST_CURRENT_TEST") or settings.environment == "test":
-        return f"{settings.supabase_url}/storage/v1/object/sign/{full_path}"
     now = int(time.time())
     token = jwt.encode(
         {
