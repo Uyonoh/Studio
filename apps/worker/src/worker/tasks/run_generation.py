@@ -21,7 +21,7 @@ from studio_core.observability import (
     capture_exception,
     set_current_job_context,
 )
-from studio_core.queue import TASK_RUN_GENERATION, enqueue
+from studio_core.queue import TASK_FINALIZE_GENERATION, TASK_RUN_GENERATION, enqueue
 from studio_core.repositories import (
     AssetRepository,
     EventRepository,
@@ -32,6 +32,7 @@ from studio_core.state_machine import JobStateMachine
 from studio_providers.base import (
     PermanentProviderError,
     ProviderInput,
+    ProviderJobState,
     ProviderRequest,
     RateLimitedError,
     TransientProviderError,
@@ -222,6 +223,19 @@ async def run_generation(ctx: dict[str, Any], job_id_raw: str | UUID) -> None:
                 new=JobStatus.RUNNING,
                 provider_job_id=job_ref.provider_job_id,
             )
+
+            # Check if job completed synchronously (e.g. Google Imagen),
+            # and enqueue finalize immediately without waiting for reconciler
+            try:
+                initial_status = await provider.get_status(job_ref)
+                if initial_status.state == ProviderJobState.SUCCEEDED:
+                    logger.info(
+                        "Job %s completed synchronously; enqueuing finalize immediately", job_id
+                    )
+                    if redis_pool:
+                        await enqueue(redis_pool, TASK_FINALIZE_GENERATION, job_id)
+            except Exception as exc:
+                logger.debug("Immediate status check skipped for job %s: %s", job_id, exc)
 
         except (RateLimitedError, TransientProviderError) as exc:
             logger.warning("Transient error submitting job %s: %s", job_id, exc)

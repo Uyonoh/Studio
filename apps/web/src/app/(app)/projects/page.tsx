@@ -17,6 +17,7 @@ import { ErrorProjectsState } from "@/components/projects/error-projects-state";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import { RenameProjectDialog } from "@/components/projects/rename-project-dialog";
 import { ArchiveProjectDialog } from "@/components/projects/archive-project-dialog";
+import { toast } from "sonner";
 
 export default function ProjectsPage() {
   const { currentWorkspace, isLoading: isLoadingWorkspace } = useCurrentWorkspace();
@@ -69,6 +70,11 @@ export default function ProjectsPage() {
   }, [data?.items, searchQuery, sortBy]);
 
   const handleCreateSubmit = async (formData: { name: string; description: string }) => {
+    if (!workspaceId) {
+      const err = new Error("No active workspace selected. Please select a workspace first.");
+      toast.error(err.message);
+      return;
+    }
     await createMutation.mutateAsync(formData);
     setIsCreateOpen(false);
   };

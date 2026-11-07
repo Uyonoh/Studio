@@ -143,6 +143,66 @@ class TestGoogleSubmit:
         with pytest.raises(PermanentProviderError, match="no image outputs"):
             await provider.submit(_text_to_image_req())
 
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_submit_video_returns_operation_ref(self) -> None:
+        provider = _make_provider()
+        route = respx.post(
+            f"{GOOGLE_BASE}/v1beta/models/veo-2.0-generate-001:predictLongRunning?key={API_KEY}"
+        ).mock(
+            return_value=httpx.Response(
+                200,
+                json={"name": "operations/test-operation-12345"},
+            )
+        )
+
+        req = ProviderRequest(
+            task_type=TaskType.TEXT_TO_VIDEO,
+            model="veo-2.0-generate-001",
+            prompt="A majestic eagle flying over mountains",
+            params={"aspect_ratio": "16:9", "duration": 5, "resolution": "720p"},
+        )
+        ref = await provider.submit(req)
+
+        assert ref.provider_id == "google"
+        assert ref.provider_job_id == "operations/test-operation-12345"
+
+        sent = json.loads(route.calls[0].request.content)
+        assert sent["instances"][0]["prompt"] == "A majestic eagle flying over mountains"
+        assert sent["parameters"]["aspectRatio"] == "16:9"
+        assert sent["parameters"]["durationSeconds"] == 5
+        assert sent["parameters"]["resolution"] == "720p"
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_submit_video_image_to_video_data_uri(self) -> None:
+        provider = _make_provider()
+        route = respx.post(
+            f"{GOOGLE_BASE}/v1beta/models/veo-2.0-generate-001:predictLongRunning?key={API_KEY}"
+        ).mock(
+            return_value=httpx.Response(
+                200,
+                json={"name": "operations/test-operation-i2v"},
+            )
+        )
+
+        req = ProviderRequest(
+            task_type=TaskType.IMAGE_TO_VIDEO,
+            model="veo-2.0-generate-001",
+            prompt="Camera slowly zooms in",
+            inputs=[
+                ProviderInput(role="first_frame", url=f"data:image/png;base64,{SAMPLE_PNG_B64}"),
+            ],
+            params={"aspect_ratio": "16:9"},
+        )
+        ref = await provider.submit(req)
+        assert ref.provider_job_id == "operations/test-operation-i2v"
+
+        sent = json.loads(route.calls[0].request.content)
+        img_payload = sent["instances"][0]["image"]
+        assert img_payload["bytesBase64Encoded"] == SAMPLE_PNG_B64
+        assert img_payload["mimeType"] == "image/png"
+
 
 class TestGoogleGetStatus:
     """Tests for GoogleProvider.get_status()."""
@@ -172,6 +232,79 @@ class TestGoogleGetStatus:
         assert status.state == ProviderJobState.FAILED
         assert status.error_code == "JOB_NOT_FOUND"
 
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_get_status_video_operation_running(self) -> None:
+        provider = _make_provider()
+        op_id = "operations/op-running-123"
+        respx.get(f"{GOOGLE_BASE}/v1beta/{op_id}?key={API_KEY}").mock(
+            return_value=httpx.Response(200, json={"name": op_id, "done": False})
+        )
+
+        ref = ProviderJobRef(provider_id="google", provider_job_id=op_id)
+        status = await provider.get_status(ref)
+        assert status.state == ProviderJobState.RUNNING
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_get_status_video_operation_succeeded(self) -> None:
+        provider = _make_provider()
+        op_id = "operations/op-done-123"
+        video_url = "https://generativelanguage.googleapis.com/v1beta/files/generated_video_789"
+        respx.get(f"{GOOGLE_BASE}/v1beta/{op_id}?key={API_KEY}").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "name": op_id,
+                    "done": True,
+                    "response": {
+                        "generateVideoResponse": {
+                            "generatedSamples": [
+                                {
+                                    "video": {
+                                        "uri": video_url,
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                },
+            )
+        )
+
+        ref = ProviderJobRef(provider_id="google", provider_job_id=op_id)
+        status = await provider.get_status(ref)
+        assert status.state == ProviderJobState.SUCCEEDED
+        assert len(status.outputs) == 1
+        assert status.outputs[0].kind == AssetKind.VIDEO
+        assert status.outputs[0].url == f"{video_url}?key={API_KEY}"
+        assert status.outputs[0].mime_type == "video/mp4"
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_get_status_video_operation_failed(self) -> None:
+        provider = _make_provider()
+        op_id = "operations/op-failed-123"
+        respx.get(f"{GOOGLE_BASE}/v1beta/{op_id}?key={API_KEY}").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "name": op_id,
+                    "done": True,
+                    "error": {
+                        "code": 400,
+                        "message": "Content moderation policy triggered",
+                    },
+                },
+            )
+        )
+
+        ref = ProviderJobRef(provider_id="google", provider_job_id=op_id)
+        status = await provider.get_status(ref)
+        assert status.state == ProviderJobState.FAILED
+        assert status.error_code == "400"
+        assert "Content moderation" in status.error_message
+
 
 class TestGoogleCancel:
     """Tests for GoogleProvider.cancel()."""
@@ -194,6 +327,19 @@ class TestGoogleCancel:
         provider = _make_provider()
         ref = ProviderJobRef(provider_id="google", provider_job_id="nonexistent")
         await provider.cancel(ref)
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_cancel_video_operation(self) -> None:
+        provider = _make_provider()
+        op_id = "operations/op-cancel-123"
+        route = respx.post(f"{GOOGLE_BASE}/v1beta/{op_id}:cancel?key={API_KEY}").mock(
+            return_value=httpx.Response(200, json={})
+        )
+
+        ref = ProviderJobRef(provider_id="google", provider_job_id=op_id)
+        await provider.cancel(ref)
+        assert route.called
 
 
 class TestGoogleErrorMapping:
@@ -320,3 +466,44 @@ class TestGoogleNormalizeOutput:
         assert len(outputs) == 1
         assert outputs[0].url == "https://storage.googleapis.com/bucket/output.mp4"
         assert outputs[0].kind == AssetKind.VIDEO
+
+    def test_normalize_output_veo_generate_video_response(self) -> None:
+        provider = _make_provider()
+        raw = {
+            "response": {
+                "generateVideoResponse": {
+                    "generatedSamples": [
+                        {
+                            "video": {
+                                "uri": "https://generativelanguage.googleapis.com/v1beta/files/vid123",
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+        outputs = provider.normalize_output(raw)
+        assert len(outputs) == 1
+        assert outputs[0].kind == AssetKind.VIDEO
+        assert outputs[0].mime_type == "video/mp4"
+        assert outputs[0].url == f"https://generativelanguage.googleapis.com/v1beta/files/vid123?key={API_KEY}"
+
+    def test_normalize_output_veo_base64_video(self) -> None:
+        provider = _make_provider()
+        fake_b64 = "AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDE="
+        raw = {
+            "response": {
+                "predictions": [
+                    {
+                        "video": {
+                            "bytesBase64Encoded": fake_b64,
+                            "mimeType": "video/mp4",
+                        }
+                    }
+                ]
+            }
+        }
+        outputs = provider.normalize_output(raw)
+        assert len(outputs) == 1
+        assert outputs[0].kind == AssetKind.VIDEO
+        assert outputs[0].url == f"data:video/mp4;base64,{fake_b64}"

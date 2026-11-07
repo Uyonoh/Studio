@@ -94,7 +94,7 @@ async def smoke_fal() -> None:
 
 
 async def smoke_google() -> None:
-    """Smoke test: submit a text→image prediction with Google Imagen 3."""
+    """Smoke test: submit a prediction to Google AI (Imagen 3 or Veo 2)."""
     from studio_core.models import TaskType
     from studio_providers.base import ProviderRequest
     from studio_providers.google import GoogleProvider
@@ -105,25 +105,46 @@ async def smoke_google() -> None:
         sys.exit(1)
 
     provider = GoogleProvider(api_key=key)
-    req = ProviderRequest(
-        task_type=TaskType.TEXT_TO_IMAGE,
-        model="imagen-3.0-generate-002",
-        prompt="A serene Japanese garden with a koi pond, soft morning light, photorealistic",
-        params={"aspect_ratio": "16:9", "num_images": 1},
-    )
 
-    print("[google] Submitting text→image prediction to Imagen 3...")
+    mode = "image"
+    if len(sys.argv) >= 3 and sys.argv[2] in ("video", "image"):
+        mode = sys.argv[2]
+
+    if mode == "video":
+        req = ProviderRequest(
+            task_type=TaskType.TEXT_TO_VIDEO,
+            model="veo-2.0-generate-001",
+            prompt="A tranquil drone shot sweeping over autumn trees and a gentle river at sunset",
+            params={"aspect_ratio": "16:9", "duration": 5, "resolution": "720p"},
+        )
+        print("[google] Submitting text→video prediction to Veo 2 (predictLongRunning)...")
+    else:
+        req = ProviderRequest(
+            task_type=TaskType.TEXT_TO_IMAGE,
+            model="imagen-3.0-generate-002",
+            prompt="A serene Japanese garden with a koi pond, soft morning light, photorealistic",
+            params={"aspect_ratio": "16:9", "num_images": 1},
+        )
+        print("[google] Submitting text→image prediction to Imagen 3...")
+
     ref = await provider.submit(req)
-    print(f"[google] Prediction ID: {ref.provider_job_id}")
+    print(f"[google] Prediction / Operation ID: {ref.provider_job_id}")
 
-    status = await provider.get_status(ref)
-    print(f"[google] Status: {status.state}")
-    if status.outputs:
-        for j, out in enumerate(status.outputs):
-            url_preview = out.url[:60] + "..." if len(out.url) > 60 else out.url
-            print(f"[google] Output {j}: {url_preview} ({out.kind})")
-    if status.error_message:
-        print(f"[google] Error: {status.error_message}")
+    # Poll status (synchronous for Imagen, async operation polling for Veo)
+    for i in range(120):
+        status = await provider.get_status(ref)
+        print(f"[google] Status: {status.state} (poll {i + 1})")
+        if status.state in ("succeeded", "failed", "canceled"):
+            if status.outputs:
+                for j, out in enumerate(status.outputs):
+                    url_preview = out.url[:70] + "..." if len(out.url) > 70 else out.url
+                    print(f"[google] Output {j}: {url_preview} ({out.kind})")
+            if status.error_message:
+                print(f"[google] Error: {status.error_message}")
+            break
+        await asyncio.sleep(5)
+    else:
+        print("[google] Timed out after polling")
 
 
 PROVIDERS = {

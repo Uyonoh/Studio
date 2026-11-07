@@ -7,6 +7,16 @@ create table if not exists public.providers (
   enabled  boolean not null default true
 );
 
+insert into public.providers (id, name, enabled)
+values
+  ('fake', 'Deterministic Test Provider', true),
+  ('replicate', 'Replicate', true),
+  ('fal', 'Fal.ai', true),
+  ('google', 'Google AI (Imagen / Veo)', true)
+on conflict (id) do update set
+  name = excluded.name,
+  enabled = excluded.enabled;
+
 create table if not exists public.models (
   id               uuid primary key default gen_random_uuid(),
   provider_id      text not null references public.providers(id),

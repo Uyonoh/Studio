@@ -18,6 +18,9 @@ class WorkerConfig(Settings):
         default=5, validation_alias="PROVIDER_CONCURRENCY_REPLICATE"
     )
     provider_concurrency_fal: int = Field(default=5, validation_alias="PROVIDER_CONCURRENCY_FAL")
+    provider_concurrency_google: int = Field(
+        default=5, validation_alias="PROVIDER_CONCURRENCY_GOOGLE"
+    )
 
     # Timeouts for reconciler
     max_runtime_image_seconds: int = Field(

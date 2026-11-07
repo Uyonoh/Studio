@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import base64
 import logging
+import time
 from typing import Any
 
 import httpx
+import jwt
 
 from studio_core.settings import Settings, get_settings
 
@@ -24,7 +26,18 @@ def make_storage_path(workspace_id: Any, project_id: Any, asset_id: Any, filenam
 def get_signed_download_url(storage_path: str, settings: Settings | None = None) -> str:
     """Generate signed download URL for an internal storage path."""
     s = settings or get_settings()
-    return f"{s.supabase_url}/storage/v1/object/sign/{s.storage_bucket}/{storage_path}"
+    full_path = f"{s.storage_bucket}/{storage_path}"
+    now = int(time.time())
+    token = jwt.encode(
+        {
+            "url": full_path,
+            "iat": now,
+            "exp": now + 3600,
+        },
+        s.supabase_jwt_secret,
+        algorithm="HS256",
+    )
+    return f"{s.supabase_url}/storage/v1/object/sign/{full_path}?token={token}"
 
 
 class StorageClient:

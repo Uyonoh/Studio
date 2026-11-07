@@ -47,7 +47,9 @@ export function WorkspaceProvider({
         }
         if (list.length > 0) {
           setWorkspaces(list);
-          setCurrentWorkspace((prev) => prev || list[0]);
+          const savedId = typeof window !== "undefined" ? localStorage.getItem("studio_active_workspace_id") : null;
+          const matched = savedId ? list.find((w) => w.id === savedId) : null;
+          setCurrentWorkspace(matched || list[0]);
         }
       } catch (e) {
         // Fallback for mock/test environments
@@ -59,12 +61,19 @@ export function WorkspaceProvider({
     loadWorkspaces();
   }, [initialWorkspace]);
 
+  const handleSelectWorkspace = (ws: Workspace) => {
+    setCurrentWorkspace(ws);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("studio_active_workspace_id", ws.id);
+    }
+  };
+
   return (
     <WorkspaceContext.Provider
       value={{
         workspaces,
         currentWorkspace,
-        setCurrentWorkspace,
+        setCurrentWorkspace: handleSelectWorkspace,
         isLoading,
       }}
     >

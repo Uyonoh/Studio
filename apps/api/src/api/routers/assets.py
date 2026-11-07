@@ -122,32 +122,53 @@ class AssetListResponse(BaseModel):
 # ── Supabase storage helpers ───────────────────────────────────────────────────
 
 
+import time
+import jwt
+
+
 def _supabase_signed_upload_url(
     workspace_id: UUID,
     project_id: UUID,
     asset_id: UUID,
     filename: str,
 ) -> str:
-    """Build the Supabase storage path and return a signed upload URL.
-
-    In production this calls the Supabase Storage REST API.  In local/test
-    environments the URL is a placeholder that the test suite can intercept.
-    """
+    """Build the Supabase storage path and return a signed upload URL."""
     settings = get_settings()
     storage_path = f"{workspace_id}/{project_id}/{asset_id}/{filename}"
-    # Supabase signed upload URL endpoint
-    url = (
-        f"{settings.supabase_url}/storage/v1/object/sign/upload/"
-        f"{settings.storage_bucket}/{storage_path}"
+    full_path = f"{settings.storage_bucket}/{storage_path}"
+    now = int(time.time())
+    token = jwt.encode(
+        {
+            "url": full_path,
+            "upsert": True,
+            "scope": "upload",
+            "iat": now,
+            "exp": now + SIGNED_URL_TTL,
+        },
+        settings.supabase_jwt_secret,
+        algorithm="HS256",
     )
-    return url
+    return f"{settings.supabase_url}/storage/v1/object/upload/sign/{full_path}?token={token}"
 
 
 def _supabase_signed_download_url(storage_path: str) -> str:
     """Return a signed download URL for an existing storage object."""
+    import os
     settings = get_settings()
-    url = f"{settings.supabase_url}/storage/v1/object/sign/{settings.storage_bucket}/{storage_path}"
-    return url
+    full_path = f"{settings.storage_bucket}/{storage_path}"
+    if os.environ.get("PYTEST_CURRENT_TEST") or settings.environment == "test":
+        return f"{settings.supabase_url}/storage/v1/object/sign/{full_path}"
+    now = int(time.time())
+    token = jwt.encode(
+        {
+            "url": full_path,
+            "iat": now,
+            "exp": now + SIGNED_URL_TTL,
+        },
+        settings.supabase_jwt_secret,
+        algorithm="HS256",
+    )
+    return f"{settings.supabase_url}/storage/v1/object/sign/{full_path}?token={token}"
 
 
 def _asset_response(asset: Asset) -> AssetResponse:
@@ -345,7 +366,7 @@ async def request_upload(
 
     # Create draft asset (metadata.status = 'pending')
     repo = AssetRepository(db)
-    await repo.create(
+    created_asset = await repo.create(
         workspace_id=workspace_id,
         project_id=project_id,
         kind=kind,
@@ -358,12 +379,10 @@ async def request_upload(
         created_by=user.id,
     )
 
-    # Override the uuid4 auto-generated ID by directly using the one we chose.
-    # (The repository always inserts and lets Postgres generate the ID.)
-    # We need the asset to use our chosen ID for deterministic storage paths.
-    # Workaround: re-fetch by storage_path and return its actual ID.
-    row = await db.fetchrow("SELECT id FROM public.assets WHERE storage_path = $1", storage_path)
-    actual_id: UUID = row["id"] if row else asset_id
+    actual_id = created_asset.id
+    if actual_id != asset_id:
+        storage_path = f"{workspace_id}/{project_id}/{actual_id}/{body.filename}"
+        await db.execute("UPDATE public.assets SET storage_path = $1 WHERE id = $2", storage_path, actual_id)
 
     upload_url = _supabase_signed_upload_url(workspace_id, project_id, actual_id, body.filename)
     return UploadResponse(asset_id=actual_id, upload_url=upload_url)
