@@ -13,7 +13,7 @@ concurrency:
 jobs:
   python:
     name: Python Lint, Typecheck & Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       redis:
         image: redis:7-alpine
@@ -61,7 +61,7 @@ jobs:
 
   web:
     name: Web & TypeScript Lint & Checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
@@ -84,6 +84,9 @@ jobs:
       - name: Lint TypeScript packages
         run: pnpm -r --if-present lint
 
+      - name: Build Packages
+        run: pnpm --filter "./packages/**" build
+
       - name: Typecheck TypeScript packages
         run: pnpm -r --if-present typecheck
 
@@ -92,7 +95,7 @@ jobs:
 
   e2e:
     name: Browser E2E
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     env:
@@ -144,7 +147,7 @@ jobs:
 
   secrets-scan:
     name: Secrets Scan (Gitleaks)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
