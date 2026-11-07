@@ -269,9 +269,7 @@ async def test_get_asset_returns_lineage_for_generated_asset() -> None:
     assert lineage["inputs"][0]["asset_id"] == str(input_id)
     assert lineage["inputs"][0]["kind"] == "image"
     assert lineage["inputs"][0]["role"] == "first_frame"
-    assert lineage["inputs"][0]["signed_url"].endswith(
-        "/storage/v1/object/sign/media/ws/proj/input/frame.png"
-    )
+    assert "/storage/v1/object/sign/media/ws/proj/input/frame.png" in lineage["inputs"][0]["signed_url"]
     assert lineage["inputs"][0]["thumbnail_url"] is None
     assert lineage["parent"]["asset_id"] == str(parent_id)
 

@@ -85,4 +85,3 @@ async def create_workspace(
         )
 
     return WorkspaceResponse(id=ws_row["id"], name=ws_row["name"], owner_id=ws_row["owner_id"])
-

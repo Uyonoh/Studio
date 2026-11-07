@@ -137,7 +137,9 @@ class E2EState:
                 proj = self.projects.get(proj_id)
                 return dict(proj) if proj else None
 
-            if "FROM public.generation_jobs" in query and ("WHERE id = $1" in query or "WHERE j.id = $1" in query):
+            if "FROM public.generation_jobs" in query and (
+                "WHERE id = $1" in query or "WHERE j.id = $1" in query
+            ):
                 job_found = self.jobs.get(params[0])
                 if not job_found:
                     return None

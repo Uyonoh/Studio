@@ -12,12 +12,14 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from datetime import datetime
 from decimal import Decimal
 from typing import Annotated, Any
 from uuid import UUID, uuid4
 
 import asyncpg
+import jwt
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
@@ -120,10 +122,6 @@ class AssetListResponse(BaseModel):
 
 
 # ── Supabase storage helpers ───────────────────────────────────────────────────
-
-
-import time
-import jwt
 
 
 def _supabase_signed_upload_url(
@@ -379,7 +377,9 @@ async def request_upload(
     actual_id = created_asset.id
     if actual_id != asset_id:
         storage_path = f"{workspace_id}/{project_id}/{actual_id}/{body.filename}"
-        await db.execute("UPDATE public.assets SET storage_path = $1 WHERE id = $2", storage_path, actual_id)
+        await db.execute(
+            "UPDATE public.assets SET storage_path = $1 WHERE id = $2", storage_path, actual_id
+        )
 
     upload_url = _supabase_signed_upload_url(workspace_id, project_id, actual_id, body.filename)
     return UploadResponse(asset_id=actual_id, upload_url=upload_url)

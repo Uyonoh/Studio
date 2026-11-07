@@ -334,9 +334,9 @@ class TestGoogleSubmit:
     async def test_submit_gemini_empty_response_raises_permanent(self) -> None:
         provider = _make_provider()
         model_name = "gemini-nano-banana-2.1"
-        respx.post(
-            f"{GOOGLE_BASE}/v1beta/models/{model_name}:generateContent?key={API_KEY}"
-        ).mock(return_value=httpx.Response(200, json={"candidates": []}))
+        respx.post(f"{GOOGLE_BASE}/v1beta/models/{model_name}:generateContent?key={API_KEY}").mock(
+            return_value=httpx.Response(200, json={"candidates": []})
+        )
 
         req = ProviderRequest(
             task_type=TaskType.TEXT_TO_IMAGE,
@@ -630,7 +630,10 @@ class TestGoogleNormalizeOutput:
         assert len(outputs) == 1
         assert outputs[0].kind == AssetKind.VIDEO
         assert outputs[0].mime_type == "video/mp4"
-        assert outputs[0].url == f"https://generativelanguage.googleapis.com/v1beta/files/vid123?key={API_KEY}"
+        assert (
+            outputs[0].url
+            == f"https://generativelanguage.googleapis.com/v1beta/files/vid123?key={API_KEY}"
+        )
 
     def test_normalize_output_veo_base64_video(self) -> None:
         provider = _make_provider()
