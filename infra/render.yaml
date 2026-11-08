@@ -17,7 +17,7 @@ services:
   - type: web
     name: studio-api
     runtime: docker
-    plan: starter
+    plan: free
     region: oregon
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: .
@@ -39,7 +39,7 @@ services:
   - type: worker
     name: studio-worker
     runtime: docker
-    plan: starter
+    plan: free
     region: oregon
     dockerfilePath: ./apps/worker/Dockerfile
     dockerContext: .
@@ -59,7 +59,7 @@ services:
 
   - type: keyvalue
     name: studio-redis
-    plan: starter
+    plan: free
     region: oregon
     maxmemoryPolicy: noeviction
     ipAllowList: [] # internal Render traffic only
