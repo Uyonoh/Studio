@@ -1,0 +1,27 @@
+# Build context only needs the Python sources and pinned requirements for the
+# API/worker images (see apps/*/Dockerfile). Keeping the context small also
+# stops Docker from hashing node_modules/.git on every build.
+.git
+.github
+.venv
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/node_modules
+**/.next
+**/dist
+**/coverage
+docs
+apps/web
+infra
+scripts
+tests
+*.md
+.env
+.env.*
+!.env.example
+uv.lock
+pnpm-lock.yaml

@@ -13,7 +13,7 @@ concurrency:
 jobs:
   python:
     name: Python Lint, Typecheck & Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     services:
       redis:
         image: redis:7-alpine
@@ -54,14 +54,14 @@ jobs:
       - name: Typecheck (Mypy)
         run: |
           uv run mypy -p api -p worker -p studio_core -p studio_providers -p studio_media
-          uv run mypy apps/api/tests apps/worker/tests packages/studio_core/tests packages/studio_providers/tests packages/studio_media/tests
+          uv run mypy apps/api/tests apps/worker/tests packages/studio_core/tests packages/studio_providers/tests packages/studio_media/tests tests/e2e_backend tests/infra
 
       - name: Run Python tests (Pytest)
         run: uv run pytest -q
 
   web:
     name: Web & TypeScript Lint & Checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout repository
@@ -84,15 +84,70 @@ jobs:
       - name: Lint TypeScript packages
         run: pnpm -r --if-present lint
 
+      - name: Build Packages
+        run: pnpm --filter "./packages/**" build
+
       - name: Typecheck TypeScript packages
         run: pnpm -r --if-present typecheck
 
       - name: Run TypeScript tests
         run: pnpm -r --if-present test
 
+  e2e:
+    name: Browser E2E
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    env:
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:3101
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:3101
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+      NEXT_TELEMETRY_DISABLED: "1"
+      E2E_USE_PROD: "1"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.20.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install Node dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared API client
+        run: pnpm --filter @studio/api-client build
+
+      - name: Build web app for E2E
+        run: pnpm --filter @studio/web build
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @studio/web exec playwright install --with-deps chromium
+
+      - name: Run Playwright suite
+        run: pnpm --filter @studio/web e2e
+
+      - name: Upload Playwright artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          retention-days: 7
+
   secrets-scan:
     name: Secrets Scan (Gitleaks)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

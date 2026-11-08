@@ -42,6 +42,7 @@ out/
 coverage/
 *.lcov
 .nyc_output
+*.tsbuildinfo
 
 # Environment & Secrets
 .env
@@ -65,3 +66,11 @@ Thumbs.db
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
+# Application source directories named lib/ are not Python packaging output
+!apps/web/src/lib/

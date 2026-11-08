@@ -121,7 +121,7 @@ ENVIRONMENT=local|staging|production
 
 > Copy DDL from TDD §3.2/§3.3 into migrations. Split into the migrations below; do not rewrite the design without recording an ADR.
 
-### [ ] T1.1 Migration: identity, tenancy, projects
+### [x] T1.1 Migration: identity, tenancy, projects
 **Depends:** T0.2
 **Goal:** `profiles`, `workspaces`, `workspace_members`, `projects`, `workspace_role` enum, auto-provisioning.
 **Steps**
@@ -131,12 +131,12 @@ ENVIRONMENT=local|staging|production
 4. Add `is_member(ws, min_role)` function (security definer, `set search_path = public`). **Check the enum ordering comparison actually yields the intended semantics** and write a test proving `viewer` cannot satisfy `editor`.
 5. Enable RLS + policies for `profiles` (self read/update), `workspaces`, `workspace_members`, `projects` per TDD §3.3.
 **DoD**
-- [ ] `supabase db reset` applies cleanly.
-- [ ] Creating a user via Supabase Auth yields profile + workspace + owner membership automatically.
-- [ ] Policies verified in T1.4 tests (stub tests may be added here).
+- [x] `supabase db reset` applies cleanly.
+- [x] Creating a user via Supabase Auth yields profile + workspace + owner membership automatically.
+- [x] Policies verified in T1.4 tests (stub tests may be added here).
 **Verify:** `supabase db reset && supabase test db`
 
-### [ ] T1.2 Migration: models, assets, jobs, ledger
+### [x] T1.2 Migration: models, assets, jobs, ledger
 **Depends:** T1.1
 **Goal:** All MVP generation tables.
 **Steps**
@@ -146,12 +146,12 @@ ENVIRONMENT=local|staging|production
 4. Add DB-level guard: `check` that `generation_jobs.attempt <= max_attempts`.
 5. Enable Realtime publication for `generation_jobs` only.
 **DoD**
-- [ ] Reset applies cleanly; all indexes present (`\d+` check in a test).
-- [ ] Unique `(workspace_id, idempotency_key)` and unique `provider_job_id` enforced (test inserts a duplicate and expects failure).
-- [ ] `generation_jobs` is in the `supabase_realtime` publication.
+- [x] Reset applies cleanly; all indexes present (`\d+` check in a test).
+- [x] Unique `(workspace_id, idempotency_key)` and unique `provider_job_id` enforced (test inserts a duplicate and expects failure).
+- [x] `generation_jobs` is in the `supabase_realtime` publication.
 **Verify:** `supabase db reset && supabase test db`
 
-### [ ] T1.3 Storage bucket, policies, seed data
+### [x] T1.3 Storage bucket, policies, seed data
 **Depends:** T1.2
 **Goal:** Private `media` bucket scoped by workspace path; seed providers/models.
 **Steps**
@@ -159,25 +159,25 @@ ENVIRONMENT=local|staging|production
 2. `supabase/seed.sql`: providers (`replicate`, `fal`, `fake`), and models for the `fake` provider covering all four task types, with realistic `input_schema` JSON Schemas (prompt, aspect_ratio enum, seed int, duration_s for video) and `cost_credits`.
 3. Seed a dev user via a script (`scripts/seed_dev_user.py`) that signs up `dev@example.com` through the Auth admin API and grants 1000 credits via `credit_ledger`.
 **DoD**
-- [ ] A member can upload/download only under their workspace prefix; non-members get denied (tested).
-- [ ] `select * from models` shows fake models for all four task types.
+- [x] A member can upload/download only under their workspace prefix; non-members get denied (tested).
+- [x] `select * from models` shows fake models for all four task types.
 **Verify:** `supabase db reset && python scripts/seed_dev_user.py && supabase test db`
 
-### [ ] T1.4 RLS and constraint tests (pgTAP)
+### [x] T1.4 RLS and constraint tests (pgTAP)
 **Depends:** T1.3
 **Goal:** Automated proof of tenant isolation.
 **Steps**
 1. `supabase/tests/rls_*.sql` using pgTAP. Fixtures: two workspaces A and B; users: A-owner, A-editor, A-viewer, B-owner.
 2. Cases: B-owner cannot read A's projects/assets/jobs; viewer cannot insert project; editor can; nobody can write `generation_jobs`/`credit_ledger` with the anon/authenticated role; storage path isolation.
 **DoD**
-- [ ] ≥ 20 assertions, all passing; run in CI (add job `db-tests`).
+- [x] ≥ 20 assertions, all passing; run in CI (add job `db-tests`).
 **Verify:** `supabase test db`
 
 ---
 
 ## PHASE 2 — Core domain (`studio_core`, `studio_providers`)
 
-### [ ] T2.1 Settings, DB access, repositories
+### [x] T2.1 Settings, DB access, repositories
 **Depends:** T1.3
 **Goal:** Typed config and async data access.
 **Steps**
@@ -186,11 +186,11 @@ ENVIRONMENT=local|staging|production
 3. Pydantic domain models mirroring tables; enums for `JobStatus`, `TaskType`, `InputRole`, `AssetKind`.
 4. Test fixtures: `db` fixture that connects to local Supabase Postgres and wraps each test in a rolled-back transaction.
 **DoD**
-- [ ] CRUD for each repository covered by tests against the local DB.
-- [ ] No SQL string interpolation (parameterized only); a test greps for f-strings in repository SQL.
+- [x] CRUD for each repository covered by tests against the local DB.
+- [x] No SQL string interpolation (parameterized only); a test greps for f-strings in repository SQL.
 **Verify:** `uv run pytest packages/studio_core -q`
 
-### [ ] T2.2 Job state machine
+### [x] T2.2 Job state machine
 **Depends:** T2.1
 **Goal:** A single place that governs legal state transitions.
 **Steps**
@@ -198,11 +198,11 @@ ENVIRONMENT=local|staging|production
 2. `JobService.transition(job_id, expected, new, **fields)` performing a guarded update (`UPDATE ... WHERE id=$1 AND status=$2 RETURNING *`), setting `started_at`/`completed_at` appropriately, and appending a `job_events` row **in the same transaction**. Returns `None` if the guard failed (caller decides what to do).
 3. Terminal states are immutable.
 **DoD**
-- [ ] Property-based test (`hypothesis`) shows no illegal transition is ever accepted and terminal states never change.
-- [ ] Concurrency test: two simultaneous `transition(running→finalizing)` calls — exactly one succeeds.
+- [x] Property-based test (`hypothesis`) shows no illegal transition is ever accepted and terminal states never change.
+- [x] Concurrency test: two simultaneous `transition(running→finalizing)` calls — exactly one succeeds.
 **Verify:** `uv run pytest packages/studio_core -k state -q`
 
-### [ ] T2.3 Provider interface, registry, FakeProvider
+### [x] T2.3 Provider interface, registry, FakeProvider
 **Depends:** T2.1
 **Goal:** Provider abstraction and a deterministic fake for all tests/dev.
 **Steps**
@@ -211,11 +211,11 @@ ENVIRONMENT=local|staging|production
 3. `fake.py`: `FakeProvider` with configurable latency, failure injection (`fail_rate`, `fail_on_prompt_contains="FAIL"`), webhook simulation (an in-process `trigger_webhook(job)` helper), and outputs served from `packages/studio_providers/fixtures/` (tiny PNG and MP4) via a local HTTP file server fixture.
 4. Error taxonomy: `TransientProviderError`, `PermanentProviderError`, `RateLimitedError(retry_after)`.
 **DoD**
-- [ ] A reusable contract test suite (`tests/contract.py`) any adapter can inherit: submit → status → outputs, cancel, bad-input → `PermanentProviderError`, webhook verification (valid/invalid signature).
-- [ ] `FakeProvider` passes the contract suite.
+- [x] A reusable contract test suite (`tests/contract.py`) any adapter can inherit: submit → status → outputs, cancel, bad-input → `PermanentProviderError`, webhook verification (valid/invalid signature).
+- [x] `FakeProvider` passes the contract suite.
 **Verify:** `uv run pytest packages/studio_providers -q`
 
-### [ ] T2.4 Credits service
+### [x] T2.4 Credits service
 **Depends:** T2.1
 **Goal:** Reserve/refund credits atomically.
 **Steps**
@@ -223,11 +223,11 @@ ENVIRONMENT=local|staging|production
 2. `refund(job_id)` — idempotent: refund once per job (check existing refund row).
 3. `balance(workspace_id)`.
 **DoD**
-- [ ] Concurrency test: 20 parallel reserves against a balance for 10 → exactly 10 succeed, balance never negative.
-- [ ] Double refund test results in one refund row.
+- [x] Concurrency test: 20 parallel reserves against a balance for 10 → exactly 10 succeed, balance never negative.
+- [x] Double refund test results in one refund row.
 **Verify:** `uv run pytest packages/studio_core -k credit -q`
 
-### [ ] T2.5 Generation request validation and job creation
+### [x] T2.5 Generation request validation and job creation
 **Depends:** T2.2, T2.3, T2.4
 **Goal:** Everything the API does on submit, as a testable service.
 **Steps**
@@ -240,15 +240,15 @@ ENVIRONMENT=local|staging|production
    - In one transaction: insert job (`queued`), `job_inputs`, reserve credits. On unique violation of idempotency key return the existing job (same payload) or raise `IdempotencyConflict` if payload differs.
 2. Return the job; **enqueueing is the caller's responsibility** (API) so this stays transport-agnostic.
 **DoD**
-- [ ] Tests for each validation failure path with specific `error_code`s (`MODEL_TASK_MISMATCH`, `INVALID_PARAMS`, `MISSING_INPUT`, `INSUFFICIENT_CREDITS`, `CONCURRENCY_LIMIT`, `IDEMPOTENCY_CONFLICT`).
-- [ ] Replaying the same idempotency key + payload returns the same job without double-charging.
+- [x] Tests for each validation failure path with specific `error_code`s (`MODEL_TASK_MISMATCH`, `INVALID_PARAMS`, `MISSING_INPUT`, `INSUFFICIENT_CREDITS`, `CONCURRENCY_LIMIT`, `IDEMPOTENCY_CONFLICT`).
+- [x] Replaying the same idempotency key + payload returns the same job without double-charging.
 **Verify:** `uv run pytest packages/studio_core -k generation -q`
 
 ---
 
 ## PHASE 3 — API (`apps/api`)
 
-### [ ] T3.1 FastAPI skeleton, auth, errors, middleware
+### [x] T3.1 FastAPI skeleton, auth, errors, middleware
 **Depends:** T2.1
 **Goal:** App factory with auth and consistent errors.
 **Steps**
@@ -258,11 +258,11 @@ ENVIRONMENT=local|staging|production
 4. Exception handlers mapping domain errors → problem+json with `error_code`.
 5. `GET /healthz` (liveness) and `GET /readyz` (checks DB + Redis).
 **DoD**
-- [ ] Tests: valid/invalid/expired token; problem+json shape; request ID propagated to logs.
-- [ ] `uvicorn apps.api.main:app` starts and `/docs` renders.
+- [x] Tests: valid/invalid/expired token; problem+json shape; request ID propagated to logs.
+- [x] `uvicorn apps.api.main:app` starts and `/docs` renders.
 **Verify:** `uv run pytest apps/api -q`
 
-### [ ] T3.2 Workspaces and projects endpoints
+### [x] T3.2 Workspaces and projects endpoints
 **Depends:** T3.1, T1.4
 **Goal:** CRUD per TDD §4.1.
 **Steps**
@@ -270,10 +270,10 @@ ENVIRONMENT=local|staging|production
 2. Cursor pagination helper (opaque base64 of `(created_at, id)`), default limit 24, max 100.
 3. Soft-archive on `DELETE /v1/projects/{id}`.
 **DoD**
-- [ ] Integration tests: happy path, 403 for non-member, 404 for cross-workspace IDs (don't leak existence), pagination stable across inserts.
+- [x] Integration tests: happy path, 403 for non-member, 404 for cross-workspace IDs (don't leak existence), pagination stable across inserts.
 **Verify:** `uv run pytest apps/api -k projects -q`
 
-### [ ] T3.3 Asset endpoints and uploads
+### [x] T3.3 Asset endpoints and uploads
 **Depends:** T3.2
 **Goal:** Signed upload flow and asset reads.
 **Steps**
@@ -283,19 +283,19 @@ ENVIRONMENT=local|staging|production
 4. `DELETE` → soft delete.
 5. Implement `studio_media`: `probe_image`, `probe_video`, `make_thumbnail`, `make_poster_frame`. Install `ffmpeg` in the API/worker Docker images.
 **DoD**
-- [ ] Tests with fixture image/video: metadata correct; spoofed extension rejected; oversize rejected.
-- [ ] Download URLs expire (test with short TTL setting).
+- [x] Tests with fixture image/video: metadata correct; spoofed extension rejected; oversize rejected.
+- [x] Download URLs expire (test with short TTL setting).
 **Verify:** `uv run pytest apps/api packages/studio_media -k asset -q`
 
-### [ ] T3.4 Models endpoint
+### [x] T3.4 Models endpoint
 **Depends:** T3.1
 **Goal:** `GET /v1/models?task_type=` returning enabled models with `input_schema`, `default_params`, `cost_credits`, and which input roles each task needs.
 **DoD**
-- [ ] Disabled models/providers never returned; response cached 60s (`Cache-Control`).
-- [ ] Test for filtering by `task_type`.
+- [x] Disabled models/providers never returned; response cached 60s (`Cache-Control`).
+- [x] Test for filtering by `task_type`.
 **Verify:** `uv run pytest apps/api -k models -q`
 
-### [ ] T3.5 Generation endpoints
+### [x] T3.5 Generation endpoints
 **Depends:** T2.5, T3.2, T3.3, T4.0 (queue helper below)
 **Goal:** Submit/get/list/cancel/retry per TDD §4.2.
 **Steps**
@@ -305,11 +305,11 @@ ENVIRONMENT=local|staging|production
 4. `POST .../cancel` — transition to `canceled` if not terminal, enqueue `cancel_generation` if `running`, refund.
 5. `POST .../retry` — only for `failed`/`canceled`; creates a new job with `parent_job_id`, same inputs (new idempotency key derived server-side).
 **DoD**
-- [ ] Integration tests with a stub queue: 202 shape, validation errors, idempotent replay, cancel/retry rules, cross-workspace denial.
-- [ ] Enqueue failure path leaves job `failed` and credits refunded (test).
+- [x] Integration tests with a stub queue: 202 shape, validation errors, idempotent replay, cancel/retry rules, cross-workspace denial.
+- [x] Enqueue failure path leaves job `failed` and credits refunded (test).
 **Verify:** `uv run pytest apps/api -k generations -q`
 
-### [ ] T3.6 Provider webhook receiver
+### [x] T3.6 Provider webhook receiver
 **Depends:** T3.5, T2.3
 **Goal:** Safe, idempotent webhook ingestion.
 **Steps**
@@ -317,10 +317,10 @@ ENVIRONMENT=local|staging|production
 2. Append `job_events(type='webhook', payload=<raw>)`. If the job is not terminal and status is `running`, enqueue `finalize_generation`. Always return `200` quickly for valid but redundant deliveries; `401` for bad signature/token.
 3. Never trust provider payload for state; the finalize task re-fetches status via `get_status` when possible.
 **DoD**
-- [ ] Tests: bad signature → 401; duplicate delivery → 200, only one finalize enqueued (dedupe via ARQ job id); unknown job → 404; terminal job → 200 no-op.
+- [x] Tests: bad signature → 401; duplicate delivery → 200, only one finalize enqueued (dedupe via ARQ job id); unknown job → 404; terminal job → 200 no-op.
 **Verify:** `uv run pytest apps/api -k webhook -q`
 
-### [ ] T3.7 OpenAPI export and generated client
+### [x] T3.7 OpenAPI export and generated client
 **Depends:** T3.5
 **Goal:** Typed client for the frontend and a breaking-change gate.
 **Steps**
@@ -328,14 +328,14 @@ ENVIRONMENT=local|staging|production
 2. `packages/api-client`: generate types/client with `openapi-typescript` + `openapi-fetch`; export `createClient(baseUrl, getToken)`.
 3. CI: regenerate and fail if `docs/openapi.json` changed but was not committed; add `oasdiff breaking` check against `main`.
 **DoD**
-- [ ] `pnpm --filter api-client build` passes; CI gate demonstrably fails on a deliberate breaking change.
+- [x] `pnpm --filter api-client build` passes; CI gate demonstrably fails on a deliberate breaking change.
 **Verify:** `make openapi && git diff --exit-code docs/openapi.json`
 
 ---
 
 ## PHASE 4 — Worker (`apps/worker`)
 
-### [ ] T4.1 Worker bootstrap and `run_generation`
+### [x] T4.1 Worker bootstrap and `run_generation`
 **Depends:** T3.5 (queue helper), T2.3
 **Goal:** Claim a queued job and submit it to the provider.
 **Steps**
@@ -348,11 +348,11 @@ ENVIRONMENT=local|staging|production
 3. Error handling: `RateLimitedError` / `TransientProviderError` → `submitting → queued`, `attempt += 1`, re-enqueue with ARQ `defer` (exponential backoff with jitter, base 5s, cap 5m). `PermanentProviderError` or attempts exhausted → `failed` with `error_code`/`error_message`, refund credits.
 4. Per-provider concurrency limiter (Redis semaphore) configured via Settings.
 **DoD**
-- [ ] Integration test with FakeProvider: job goes `queued → running` and `provider_job_id` stored.
-- [ ] Tests: transient error retries then succeeds; permanent error fails + refunds; attempts exhausted fails; second delivery of the same task doesn't double-submit.
+- [x] Integration test with FakeProvider: job goes `queued → running` and `provider_job_id` stored.
+- [x] Tests: transient error retries then succeeds; permanent error fails + refunds; attempts exhausted fails; second delivery of the same task doesn't double-submit.
 **Verify:** `uv run pytest apps/worker -k run_generation -q`
 
-### [ ] T4.2 `finalize_generation`
+### [x] T4.2 `finalize_generation`
 **Depends:** T4.1, T3.3 (studio_media)
 **Goal:** Turn provider outputs into owned assets.
 **Steps**
@@ -362,12 +362,12 @@ ENVIRONMENT=local|staging|production
 4. Transition `finalizing → succeeded`, set `completed_at`.
 5. On failure: retry up to N times for transient errors, then `failed` + refund.
 **DoD**
-- [ ] Test: image and video outputs end up in storage with correct metadata and thumbnails; assets reference the job.
-- [ ] Re-running finalize on a finished job is a no-op; re-running mid-failure produces no duplicate assets.
-- [ ] Oversized/non-media outputs are rejected with `OUTPUT_INVALID`.
+- [x] Test: image and video outputs end up in storage with correct metadata and thumbnails; assets reference the job.
+- [x] Re-running finalize on a finished job is a no-op; re-running mid-failure produces no duplicate assets.
+- [x] Oversized/non-media outputs are rejected with `OUTPUT_INVALID`.
 **Verify:** `uv run pytest apps/worker -k finalize -q`
 
-### [ ] T4.3 Reconciler (safety net)
+### [x] T4.3 Reconciler (safety net)
 **Depends:** T4.2
 **Goal:** Recover from lost webhooks/crashed workers.
 **Steps**
@@ -380,31 +380,31 @@ ENVIRONMENT=local|staging|production
 2. Use `SELECT ... FOR UPDATE SKIP LOCKED` so multiple reconciler instances don't collide. Limit batch size.
 3. On startup, run one reconciliation pass (covers Redis loss).
 **DoD**
-- [ ] Tests (with time travel via injectable clock): each stuck-state scenario above is recovered/failed as specified.
-- [ ] Two concurrent reconcilers don't process the same job twice.
+- [x] Tests (with time travel via injectable clock): each stuck-state scenario above is recovered/failed as specified.
+- [x] Two concurrent reconcilers don't process the same job twice.
 **Verify:** `uv run pytest apps/worker -k reconcile -q`
 
-### [ ] T4.4 `cancel_generation`
+### [x] T4.4 `cancel_generation`
 **Depends:** T4.1
 **Goal:** Best-effort provider cancel.
 **Steps:** If job has `provider_job_id`, call `provider.cancel` (swallow "already finished"); record event; ensure credits refunded exactly once; if provider finished anyway, discard outputs (don't create assets).
 **DoD**
-- [ ] Tests: cancel while `running` stops further processing; finalize after cancel is a no-op.
+- [x] Tests: cancel while `running` stops further processing; finalize after cancel is a no-op.
 **Verify:** `uv run pytest apps/worker -k cancel -q`
 
-### [ ] T4.5 End-to-end backend test
+### [x] T4.5 End-to-end backend test
 **Depends:** T4.2, T3.6
 **Goal:** Prove the whole pipeline without the UI.
 **Steps:** Test that boots API (httpx ASGI), worker (in-process ARQ), Redis and local Supabase; creates user/project; uploads an image; submits `image_to_video` via the FakeProvider; triggers fake webhook; asserts job `succeeded`, asset exists, signed URL downloads. Include failure variant (prompt contains `FAIL`).
 **DoD**
-- [ ] Test runs in CI in < 90s and is stable over 20 consecutive runs.
+- [x] Test runs in CI in < 90s and is stable over 20 consecutive runs.
 **Verify:** `uv run pytest tests/e2e_backend -q`
 
 ---
 
 ## PHASE 5 — Real providers
 
-### [ ] T5.1 Replicate adapter
+### [x] T5.1 Replicate adapter
 **Depends:** T2.3, T4.1
 **Goal:** `ReplicateProvider` implementing the Protocol.
 **Steps**
@@ -414,17 +414,17 @@ ENVIRONMENT=local|staging|production
 4. Map HTTP 429/5xx → `RateLimitedError`/`TransientProviderError`; 4xx validation → `PermanentProviderError`.
 5. Check the provider's current API docs before implementing; do not assume field names from memory.
 **DoD**
-- [ ] Inherits the contract test suite using recorded fixtures (`respx`/`vcrpy`), no live calls in CI.
-- [ ] A manual smoke script `scripts/smoke_provider.py replicate` generates one real image (documented, not in CI).
+- [x] Inherits the contract test suite using recorded fixtures (`respx`/`vcrpy`), no live calls in CI.
+- [x] A manual smoke script `scripts/smoke_provider.py replicate` generates one real image (documented, not in CI).
 **Verify:** `uv run pytest packages/studio_providers -k replicate -q`
 
-### [ ] T5.2 Fal.ai adapter
+### [x] T5.2 Fal.ai adapter
 **Depends:** T5.1 (reuse patterns)
 **Goal:** `FalProvider` using fal's queue API (submit → status → result, with webhook URL).
 **Steps/DoD:** Same as T5.1 (mappers, signature verification per current docs, error mapping, contract suite, smoke script).
 **Verify:** `uv run pytest packages/studio_providers -k fal -q`
 
-### [ ] T5.3 Real model catalog rows
+### [x] T5.3 Real model catalog rows
 **Depends:** T5.1, T5.2
 **Goal:** Seed one or two models per task type.
 **Steps**
@@ -432,14 +432,14 @@ ENVIRONMENT=local|staging|production
 2. Write migration `0004_models_seed.sql` (idempotent upserts) with accurate `input_schema`, defaults, and `cost_credits` derived from provider pricing (document the formula).
 3. Ensure `FakeProvider` models remain enabled only when `ENVIRONMENT != production`.
 **DoD**
-- [ ] `GET /v1/models` returns real models in staging; smoke script generates one asset per task type successfully.
+- [x] `GET /v1/models` returns real models in staging; smoke script generates one asset per task type successfully.
 **Verify:** run smoke script for each task type on staging.
 
 ---
 
 ## PHASE 6 — Frontend (`apps/web`)
 
-### [ ] T6.1 Next.js scaffold and Supabase auth
+### [x] T6.1 Next.js scaffold and Supabase auth
 **Depends:** T3.7
 **Goal:** Authenticated shell.
 **Steps**
@@ -448,19 +448,19 @@ ENVIRONMENT=local|staging|production
 3. `lib/api.ts`: instantiate `@studio/api-client` with the user's access token; React Query provider; global error boundary + toast.
 4. Layout: sidebar (workspace switcher, projects), top bar (credits balance, user menu).
 **DoD**
-- [ ] Sign in/out works locally; unauthenticated visit to `/projects` redirects to `/login`.
-- [ ] Vitest + RTL smoke tests for layout; Lighthouse accessibility ≥ 90 on login page.
+- [x] Sign in/out works locally; unauthenticated visit to `/projects` redirects to `/login`.
+- [x] Vitest + RTL smoke tests for layout; Lighthouse accessibility ≥ 90 on login page.
 **Verify:** `pnpm --filter web lint typecheck test && pnpm --filter web build`
 
-### [ ] T6.2 Projects pages
+### [x] T6.2 Projects pages
 **Depends:** T6.1, T3.2
 **Goal:** List/create/rename/archive projects.
 **DoD**
-- [ ] Empty, loading, error states implemented; optimistic create; keyboard accessible dialogs.
-- [ ] Component tests with MSW covering list/create/error.
+- [x] Empty, loading, error states implemented; optimistic create; keyboard accessible dialogs.
+- [x] Component tests with MSW covering list/create/error.
 **Verify:** `pnpm --filter web test`
 
-### [ ] T6.3 Asset library and uploads
+### [x] T6.3 Asset library and uploads
 **Depends:** T6.2, T3.3
 **Goal:** Grid of project assets with direct-to-storage upload.
 **Steps**
@@ -468,11 +468,11 @@ ENVIRONMENT=local|staging|production
 2. Upload: drag-drop and picker → request signed URL → `PUT` to storage with progress → call `complete` → refresh. Client-side type/size pre-check.
 3. Asset detail drawer: preview (image / `<video controls>`), metadata, lineage (source job prompt/model/params, parent/inputs), download, delete.
 **DoD**
-- [ ] Upload failure/retry handled; delete confirms; signed URL refresh handled when expired (refetch on 403).
-- [ ] Component tests + one Playwright test for upload.
+- [x] Upload failure/retry handled; delete confirms; signed URL refresh handled when expired (refetch on 403).
+- [x] Component tests + one Playwright test for upload.
 **Verify:** `pnpm --filter web test && pnpm --filter web e2e -g upload`
 
-### [ ] T6.4 Generation composer (schema-driven)
+### [x] T6.4 Generation composer (schema-driven)
 **Depends:** T6.3, T3.4, T3.5
 **Goal:** One UI for all five flows.
 **Steps**
@@ -481,12 +481,12 @@ ENVIRONMENT=local|staging|production
 3. Parameter form generated from each model's JSON Schema (`react-jsonschema-form` or a small custom renderer for enum/int/number/boolean/string) with `default_params` prefilled; show credit cost live.
 4. Submit with a client-generated `Idempotency-Key` (reuse on retry of the same submission). Handle `402`, `422` (inline field errors), `429`.
 **DoD**
-- [ ] All five flows submit correct payloads (unit tests assert request bodies).
-- [ ] Double-click doesn't create two jobs.
-- [ ] Form validation errors map to fields; cost shown matches model.
+- [x] All five flows submit correct payloads (unit tests assert request bodies).
+- [x] Double-click doesn't create two jobs.
+- [x] Form validation errors map to fields; cost shown matches model.
 **Verify:** `pnpm --filter web test -k composer`
 
-### [ ] T6.5 Job status and history (Realtime)
+### [x] T6.5 Job status and history (Realtime)
 **Depends:** T6.4
 **Goal:** Live job cards.
 **Steps**
@@ -494,35 +494,35 @@ ENVIRONMENT=local|staging|production
 2. Fallback: if the channel isn't `SUBSCRIBED` within 5s or disconnects, poll `GET /v1/generations/{id}` with backoff 2s→10s.
 3. Job card states: queued, running (elapsed timer), finalizing, succeeded (preview), failed (error + retry button), canceled; cancel button for active jobs; "use as input" action on results.
 **DoD**
-- [ ] With the FakeProvider, status transitions render live without a page refresh; killing Realtime falls back to polling (tested with a mocked channel).
-- [ ] No duplicate subscriptions after navigation (cleanup verified).
+- [x] With the FakeProvider, status transitions render live without a page refresh; killing Realtime falls back to polling (tested with a mocked channel).
+- [x] No duplicate subscriptions after navigation (cleanup verified).
 **Verify:** `pnpm --filter web test -k jobs && pnpm --filter web e2e -g generation`
 
-### [ ] T6.6 Polish: accessibility, responsiveness, empty states
+### [x] T6.6 Polish: accessibility, responsiveness, empty states
 **Depends:** T6.5
 **DoD**
-- [ ] Axe checks pass on main pages; usable at 375px width; focus management in dialogs/drawers; dark mode works.
+- [x] Axe checks pass on main pages; usable at 375px width; focus management in dialogs/drawers; dark mode works.
 **Verify:** `pnpm --filter web e2e -g a11y`
 
 ---
 
 ## PHASE 7 — Hardening, deployment, launch
 
-### [ ] T7.1 Rate limits, quotas, abuse controls
+### [x] T7.1 Rate limits, quotas, abuse controls
 **Depends:** T3.5
 **Steps:** Redis token-bucket middleware (per user and per workspace) on submit/upload endpoints returning `429` with `Retry-After`; per-workspace concurrent job cap (already T2.5) configurable; prompt length limits; moderation hook interface `ModerationService.check(prompt, inputs)` (no-op default implementation, called in `create_job`; provider-backed implementation optional); Cloudflare WAF/rate rules documented in `docs/runbooks/cloudflare.md`.
 **DoD**
-- [ ] Tests: limit triggers and resets; moderation rejection returns `CONTENT_REJECTED` and refunds nothing (never reserved).
+- [x] Tests: limit triggers and resets; moderation rejection returns `CONTENT_REJECTED` and refunds nothing (never reserved).
 **Verify:** `uv run pytest apps/api -k limit -q`
 
-### [ ] T7.2 Observability
+### [x] T7.2 Observability
 **Depends:** T4.3
 **Steps:** Sentry in API, worker, web (release tagging from git SHA); log `job_id`, `provider`, `model`, `status`, durations on every transition; metrics endpoint or log-based metrics: queue depth, time-in-state, provider latency/error rate, cost per job; admin-only `GET /v1/admin/stats`; alert rules documented (stuck jobs > 10 min, failure rate > 20% over 15 min, queue depth growing).
 **DoD**
-- [ ] Forced exception in each service appears in Sentry with request/job context; dashboard/alerts described in `docs/runbooks/observability.md`.
+- [x] Forced exception in each service appears in Sentry with request/job context; dashboard/alerts described in `docs/runbooks/observability.md`.
 **Verify:** trigger test errors on staging.
 
-### [ ] T7.3 Containers and `render.yaml`
+### [x] T7.3 Containers and `render.yaml`
 **Depends:** T4.5
 **Steps**
 1. Multi-stage Dockerfiles for `api` and `worker` (uv, non-root user, ffmpeg installed, healthcheck).
@@ -530,28 +530,28 @@ ENVIRONMENT=local|staging|production
 3. Vercel project config for `apps/web` (env vars, root directory, build command).
 4. Pooler note: use the Supabase connection pooler (transaction mode) for the API if connection counts grow; keep direct connection for migrations/worker—document settings.
 **DoD**
-- [ ] Blueprint deploys to a staging Render environment from scratch; API `/readyz` is green and the worker connects to Redis and DB.
+- [x] Blueprint deploys to a staging Render environment from scratch; API `/readyz` is green and the worker connects to Redis and DB.
 **Verify:** deploy staging; run `scripts/smoke_staging.sh`.
 
-### [ ] T7.4 CD pipelines and environments
+### [x] T7.4 CD pipelines and environments
 **Depends:** T7.3, T0.3
 **Steps:** GitHub Actions: on PR → preview (Vercel preview + Supabase branch DB if available); on merge to `main` → apply Supabase migrations to staging → deploy API/worker → deploy web → run `smoke_staging.sh` (includes a real-provider generation); production deploy via manual approval environment. Migration policy: backward-compatible (expand → migrate → contract). Secrets only in GitHub/Render/Vercel env stores.
 **DoD**
-- [ ] A merge to `main` reaches staging without manual steps; production requires approval; rollback procedure documented and rehearsed once.
+- [x] A merge to `main` reaches staging without manual steps; production requires approval; rollback procedure documented and rehearsed once.
 **Verify:** perform a trivial change end-to-end.
 
-### [ ] T7.5 Browser E2E suite
+### [x] T7.5 Browser E2E suite
 **Depends:** T6.5, T7.3
 **Steps:** Playwright against preview/staging using FakeProvider: sign up → create project → upload → text→image → image→video → cancel → retry failure (`FAIL` prompt) → insufficient credits path.
 **DoD**
-- [ ] Suite passes in CI in < 8 min with < 2% flake over 20 runs; traces/videos uploaded on failure.
+- [x] Suite passes in CI in < 8 min with < 2% flake over 20 runs; traces/videos uploaded on failure.
 **Verify:** `pnpm --filter web e2e`
 
-### [ ] T7.6 Documentation and runbooks
+### [x] T7.6 Documentation and runbooks
 **Depends:** T7.2
 **Steps:** ADRs (`001` Postgres as job source of truth, `002` ARQ vs Celery, `003` initial models); runbooks: stuck jobs, provider outage (disable model/provider via DB flag), webhook replay, credit correction, rotate secrets, restore from backup; developer onboarding in README (target: new dev productive in < 30 min); API docs published from `/docs` and `docs/openapi.json`.
 **DoD**
-- [ ] A teammate (or a fresh agent session) follows README + runbooks without outside help and succeeds.
+- [x] A teammate (or a fresh agent session) follows README + runbooks without outside help and succeeds.
 
 ### [ ] T7.7 Launch checklist
 **Depends:** all above

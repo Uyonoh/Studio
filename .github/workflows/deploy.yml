@@ -1,0 +1,242 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Environment to deploy
+        required: true
+        type: choice
+        options: [staging, production]
+        default: staging
+
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.ref }}-${{ inputs.target || 'auto' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  preview:
+    name: Preview
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    environment: preview
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        if: vars.SUPABASE_BRANCHING_ENABLED == 'true'
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Create Supabase preview branch and apply migrations
+        if: vars.SUPABASE_BRANCHING_ENABLED == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_STAGING_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}
+        run: |
+          # Supabase's GitHub integration is the preferred way to create preview
+          # branches. This CLI path is a fallback for teams that manage branches
+          # explicitly; it is idempotent for repeated PR synchronize events.
+          branch="pr-${GITHUB_HEAD_REF//\//-}"
+          if ! supabase branches create "$branch" \
+            --project-ref "$SUPABASE_PROJECT_REF" \
+            --git-branch "$GITHUB_HEAD_REF" \
+            --yes --output json > branch.json; then
+            echo "Branch already exists or could not be created; resolving it"
+          fi
+          branch_ref="$(jq -r '.project_ref // empty' branch.json 2>/dev/null || true)"
+          if [ -z "$branch_ref" ]; then
+            branch_ref="$(supabase branches list --project-ref "$SUPABASE_PROJECT_REF" --output json \
+              | jq -r --arg name "$branch" '.[] | select(.name == $name) | .project_ref' \
+              | head -n1)"
+          fi
+          if [ -z "$branch_ref" ] || [ "$branch_ref" = "null" ]; then
+            echo "::error::Could not resolve the Supabase preview branch project ref"
+            exit 1
+          fi
+          supabase db push --project-ref "$branch_ref" --include-all
+          echo "SUPABASE_PREVIEW_PROJECT_REF=$branch_ref" >> "$GITHUB_ENV"
+
+      - name: Deploy Vercel preview
+        if: vars.VERCEL_PREVIEWS_VIA_CLI == 'true' && github.event.pull_request.head.repo.full_name == github.repository
+        working-directory: apps/web
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npx --yes vercel@latest pull --yes --environment=preview --token "$VERCEL_TOKEN"
+          npx --yes vercel@latest build --token "$VERCEL_TOKEN"
+          url="$(npx --yes vercel@latest deploy --prebuilt --token "$VERCEL_TOKEN")"
+          echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Note skipped preview steps
+        if: vars.SUPABASE_BRANCHING_ENABLED != 'true' && vars.VERCEL_PREVIEWS_VIA_CLI != 'true'
+        run: |
+          echo "::notice::Preview infrastructure is not configured; Vercel Git previews handle PRs by default."
+
+  staging:
+    name: Staging
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.target == 'staging')
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Apply staging migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_STAGING_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_STAGING_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --yes
+          supabase db push --include-all --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Deploy API and worker to Render
+        env:
+          RENDER_STAGING_API_DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_API_DEPLOY_HOOK }}
+          RENDER_STAGING_WORKER_DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_WORKER_DEPLOY_HOOK }}
+        run: |
+          curl --fail --silent --show-error --request POST "$RENDER_STAGING_API_DEPLOY_HOOK" > /dev/null
+          curl --fail --silent --show-error --request POST "$RENDER_STAGING_WORKER_DEPLOY_HOOK" > /dev/null
+
+      - name: Deploy web to Vercel
+        env:
+          VERCEL_STAGING_DEPLOY_HOOK: ${{ secrets.VERCEL_STAGING_DEPLOY_HOOK }}
+        run: |
+          curl --fail --silent --show-error --request POST "$VERCEL_STAGING_DEPLOY_HOOK" > /dev/null
+
+      - name: Wait for API readiness
+        env:
+          API_BASE_URL: ${{ vars.STAGING_API_BASE_URL }}
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error "$API_BASE_URL/readyz" | grep -q '"db":"ok"'; then
+              echo "API is ready"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::API did not become ready within 10 minutes"
+          exit 1
+
+      - name: Smoke test staging (real provider generation)
+        env:
+          SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
+          SMOKE_USER_EMAIL: ${{ secrets.STAGING_SMOKE_USER_EMAIL }}
+          SMOKE_USER_PASSWORD: ${{ secrets.STAGING_SMOKE_USER_PASSWORD }}
+          SMOKE_PROJECT_ID: ${{ secrets.STAGING_SMOKE_PROJECT_ID }}
+          SMOKE_MODEL: ${{ vars.STAGING_SMOKE_MODEL }}
+          API_BASE_URL: ${{ vars.STAGING_API_BASE_URL }}
+          WEB_BASE_URL: ${{ vars.STAGING_WEB_BASE_URL }}
+        run: |
+          if [ -z "$SMOKE_PROJECT_ID" ] || [ -z "$SMOKE_MODEL" ] || [ -z "$SMOKE_USER_EMAIL" ]; then
+            echo "::error::Smoke test requires SMOKE_PROJECT_ID, SMOKE_MODEL, and SMOKE_USER_EMAIL to be configured"
+            exit 1
+          fi
+          token_response="$(curl --fail --silent --show-error \
+            --request POST "$SUPABASE_URL/auth/v1/token?grant_type=password" \
+            --header "apikey: $SUPABASE_ANON_KEY" \
+            --header "Content-Type: application/json" \
+            --data "{\"email\":\"$SMOKE_USER_EMAIL\",\"password\":\"$SMOKE_USER_PASSWORD\"}")"
+          SMOKE_USER_TOKEN="$(printf '%s' "$token_response" | jq -r '.access_token')"
+          if [ -z "$SMOKE_USER_TOKEN" ] || [ "$SMOKE_USER_TOKEN" = "null" ]; then
+            echo "::error::Could not obtain a smoke-test access token"
+            exit 1
+          fi
+          export SMOKE_USER_TOKEN
+          bash scripts/smoke_staging.sh
+
+  production:
+    name: Production
+    if: github.event_name == 'workflow_dispatch' && inputs.target == 'production'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Apply production migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PRODUCTION_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_PRODUCTION_DB_PASSWORD }}
+        run: |
+          supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD" --yes
+          supabase db push --include-all --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Deploy API and worker to Render
+        env:
+          RENDER_PRODUCTION_API_DEPLOY_HOOK: ${{ secrets.RENDER_PRODUCTION_API_DEPLOY_HOOK }}
+          RENDER_PRODUCTION_WORKER_DEPLOY_HOOK: ${{ secrets.RENDER_PRODUCTION_WORKER_DEPLOY_HOOK }}
+        run: |
+          curl --fail --silent --show-error --request POST "$RENDER_PRODUCTION_API_DEPLOY_HOOK" > /dev/null
+          curl --fail --silent --show-error --request POST "$RENDER_PRODUCTION_WORKER_DEPLOY_HOOK" > /dev/null
+
+      - name: Deploy web to Vercel
+        env:
+          VERCEL_PRODUCTION_DEPLOY_HOOK: ${{ secrets.VERCEL_PRODUCTION_DEPLOY_HOOK }}
+        run: |
+          curl --fail --silent --show-error --request POST "$VERCEL_PRODUCTION_DEPLOY_HOOK" > /dev/null
+
+      - name: Wait for API readiness
+        env:
+          API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error "$API_BASE_URL/readyz" | grep -q '"db":"ok"'; then
+              echo "API is ready"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::API did not become ready within 10 minutes"
+          exit 1
+
+      - name: Smoke test production
+        env:
+          SUPABASE_URL: ${{ vars.PRODUCTION_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
+          SMOKE_USER_EMAIL: ${{ secrets.PRODUCTION_SMOKE_USER_EMAIL }}
+          SMOKE_USER_PASSWORD: ${{ secrets.PRODUCTION_SMOKE_USER_PASSWORD }}
+          SMOKE_PROJECT_ID: ${{ secrets.PRODUCTION_SMOKE_PROJECT_ID }}
+          SMOKE_MODEL: ${{ vars.PRODUCTION_SMOKE_MODEL }}
+          API_BASE_URL: ${{ vars.PRODUCTION_API_BASE_URL }}
+          WEB_BASE_URL: ${{ vars.PRODUCTION_WEB_BASE_URL }}
+        run: |
+          if [ -z "$SMOKE_PROJECT_ID" ] || [ -z "$SMOKE_MODEL" ] || [ -z "$SMOKE_USER_EMAIL" ]; then
+            echo "::error::Smoke test requires SMOKE_PROJECT_ID, SMOKE_MODEL, and SMOKE_USER_EMAIL to be configured"
+            exit 1
+          fi
+          token_response="$(curl --fail --silent --show-error \
+            --request POST "$SUPABASE_URL/auth/v1/token?grant_type=password" \
+            --header "apikey: $SUPABASE_ANON_KEY" \
+            --header "Content-Type: application/json" \
+            --data "{\"email\":\"$SMOKE_USER_EMAIL\",\"password\":\"$SMOKE_USER_PASSWORD\"}")"
+          SMOKE_USER_TOKEN="$(printf '%s' "$token_response" | jq -r '.access_token')"
+          if [ -z "$SMOKE_USER_TOKEN" ] || [ "$SMOKE_USER_TOKEN" = "null" ]; then
+            echo "::error::Could not obtain a smoke-test access token"
+            exit 1
+          fi
+          export SMOKE_USER_TOKEN
+          bash scripts/smoke_staging.sh

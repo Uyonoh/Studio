@@ -1,0 +1,165 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { X, Loader2, Edit3 } from "lucide-react";
+import { type Project } from "@/hooks/use-projects";
+import { useFocusTrap } from "@/hooks/use-focus-trap";
+
+interface RenameProjectDialogProps {
+  project: Project | null;
+  isOpen: boolean;
+  isLoading: boolean;
+  onClose: () => void;
+  onSubmit: (data: { projectId: string; name: string; description: string }) => void;
+}
+
+export function RenameProjectDialog({
+  project,
+  isOpen,
+  isLoading,
+  onClose,
+  onSubmit,
+}: RenameProjectDialogProps) {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen && project) {
+      setName(project.name);
+      setDescription(project.description || "");
+      setError(null);
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [isOpen, project]);
+
+  useFocusTrap(dialogRef, isOpen && Boolean(project), {
+    initialFocusRef: inputRef,
+    onEscape: onClose,
+  });
+
+  if (!isOpen || !project) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setError("Project name is required");
+      return;
+    }
+    setError(null);
+    onSubmit({
+      projectId: project.id,
+      name: trimmed,
+      description: description.trim(),
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rename-project-title"
+        tabIndex={-1}
+        className="relative w-full max-w-lg bg-[#14161C] border border-[#262A35] rounded-2xl p-6 shadow-card z-10 animate-in fade-in zoom-in-95 duration-150"
+      >
+        <div className="flex items-center justify-between pb-4 border-b border-[#262A35]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-[#1B1E26] border border-[#262A35] flex items-center justify-center text-[#A995FF]">
+              <Edit3 className="w-4 h-4" />
+            </div>
+            <div>
+              <h2
+                id="rename-project-title"
+                className="text-base font-semibold text-[#E8EAF0]"
+              >
+                Edit Project
+              </h2>
+              <p className="text-xs text-[#9AA1B2]">
+                Update project name and details.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="p-1 rounded-lg text-[#9AA1B2] hover:text-[#E8EAF0] hover:bg-[#1B1E26] transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+          <div className="space-y-1.5">
+            <label
+              htmlFor="rename-project-name"
+              className="block text-xs font-medium text-[#9AA1B2]"
+            >
+              Project Name <span className="text-red-400">*</span>
+            </label>
+            <input
+              ref={inputRef}
+              id="rename-project-name"
+              name="name"
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B0C10] border border-[#262A35] text-[#E8EAF0] text-sm focus:outline-none focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF] transition-all"
+            />
+            {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+          </div>
+
+          <div className="space-y-1.5">
+            <label
+              htmlFor="rename-project-description"
+              className="block text-xs font-medium text-[#9AA1B2]"
+            >
+              Description (Optional)
+            </label>
+            <textarea
+              id="rename-project-description"
+              name="description"
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B0C10] border border-[#262A35] text-[#E8EAF0] text-sm focus:outline-none focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF] transition-all resize-none"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="px-4 py-2 rounded-xl text-xs font-medium text-[#9AA1B2] hover:text-[#E8EAF0] hover:bg-[#1B1E26] transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading || !name.trim()}
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#6C4CE8] hover:bg-[#5B3FD6] text-white text-xs font-semibold shadow-[0_0_16px_rgba(124,92,255,0.25)] transition-all disabled:opacity-50"
+            >
+              {isLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : null}
+              <span>Save Changes</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

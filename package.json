@@ -9,5 +9,8 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "build": "pnpm -r --if-present build"
+  },
+  "devDependencies": {
+    "supabase": "^2.121.0"
   }
 }
