@@ -89,7 +89,7 @@ async def get_current_user(
             },
         ) from exc
     except jwt.PyJWTError as exc:
-        logger.debug("JWT decode failure: %s", exc)
+        logger.warning("JWT decode failure: %s", exc)
         raise HTTPException(
             status_code=401,
             detail={
@@ -101,7 +101,7 @@ async def get_current_user(
             },
         ) from exc
     except Exception as exc:
-        logger.debug("JWT validation error: %s", exc)
+        logger.warning("JWT validation error: %s", exc)
         raise HTTPException(
             status_code=401,
             detail={
