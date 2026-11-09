@@ -94,8 +94,8 @@ const server = setupServer(
       duration_ms: null,
       fps: null,
       storage_path: "uploads/asset-new.png",
-      thumbnail_path: null,
-      thumbnail_url: null,
+      thumbnail_path: "uploads/asset-new-thumb.jpg",
+      thumbnail_url: "https://storage.example.com/asset-new-thumb.jpg",
       signed_url: "https://storage.example.com/asset-new.png",
       source_job_id: null,
       parent_asset_id: null,
@@ -406,6 +406,8 @@ describe("AssetLibrary & Upload Components", () => {
 
     // Retry issues a fresh signed URL and succeeds
     expect(await screen.findByText("Ready", {}, { timeout: 4000 })).toBeInTheDocument();
+    expect(screen.getByText("512×512")).toBeInTheDocument();
+    expect(container.querySelector("img")?.getAttribute("src")).toContain("asset-new-thumb.jpg");
     expect(onUploadSuccess).toHaveBeenCalledTimes(1);
     expect(completeAttempts).toBe(2);
   });

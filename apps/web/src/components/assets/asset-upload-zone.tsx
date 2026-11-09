@@ -24,10 +24,32 @@ interface UploadingFileState {
   progress: number;
   status: "uploading" | "processing" | "success" | "error";
   error?: string;
+  /** Human-readable metadata shown once processing finishes (e.g. "1920×1080 · 12.4s"). */
+  details?: string;
+  /** Server-generated thumbnail or video poster frame. */
+  thumbnailUrl?: string;
 }
 
 function makeUploadId(): string {
   return `upload-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function formatDuration(ms: number): string {
+  const totalSeconds = Math.round(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return minutes > 0 ? `${minutes}:${String(seconds).padStart(2, "0")}` : `${(ms / 1000).toFixed(1)}s`;
+}
+
+function describeAsset(asset: Asset): string | undefined {
+  const parts: string[] = [];
+  if (asset.width && asset.height) {
+    parts.push(`${asset.width}×${asset.height}`);
+  }
+  if (asset.duration_ms) {
+    parts.push(formatDuration(asset.duration_ms));
+  }
+  return parts.length > 0 ? parts.join(" · ") : undefined;
 }
 
 export function AssetUploadZone({ projectId, onUploadSuccess }: AssetUploadZoneProps) {
@@ -54,9 +76,18 @@ export function AssetUploadZone({ projectId, onUploadSuccess }: AssetUploadZoneP
               status: percent >= 100 ? "processing" : "uploading",
             });
           },
+          onProcessing: () => {
+            patchEntry(uploadId, { status: "processing", progress: 100 });
+          },
         });
 
-        patchEntry(uploadId, { status: "success", progress: 100, error: undefined });
+        patchEntry(uploadId, {
+          status: "success",
+          progress: 100,
+          error: undefined,
+          details: describeAsset(asset),
+          thumbnailUrl: asset.thumbnail_url ?? undefined,
+        });
         toast.success(`"${file.name}" uploaded successfully`);
         onUploadSuccess(asset);
 
@@ -99,7 +130,13 @@ export function AssetUploadZone({ projectId, onUploadSuccess }: AssetUploadZoneP
 
   const retryUpload = useCallback(
     (entry: UploadingFileState) => {
-      patchEntry(entry.id, { status: "uploading", progress: 0, error: undefined });
+      patchEntry(entry.id, {
+        status: "uploading",
+        progress: 0,
+        error: undefined,
+        details: undefined,
+        thumbnailUrl: undefined,
+      });
       void runUpload(entry.id, entry.file);
     },
     [patchEntry, runUpload]
@@ -188,7 +225,16 @@ export function AssetUploadZone({ projectId, onUploadSuccess }: AssetUploadZoneP
               className="p-3 rounded-xl bg-[#14161C] border border-[#262A35] flex items-center justify-between gap-4 text-xs"
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <File className="w-4 h-4 text-[#9AA1B2] shrink-0" />
+                {item.thumbnailUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.thumbnailUrl}
+                    alt=""
+                    className="w-9 h-9 rounded-lg object-cover shrink-0 border border-[#262A35]"
+                  />
+                ) : (
+                  <File className="w-4 h-4 text-[#9AA1B2] shrink-0" />
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium text-[#E8EAF0] truncate max-w-[200px]">
@@ -215,6 +261,9 @@ export function AssetUploadZone({ projectId, onUploadSuccess }: AssetUploadZoneP
                       style={{ width: `${item.progress}%` }}
                     />
                   </div>
+                  {item.details && (
+                    <p className="text-[10px] font-mono text-[#9AA1B2] mt-1">{item.details}</p>
+                  )}
                   {item.error && <p className="text-[11px] text-red-400 mt-1">{item.error}</p>}
                 </div>
               </div>

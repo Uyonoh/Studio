@@ -160,10 +160,12 @@ export async function uploadAssetWithProgress({
   projectId,
   file,
   onProgress,
+  onProcessing,
 }: {
   projectId: string;
   file: File;
   onProgress?: (progress: number) => void;
+  onProcessing?: () => void;
 }): Promise<Asset> {
   const client = getApiClient();
 
@@ -214,7 +216,9 @@ export async function uploadAssetWithProgress({
     xhr.send(file);
   });
 
-  // 4. Confirm completion with backend (probes metadata, marks the asset ready).
+  // 4. Confirm completion with backend (probes metadata, generates a
+  //    thumbnail/poster frame, and marks the asset ready).
+  onProcessing?.();
   const completeRes = await client.POST("/v1/assets/{asset_id}/complete", {
     params: { path: { asset_id } },
   });
