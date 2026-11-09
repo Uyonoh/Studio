@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import io
+import json
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
+from urllib.parse import parse_qs, urlparse
 from uuid import UUID
 
+import jwt
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
@@ -169,6 +172,144 @@ async def test_request_upload_rejects_oversized() -> None:
             headers={"Authorization": f"Bearer {make_jwt(uid)}"},
         )
     assert resp.status_code == 413
+
+
+@pytest.mark.asyncio
+async def test_request_upload_uses_url_safe_storage_name() -> None:
+    """Filenames with spaces/brackets are stored under a safe object name."""
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    proj_id = uuid.uuid4()
+    asset = _asset_row(workspace_id=ws_id, project_id=proj_id, kind="video", mime_type="video/mp4")
+
+    conn = _mock_conn()
+
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
+        if "projects" in query and "archived_at IS NULL" in query:
+            return {"workspace_id": ws_id}
+        if "INSERT INTO public.assets" in query:
+            return asset
+        return None
+
+    conn.fetchrow = AsyncMock(side_effect=fetchrow_side_effect)
+    conn.fetchval = AsyncMock(return_value="editor")
+    app = _make_app(conn)
+
+    nasty_name = "vlc-record Converting file (2021) [720p] %20 weird.mp4"
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            f"/v1/projects/{proj_id}/assets/uploads",
+            json={"mime_type": "video/mp4", "size_bytes": 1024, "filename": nasty_name},
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 201
+    upload_url = resp.json()["upload_url"]
+    assert "/original.mp4" in upload_url
+    assert "vlc-record" not in upload_url
+
+    # The token's url claim must match the actual, URL-safe request path.
+    parsed = urlparse(upload_url)
+    token = parse_qs(parsed.query)["token"][0]
+    claim = jwt.decode(token, options={"verify_signature": False})
+    assert claim["url"] == f"media/{ws_id}/{proj_id}/{asset['id']}/original.mp4"
+
+    # The user-facing filename is preserved in metadata.
+    insert_calls = [
+        call for call in conn.fetchrow.call_args_list if "INSERT INTO public.assets" in call.args[0]
+    ]
+    assert len(insert_calls) == 1
+    metadata = json.loads(insert_calls[0].args[16])
+    assert metadata["filename"] == nasty_name
+
+
+@pytest.mark.asyncio
+async def test_list_assets_hides_unfinished_uploads() -> None:
+    """Draft/processing/failed uploads do not appear in the asset library."""
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    proj_id = uuid.uuid4()
+
+    conn = _mock_conn()
+
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
+        if "projects" in query:
+            return {"workspace_id": ws_id}
+        return None
+
+    conn.fetchrow = AsyncMock(side_effect=fetchrow_side_effect)
+    conn.fetchval = AsyncMock(return_value="viewer")
+    conn.fetch = AsyncMock(return_value=[])
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            f"/v1/projects/{proj_id}/assets",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 200
+    assert resp.json() == {"items": [], "next_cursor": None}
+    query = conn.fetch.call_args.args[0]
+    assert "COALESCE(metadata->>'status', 'ready') = 'ready'" in query
+
+
+@pytest.mark.asyncio
+async def test_list_assets_maps_legacy_generation_origin() -> None:
+    """The old ``origin=generation`` value maps to the ``generated`` enum."""
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    proj_id = uuid.uuid4()
+
+    conn = _mock_conn()
+
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
+        if "projects" in query:
+            return {"workspace_id": ws_id}
+        return None
+
+    conn.fetchrow = AsyncMock(side_effect=fetchrow_side_effect)
+    conn.fetchval = AsyncMock(return_value="viewer")
+    conn.fetch = AsyncMock(return_value=[])
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            f"/v1/projects/{proj_id}/assets?origin=generation",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 200
+    # query, project_id, origin, limit+1
+    assert conn.fetch.call_args.args[2] == "generated"
+
+
+@pytest.mark.asyncio
+async def test_list_assets_rejects_invalid_origin() -> None:
+    """Unknown origin filters return 400 instead of a database 500."""
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    proj_id = uuid.uuid4()
+
+    conn = _mock_conn()
+
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
+        if "projects" in query:
+            return {"workspace_id": ws_id}
+        return None
+
+    conn.fetchrow = AsyncMock(side_effect=fetchrow_side_effect)
+    conn.fetchval = AsyncMock(return_value="viewer")
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            f"/v1/projects/{proj_id}/assets?origin=bogus",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 400
+    assert "origin" in resp.json()["detail"].lower()
 
 
 # ── Get asset ─────────────────────────────────────────────────────────────────

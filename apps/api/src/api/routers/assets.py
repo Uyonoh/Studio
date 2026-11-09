@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import json
 import logging
+import mimetypes
+import re
 import tempfile
 import time
 from datetime import datetime
@@ -135,6 +137,27 @@ class AssetListResponse(BaseModel):
 # ── Supabase storage helpers ───────────────────────────────────────────────────
 
 
+_SAFE_EXTENSION = re.compile(r"^[a-z0-9]{1,10}$")
+
+
+def _safe_storage_filename(filename: str, mime_type: str) -> str:
+    """Return a URL-safe object name while preserving the file extension.
+
+    Supabase validates signed upload/download tokens by comparing the token's
+    ``url`` claim with the request path. Object names containing spaces,
+    brackets, commas, or already-percent-encoded characters can make those two
+    representations diverge, producing ``InvalidSignature`` errors. We store
+    uploads under ``original.<ext>`` (the asset id already guarantees
+    uniqueness) and keep the user-facing name in ``assets.metadata.filename``.
+    """
+    suffix = Path(filename).suffix.lower().lstrip(".")
+    if not _SAFE_EXTENSION.fullmatch(suffix):
+        suffix = (mimetypes.guess_extension(mime_type) or "").lstrip(".")
+    if not _SAFE_EXTENSION.fullmatch(suffix):
+        suffix = "mp4" if mime_type.startswith("video/") else "img"
+    return f"original.{suffix}"
+
+
 def _supabase_signed_upload_url(
     workspace_id: UUID,
     project_id: UUID,
@@ -222,8 +245,9 @@ async def _extract_upload_metadata(
     """
     data = await storage.download_file(asset.storage_path)
 
-    filename = str(asset.metadata.get("filename") or "")
-    suffix = Path(filename).suffix or (".mp4" if asset.kind == AssetKind.VIDEO else ".img")
+    suffix = Path(asset.storage_path).suffix or (
+        ".mp4" if asset.kind == AssetKind.VIDEO else ".img"
+    )
 
     with tempfile.TemporaryDirectory() as tmp_dir_str:
         tmp_dir = Path(tmp_dir_str)
@@ -454,7 +478,8 @@ async def request_upload(
     asset_id = uuid4()
     kind = AssetKind.IMAGE if body.mime_type.startswith("image/") else AssetKind.VIDEO
     settings = get_settings()
-    storage_path = f"{workspace_id}/{project_id}/{asset_id}/{body.filename}"
+    storage_filename = _safe_storage_filename(body.filename, body.mime_type)
+    storage_path = f"{workspace_id}/{project_id}/{asset_id}/{storage_filename}"
 
     # Create draft asset (metadata.status = 'pending')
     repo = AssetRepository(db)
@@ -473,12 +498,12 @@ async def request_upload(
 
     actual_id = created_asset.id
     if actual_id != asset_id:
-        storage_path = f"{workspace_id}/{project_id}/{actual_id}/{body.filename}"
+        storage_path = f"{workspace_id}/{project_id}/{actual_id}/{storage_filename}"
         await db.execute(
             "UPDATE public.assets SET storage_path = $1 WHERE id = $2", storage_path, actual_id
         )
 
-    upload_url = _supabase_signed_upload_url(workspace_id, project_id, actual_id, body.filename)
+    upload_url = _supabase_signed_upload_url(workspace_id, project_id, actual_id, storage_filename)
     return UploadResponse(asset_id=actual_id, upload_url=upload_url)
 
 
@@ -593,8 +618,24 @@ async def list_assets(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="Invalid cursor value") from exc
 
-    # Build dynamic query
-    clauses = ["project_id = $1", "deleted_at IS NULL"]
+    # Older web clients sent "generation"; the enum value is "generated".
+    if origin == "generation":
+        origin = AssetOrigin.GENERATED.value
+
+    # Validate enum filters here so bad values return 400 instead of surfacing
+    # as an asyncpg InvalidTextRepresentationError (500).
+    if kind is not None and kind not in {member.value for member in AssetKind}:
+        raise HTTPException(status_code=400, detail="Invalid kind filter")
+    if origin is not None and origin not in {member.value for member in AssetOrigin}:
+        raise HTTPException(status_code=400, detail="Invalid origin filter")
+
+    # Build dynamic query. Draft/processing/failed uploads are hidden so the
+    # library never shows blank cards for objects that were never confirmed.
+    clauses = [
+        "project_id = $1",
+        "deleted_at IS NULL",
+        "COALESCE(metadata->>'status', 'ready') = 'ready'",
+    ]
     params: list[object] = [project_id]
 
     if kind:

@@ -135,9 +135,9 @@ export function AssetLibrary({ projectId }: AssetLibraryProps) {
             </button>
             <button
               type="button"
-              onClick={() => setOriginFilter("generation")}
+              onClick={() => setOriginFilter("generated")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                originFilter === "generation"
+                originFilter === "generated"
                   ? "bg-[#1B1E26] text-[#A995FF] border border-[#7C5CFF]/30"
                   : "text-[#9AA1B2] hover:text-[#E8EAF0]"
               }`}
