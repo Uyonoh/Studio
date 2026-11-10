@@ -142,6 +142,27 @@ When modifying API routes, models, or query parameters:
 
 ## 5. Development Workflow & Verification
 
+### Pre-push CI Check
+```bash
+# Windows
+.\scripts\ci-local.ps1
+
+# macOS / Linux
+./scripts/ci-local.sh
+```
+Runs the same checks as GitHub Actions (`.github/workflows/ci.yml`). By default
+it auto-fixes Python lint and formatting (`ruff check --fix`, `ruff format`) and
+then verifies, so a green run means the tree is ready to push or deploy.
+
+Useful flags:
+- `-Check` / `--check` — verify only, do not modify files
+- `-SkipPython` / `--skip-python` — skip Python checks
+- `-SkipWeb` / `--skip-web` — skip TypeScript checks
+- `-E2E` / `--e2e` — also run the Playwright browser suite
+- `-Secrets` / `--secrets` — also run the gitleaks secrets scan
+
+Also available as `make ci`.
+
 ### Code Formatting and Linting
 ```bash
 make lint

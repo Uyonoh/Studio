@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import io
 import json
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -383,6 +384,21 @@ class E2EState:
                 )
                 return "INSERT 1"
 
+            if "UPDATE public.assets" in query and "SET mime_type = $2" in query:
+                asset_id = params[0]
+                asset = self.assets.get(asset_id)
+                if asset is not None:
+                    asset["mime_type"] = params[1]
+                    asset["size_bytes"] = params[2]
+                    asset["width"] = params[3]
+                    asset["height"] = params[4]
+                    asset["duration_ms"] = params[5]
+                    asset["fps"] = params[6]
+                    asset["thumbnail_path"] = params[7]
+                    meta_patch = json.loads(params[8]) if isinstance(params[8], str) else params[8]
+                    asset["metadata"].update(meta_patch)
+                return "UPDATE 1"
+
             if "UPDATE public.assets" in query and "metadata" in query:
                 asset_id = params[0]
                 if asset_id in self.assets:
@@ -440,7 +456,7 @@ def _make_pool(mock_conn: AsyncMock) -> MagicMock:
 
 
 @pytest.mark.asyncio
-async def test_e2e_backend_pipeline_success() -> None:
+async def test_e2e_backend_pipeline_success(monkeypatch: pytest.MonkeyPatch) -> None:
     """Full end-to-end integration test:
 
     1. Client uploads an image asset
@@ -459,6 +475,24 @@ async def test_e2e_backend_pipeline_success() -> None:
     state = E2EState(user_id, workspace_id, project_id)
     mock_conn = state.make_conn()
     pool = _make_pool(mock_conn)
+
+    # Upload completion downloads and probes the object from storage, so serve
+    # a real PNG from an in-memory storage stub instead of calling Supabase.
+    png_buffer = io.BytesIO()
+    Image.new("RGB", (64, 48), color=(200, 40, 40)).save(png_buffer, format="PNG")
+    uploaded_png = png_buffer.getvalue()
+
+    class FakeUploadStorage:
+        async def download_file(self, storage_path: str, max_size_bytes: int = 0) -> bytes:
+            return uploaded_png
+
+        async def upload_file(self, storage_path: str, data: bytes, content_type: str = "") -> str:
+            return storage_path
+
+        async def delete_file(self, storage_path: str) -> None:
+            return None
+
+    monkeypatch.setattr("api.routers.assets.StorageClient", FakeUploadStorage)
 
     # In-memory Redis queue stub
     mock_redis = MagicMock()

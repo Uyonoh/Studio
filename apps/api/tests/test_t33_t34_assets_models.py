@@ -2,15 +2,23 @@
 
 from __future__ import annotations
 
+import io
+import json
 import uuid
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
+from urllib.parse import parse_qs, urlparse
 from uuid import UUID
 
+import jwt
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from PIL import Image
+
+from studio_media.media import VideoMetadata
 
 from .conftest import make_jwt
 
@@ -164,6 +172,144 @@ async def test_request_upload_rejects_oversized() -> None:
             headers={"Authorization": f"Bearer {make_jwt(uid)}"},
         )
     assert resp.status_code == 413
+
+
+@pytest.mark.asyncio
+async def test_request_upload_uses_url_safe_storage_name() -> None:
+    """Filenames with spaces/brackets are stored under a safe object name."""
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    proj_id = uuid.uuid4()
+    asset = _asset_row(workspace_id=ws_id, project_id=proj_id, kind="video", mime_type="video/mp4")
+
+    conn = _mock_conn()
+
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
+        if "projects" in query and "archived_at IS NULL" in query:
+            return {"workspace_id": ws_id}
+        if "INSERT INTO public.assets" in query:
+            return asset
+        return None
+
+    conn.fetchrow = AsyncMock(side_effect=fetchrow_side_effect)
+    conn.fetchval = AsyncMock(return_value="editor")
+    app = _make_app(conn)
+
+    nasty_name = "vlc-record Converting file (2021) [720p] %20 weird.mp4"
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            f"/v1/projects/{proj_id}/assets/uploads",
+            json={"mime_type": "video/mp4", "size_bytes": 1024, "filename": nasty_name},
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 201
+    upload_url = resp.json()["upload_url"]
+    assert "/original.mp4" in upload_url
+    assert "vlc-record" not in upload_url
+
+    # The token's url claim must match the actual, URL-safe request path.
+    parsed = urlparse(upload_url)
+    token = parse_qs(parsed.query)["token"][0]
+    claim = jwt.decode(token, options={"verify_signature": False})
+    assert claim["url"] == f"media/{ws_id}/{proj_id}/{asset['id']}/original.mp4"
+
+    # The user-facing filename is preserved in metadata.
+    insert_calls = [
+        call for call in conn.fetchrow.call_args_list if "INSERT INTO public.assets" in call.args[0]
+    ]
+    assert len(insert_calls) == 1
+    metadata = json.loads(insert_calls[0].args[16])
+    assert metadata["filename"] == nasty_name
+
+
+@pytest.mark.asyncio
+async def test_list_assets_hides_unfinished_uploads() -> None:
+    """Draft/processing/failed uploads do not appear in the asset library."""
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    proj_id = uuid.uuid4()
+
+    conn = _mock_conn()
+
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
+        if "projects" in query:
+            return {"workspace_id": ws_id}
+        return None
+
+    conn.fetchrow = AsyncMock(side_effect=fetchrow_side_effect)
+    conn.fetchval = AsyncMock(return_value="viewer")
+    conn.fetch = AsyncMock(return_value=[])
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            f"/v1/projects/{proj_id}/assets",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 200
+    assert resp.json() == {"items": [], "next_cursor": None}
+    query = conn.fetch.call_args.args[0]
+    assert "COALESCE(metadata->>'status', 'ready') = 'ready'" in query
+
+
+@pytest.mark.asyncio
+async def test_list_assets_maps_legacy_generation_origin() -> None:
+    """The old ``origin=generation`` value maps to the ``generated`` enum."""
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    proj_id = uuid.uuid4()
+
+    conn = _mock_conn()
+
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
+        if "projects" in query:
+            return {"workspace_id": ws_id}
+        return None
+
+    conn.fetchrow = AsyncMock(side_effect=fetchrow_side_effect)
+    conn.fetchval = AsyncMock(return_value="viewer")
+    conn.fetch = AsyncMock(return_value=[])
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            f"/v1/projects/{proj_id}/assets?origin=generation",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 200
+    # query, project_id, origin, limit+1
+    assert conn.fetch.call_args.args[2] == "generated"
+
+
+@pytest.mark.asyncio
+async def test_list_assets_rejects_invalid_origin() -> None:
+    """Unknown origin filters return 400 instead of a database 500."""
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    proj_id = uuid.uuid4()
+
+    conn = _mock_conn()
+
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
+        if "projects" in query:
+            return {"workspace_id": ws_id}
+        return None
+
+    conn.fetchrow = AsyncMock(side_effect=fetchrow_side_effect)
+    conn.fetchval = AsyncMock(return_value="viewer")
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            f"/v1/projects/{proj_id}/assets?origin=bogus",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 400
+    assert "origin" in resp.json()["detail"].lower()
 
 
 # ── Get asset ─────────────────────────────────────────────────────────────────
@@ -385,3 +531,211 @@ async def test_list_models_rejects_invalid_task_type() -> None:
             headers={"Authorization": f"Bearer {make_jwt(uid)}"},
         )
     assert resp.status_code == 400
+
+
+# ── Complete upload: real media processing ─────────────────────────────────────
+
+
+def _png_bytes(width: int, height: int) -> bytes:
+    buf = io.BytesIO()
+    Image.new("RGB", (width, height), (200, 40, 40)).save(buf, format="PNG")
+    return buf.getvalue()
+
+
+class _FakeStorage:
+    """Stands in for the Supabase storage client in upload-processing tests."""
+
+    def __init__(self, data: bytes = b"", error: Exception | None = None) -> None:
+        self.data = data
+        self.error = error
+        self.uploaded: list[tuple[str, bytes, str]] = []
+        self.deleted: list[str] = []
+
+    async def download_file(self, storage_path: str, max_size_bytes: int = 0) -> bytes:
+        if self.error is not None:
+            raise self.error
+        return self.data
+
+    async def upload_file(self, storage_path: str, data: bytes, content_type: str = "") -> str:
+        self.uploaded.append((storage_path, data, content_type))
+        return storage_path
+
+    async def delete_file(self, storage_path: str) -> None:
+        self.deleted.append(storage_path)
+
+
+def _pending_asset_row(kind: str = "image", filename: str = "photo.png") -> dict[str, Any]:
+    asset = _asset_row(kind=kind, mime_type="image/png" if kind == "image" else "video/mp4")
+    asset["metadata"] = f'{{"status": "pending", "filename": "{filename}"}}'
+    asset["width"] = None
+    asset["height"] = None
+    asset["duration_ms"] = None
+    asset["fps"] = None
+    asset["thumbnail_path"] = None
+    return asset
+
+
+def _conn_returning_pending_then_ready(pending: dict[str, Any], ready: dict[str, Any]) -> AsyncMock:
+    conn = _mock_conn()
+    reads = {"count": 0}
+
+    async def fetchrow_side_effect(query: str, *args: Any) -> dict[str, Any] | None:
+        if "FROM public.assets" in query:
+            reads["count"] += 1
+            return pending if reads["count"] == 1 else ready
+        return None
+
+    conn.fetchrow = AsyncMock(side_effect=fetchrow_side_effect)
+    conn.fetchval = AsyncMock(return_value="editor")
+    return conn
+
+
+@pytest.mark.asyncio
+async def test_complete_upload_probes_image_and_generates_thumbnail(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Completing an image upload stores real dimensions and a thumbnail."""
+    uid = uuid.uuid4()
+    png = _png_bytes(4, 3)
+    pending = _pending_asset_row(filename="photo.png")
+    thumb_path = f"{pending['workspace_id']}/{pending['project_id']}/{pending['id']}/thumbnail.jpg"
+    ready = {
+        **pending,
+        "width": 4,
+        "height": 3,
+        "size_bytes": len(png),
+        "thumbnail_path": thumb_path,
+        "metadata": '{"status": "ready", "filename": "photo.png"}',
+    }
+
+    conn = _conn_returning_pending_then_ready(pending, ready)
+    fake_storage = _FakeStorage(data=png)
+    monkeypatch.setattr("api.routers.assets.StorageClient", lambda: fake_storage)
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            f"/v1/assets/{pending['id']}/complete",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["width"] == 4
+    assert body["height"] == 3
+    assert body["size_bytes"] == len(png)
+    assert body["mime_type"] == "image/png"
+    assert body["duration_ms"] is None
+    assert body["thumbnail_path"] == thumb_path
+    assert body["thumbnail_url"] is not None
+    assert body["metadata"]["status"] == "ready"
+
+    # The generated thumbnail was uploaded as JPEG.
+    assert len(fake_storage.uploaded) == 1
+    uploaded_path, uploaded_bytes, uploaded_type = fake_storage.uploaded[0]
+    assert uploaded_path == thumb_path
+    assert uploaded_type == "image/jpeg"
+    assert uploaded_bytes.startswith(b"\xff\xd8")  # JPEG magic
+
+    final_updates = [
+        call for call in conn.execute.call_args_list if "SET mime_type = $2" in call.args[0]
+    ]
+    assert len(final_updates) == 1
+    args = final_updates[0].args
+    assert args[1] == pending["id"]
+    assert args[2] == "image/png"
+    assert args[3] == len(png)
+    assert args[4] == 4
+    assert args[5] == 3
+    assert args[6] is None
+    assert args[7] is None
+    assert args[8] == thumb_path
+    assert '"ready"' in args[9]
+
+
+@pytest.mark.asyncio
+async def test_complete_upload_probes_video_and_generates_poster(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Completing a video upload stores duration/fps and a poster frame."""
+    uid = uuid.uuid4()
+    pending = _pending_asset_row(kind="video", filename="clip.mp4")
+    thumb_path = f"{pending['workspace_id']}/{pending['project_id']}/{pending['id']}/thumbnail.jpg"
+    ready = {
+        **pending,
+        "width": 1920,
+        "height": 1080,
+        "duration_ms": 12345,
+        "fps": Decimal("30.000"),
+        "thumbnail_path": thumb_path,
+        "metadata": '{"status": "ready", "filename": "clip.mp4"}',
+    }
+
+    def fake_probe_video(path: Any) -> VideoMetadata:
+        return VideoMetadata(
+            width=1920,
+            height=1080,
+            duration_ms=12345,
+            fps=Decimal("30.000"),
+            mime_type="video/mp4",
+        )
+
+    def fake_poster(src: Any, dst: Any, time_s: float = 0.0) -> None:
+        with open(dst, "wb") as fh:
+            fh.write(b"\xff\xd8fake-poster")
+
+    monkeypatch.setattr("api.routers.assets.probe_video", fake_probe_video)
+    monkeypatch.setattr("api.routers.assets.make_poster_frame", fake_poster)
+
+    conn = _conn_returning_pending_then_ready(pending, ready)
+    fake_storage = _FakeStorage(data=b"fake-video-bytes")
+    monkeypatch.setattr("api.routers.assets.StorageClient", lambda: fake_storage)
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            f"/v1/assets/{pending['id']}/complete",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["width"] == 1920
+    assert body["height"] == 1080
+    assert body["duration_ms"] == 12345
+    assert float(body["fps"]) == 30.0
+    assert body["thumbnail_path"] == thumb_path
+    assert body["thumbnail_url"] is not None
+
+    assert len(fake_storage.uploaded) == 1
+    assert fake_storage.uploaded[0][2] == "image/jpeg"
+
+
+@pytest.mark.asyncio
+async def test_complete_upload_rejects_invalid_media(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Corrupt uploads are rejected, deleted from storage, and marked failed."""
+    uid = uuid.uuid4()
+    pending = _pending_asset_row(filename="broken.png")
+    conn = _conn_returning_pending_then_ready(pending, pending)
+    fake_storage = _FakeStorage(data=b"this is definitely not an image")
+    monkeypatch.setattr("api.routers.assets.StorageClient", lambda: fake_storage)
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            f"/v1/assets/{pending['id']}/complete",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 422
+    assert "not valid media" in resp.json()["detail"]
+    assert fake_storage.deleted == [pending["storage_path"]]
+
+    failed_updates = [
+        call
+        for call in conn.execute.call_args_list
+        if "metadata = metadata || $2::jsonb" in call.args[0] and '"failed"' in call.args[2]
+    ]
+    assert len(failed_updates) == 1

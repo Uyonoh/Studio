@@ -35,6 +35,12 @@ class Settings(BaseSettings):
         validation_alias="SUPABASE_JWT_SECRET",
     )
 
+    # Web and CORS
+    web_origins: str = Field(
+        default="http://localhost:3000",
+        validation_alias=AliasChoices("WEB_ORIGINS", "WEB_ORIGIN"),
+    )
+
     # Database & Storage
     database_url: str = Field(
         default="postgresql://postgres:postgres@127.0.0.1:54322/postgres",

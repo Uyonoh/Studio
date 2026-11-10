@@ -61,6 +61,7 @@ Thumbs.db
 
 # Supabase
 .supabase/
+seed_user.sql
 
 # Cache
 .pytest_cache/

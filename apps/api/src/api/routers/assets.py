@@ -12,9 +12,13 @@ from __future__ import annotations
 
 import json
 import logging
+import mimetypes
+import re
+import tempfile
 import time
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
 from typing import Annotated, Any
 from uuid import UUID, uuid4
 
@@ -22,14 +26,23 @@ import asyncpg
 import jwt
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
 from api.auth import AuthUser
 from api.deps import DBConn
 from api.pagination import decode_cursor, encode_cursor
 from api.rate_limit import upload_rate_limit
+from api.storage import StorageClient
 from studio_core.models import Asset, AssetKind, AssetOrigin, WorkspaceRole
 from studio_core.repositories import AssetRepository, ProjectRepository
 from studio_core.settings import get_settings
+from studio_media.media import (
+    MediaProbeError,
+    make_poster_frame,
+    make_thumbnail,
+    probe_image,
+    probe_video,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +137,27 @@ class AssetListResponse(BaseModel):
 # ── Supabase storage helpers ───────────────────────────────────────────────────
 
 
+_SAFE_EXTENSION = re.compile(r"^[a-z0-9]{1,10}$")
+
+
+def _safe_storage_filename(filename: str, mime_type: str) -> str:
+    """Return a URL-safe object name while preserving the file extension.
+
+    Supabase validates signed upload/download tokens by comparing the token's
+    ``url`` claim with the request path. Object names containing spaces,
+    brackets, commas, or already-percent-encoded characters can make those two
+    representations diverge, producing ``InvalidSignature`` errors. We store
+    uploads under ``original.<ext>`` (the asset id already guarantees
+    uniqueness) and keep the user-facing name in ``assets.metadata.filename``.
+    """
+    suffix = Path(filename).suffix.lower().lstrip(".")
+    if not _SAFE_EXTENSION.fullmatch(suffix):
+        suffix = (mimetypes.guess_extension(mime_type) or "").lstrip(".")
+    if not _SAFE_EXTENSION.fullmatch(suffix):
+        suffix = "mp4" if mime_type.startswith("video/") else "img"
+    return f"original.{suffix}"
+
+
 def _supabase_signed_upload_url(
     workspace_id: UUID,
     project_id: UUID,
@@ -191,6 +225,93 @@ def _asset_response(asset: Asset) -> AssetResponse:
         created_at=asset.created_at,
         signed_url=signed_url,
         thumbnail_url=thumb_url,
+    )
+
+
+def _thumbnail_storage_path(asset: Asset) -> str:
+    """Standard thumbnail location: {workspace}/{project}/{asset}/thumbnail.jpg."""
+    return f"{asset.workspace_id}/{asset.project_id}/{asset.id}/thumbnail.jpg"
+
+
+async def _extract_upload_metadata(
+    asset: Asset,
+    storage: StorageClient,
+) -> tuple[dict[str, Any], str | None]:
+    """Download an uploaded object, probe it, and generate a thumbnail.
+
+    Returns the asset column values to persist and the thumbnail storage path
+    (``None`` if thumbnail generation failed). Raises ``MediaProbeError`` when
+    the uploaded bytes are not valid media.
+    """
+    data = await storage.download_file(asset.storage_path)
+
+    suffix = Path(asset.storage_path).suffix or (
+        ".mp4" if asset.kind == AssetKind.VIDEO else ".img"
+    )
+
+    with tempfile.TemporaryDirectory() as tmp_dir_str:
+        tmp_dir = Path(tmp_dir_str)
+        local_file = tmp_dir / f"original{suffix}"
+        local_file.write_bytes(data)
+        thumb_local = tmp_dir / "thumbnail.jpg"
+
+        if asset.kind == AssetKind.VIDEO:
+            video_meta = await run_in_threadpool(probe_video, local_file)
+            values: dict[str, Any] = {
+                "mime_type": video_meta.mime_type,
+                "width": video_meta.width,
+                "height": video_meta.height,
+                "duration_ms": video_meta.duration_ms,
+                "fps": video_meta.fps,
+            }
+            make_thumb = run_in_threadpool(make_poster_frame, local_file, thumb_local)
+        else:
+            image_meta = await run_in_threadpool(probe_image, local_file)
+            values = {
+                "mime_type": image_meta.mime_type,
+                "width": image_meta.width,
+                "height": image_meta.height,
+                "duration_ms": None,
+                "fps": None,
+            }
+            make_thumb = run_in_threadpool(make_thumbnail, local_file, thumb_local)
+
+        thumb_path = _thumbnail_storage_path(asset)
+        thumbnail_path: str | None = thumb_path
+        try:
+            await make_thumb
+            await storage.upload_file(
+                thumb_path,
+                thumb_local.read_bytes(),
+                content_type="image/jpeg",
+            )
+        except Exception:  # noqa: BLE001
+            # A missing thumbnail is not fatal: keep the asset usable.
+            logger.warning("Failed to generate thumbnail for asset %s", asset.id, exc_info=True)
+            thumbnail_path = None
+
+    values["size_bytes"] = len(data)
+    return values, thumbnail_path
+
+
+async def _set_upload_status(
+    db: asyncpg.Connection[asyncpg.Record],
+    asset_id: UUID,
+    status: str,
+    error: str | None = None,
+) -> None:
+    """Merge an upload status (and optional error) into asset metadata."""
+    patch: dict[str, Any] = {"status": status}
+    if error is not None:
+        patch["error"] = error
+    await db.execute(
+        """
+        UPDATE public.assets
+        SET metadata = metadata || $2::jsonb
+        WHERE id = $1
+        """,
+        asset_id,
+        json.dumps(patch),
     )
 
 
@@ -357,7 +478,8 @@ async def request_upload(
     asset_id = uuid4()
     kind = AssetKind.IMAGE if body.mime_type.startswith("image/") else AssetKind.VIDEO
     settings = get_settings()
-    storage_path = f"{workspace_id}/{project_id}/{asset_id}/{body.filename}"
+    storage_filename = _safe_storage_filename(body.filename, body.mime_type)
+    storage_path = f"{workspace_id}/{project_id}/{asset_id}/{storage_filename}"
 
     # Create draft asset (metadata.status = 'pending')
     repo = AssetRepository(db)
@@ -376,12 +498,12 @@ async def request_upload(
 
     actual_id = created_asset.id
     if actual_id != asset_id:
-        storage_path = f"{workspace_id}/{project_id}/{actual_id}/{body.filename}"
+        storage_path = f"{workspace_id}/{project_id}/{actual_id}/{storage_filename}"
         await db.execute(
             "UPDATE public.assets SET storage_path = $1 WHERE id = $2", storage_path, actual_id
         )
 
-    upload_url = _supabase_signed_upload_url(workspace_id, project_id, actual_id, body.filename)
+    upload_url = _supabase_signed_upload_url(workspace_id, project_id, actual_id, storage_filename)
     return UploadResponse(asset_id=actual_id, upload_url=upload_url)
 
 
@@ -391,10 +513,11 @@ async def complete_upload(
     user: AuthUser,
     db: DBConn,
 ) -> AssetResponse:
-    """Confirm that a direct upload has completed.
+    """Confirm that a direct upload has completed and process the media.
 
-    The server verifies the object exists in storage, probes its MIME and
-    dimensions, generates a thumbnail, and marks the asset ``ready``.
+    The server downloads the object from storage, probes its real MIME type,
+    dimensions, duration and frame rate, generates a thumbnail (or video poster
+    frame), uploads it, and marks the asset ``ready``.
     """
     repo = AssetRepository(db)
     asset = await repo.get_by_id(asset_id)
@@ -409,19 +532,49 @@ async def complete_upload(
     if role is None or role == WorkspaceRole.VIEWER:
         raise HTTPException(status_code=403, detail="Insufficient permissions")
 
-    # In production we would download from storage and probe the actual bytes.
-    # For MVP we trust the declared MIME from the upload request and update status.
-    # A full implementation would use python-magic and studio_media probing here.
+    await _set_upload_status(db, asset_id, "processing")
 
-    # Mark asset ready
+    storage = StorageClient()
+    try:
+        values, thumbnail_path = await _extract_upload_metadata(asset, storage)
+    except MediaProbeError as exc:
+        logger.warning("Rejecting upload %s: %s", asset_id, exc)
+        await storage.delete_file(asset.storage_path)
+        await _set_upload_status(db, asset_id, "failed", str(exc))
+        raise HTTPException(
+            status_code=422,
+            detail=f"Uploaded file is not valid media: {exc}",
+        ) from exc
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("Failed to process upload %s", asset_id)
+        await _set_upload_status(db, asset_id, "failed", "Processing failed")
+        raise HTTPException(
+            status_code=502,
+            detail="Failed to process uploaded media",
+        ) from exc
+
     await db.execute(
         """
         UPDATE public.assets
-        SET metadata = metadata || $2::jsonb
+        SET mime_type = $2,
+            size_bytes = $3,
+            width = $4,
+            height = $5,
+            duration_ms = $6,
+            fps = $7,
+            thumbnail_path = $8,
+            metadata = (metadata - 'error') || $9::jsonb
         WHERE id = $1
         """,
         asset_id,
-        '{"status": "ready"}',
+        values["mime_type"],
+        values["size_bytes"],
+        values["width"],
+        values["height"],
+        values["duration_ms"],
+        values["fps"],
+        thumbnail_path,
+        json.dumps({"status": "ready"}),
     )
 
     updated = await repo.get_by_id(asset_id)
@@ -465,8 +618,24 @@ async def list_assets(
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="Invalid cursor value") from exc
 
-    # Build dynamic query
-    clauses = ["project_id = $1", "deleted_at IS NULL"]
+    # Older web clients sent "generation"; the enum value is "generated".
+    if origin == "generation":
+        origin = AssetOrigin.GENERATED.value
+
+    # Validate enum filters here so bad values return 400 instead of surfacing
+    # as an asyncpg InvalidTextRepresentationError (500).
+    if kind is not None and kind not in {member.value for member in AssetKind}:
+        raise HTTPException(status_code=400, detail="Invalid kind filter")
+    if origin is not None and origin not in {member.value for member in AssetOrigin}:
+        raise HTTPException(status_code=400, detail="Invalid origin filter")
+
+    # Build dynamic query. Draft/processing/failed uploads are hidden so the
+    # library never shows blank cards for objects that were never confirmed.
+    clauses = [
+        "project_id = $1",
+        "deleted_at IS NULL",
+        "COALESCE(metadata->>'status', 'ready') = 'ready'",
+    ]
     params: list[object] = [project_id]
 
     if kind:

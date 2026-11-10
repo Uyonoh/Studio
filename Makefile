@@ -1,4 +1,4 @@
-.PHONY: setup lint typecheck test dev-api dev-worker dev-web db-reset
+.PHONY: setup lint typecheck test ci dev-api dev-worker dev-web db-reset
 
 setup:
 	uv sync --all-packages
@@ -17,6 +17,9 @@ typecheck:
 test:
 	uv run pytest
 	pnpm -r --if-present test
+
+ci:
+	@if command -v pwsh >/dev/null 2>&1; then pwsh -NoProfile -File scripts/ci-local.ps1; else bash scripts/ci-local.sh; fi
 
 dev-api:
 	uv run uvicorn api.main:app --reload --port 8000

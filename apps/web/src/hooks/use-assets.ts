@@ -160,10 +160,12 @@ export async function uploadAssetWithProgress({
   projectId,
   file,
   onProgress,
+  onProcessing,
 }: {
   projectId: string;
   file: File;
   onProgress?: (progress: number) => void;
+  onProcessing?: () => void;
 }): Promise<Asset> {
   const client = getApiClient();
 
@@ -171,57 +173,78 @@ export async function uploadAssetWithProgress({
   validateUploadFile(file);
 
   // 2. Request signed upload URL
-  const uploadInitRes = await client.POST("/v1/projects/{project_id}/assets/uploads", {
-    params: { path: { project_id: projectId } },
-    body: {
-      filename: file.name,
-      mime_type: file.type || "application/octet-stream",
-      size_bytes: file.size,
-    },
-  });
+  let assetId: string | undefined;
+  let uploadConfirmed = false;
+  try {
+    const uploadInitRes = await client.POST("/v1/projects/{project_id}/assets/uploads", {
+      params: { path: { project_id: projectId } },
+      body: {
+        filename: file.name,
+        mime_type: file.type || "application/octet-stream",
+        size_bytes: file.size,
+      },
+    });
 
-  if (uploadInitRes.error || !uploadInitRes.data) {
-    throw new Error((uploadInitRes.error as any)?.detail || "Failed to initiate asset upload");
-  }
-
-  const { asset_id, upload_url } = uploadInitRes.data;
-
-  // 3. Direct upload to storage with progress (XHR exposes upload events).
-  await new Promise<void>((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open("PUT", upload_url, true);
-    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-
-    if (xhr.upload && onProgress) {
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          const percent = Math.round((e.loaded / e.total) * 100);
-          onProgress(percent);
-        }
-      };
+    if (uploadInitRes.error || !uploadInitRes.data) {
+      throw new Error((uploadInitRes.error as any)?.detail || "Failed to initiate asset upload");
     }
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve();
-      } else {
-        reject(new Error(`Storage upload failed with HTTP ${xhr.status}`));
+    const { asset_id, upload_url } = uploadInitRes.data;
+    assetId = asset_id;
+
+    // 3. Direct upload to storage with progress (XHR exposes upload events).
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", upload_url, true);
+      xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+
+      if (xhr.upload && onProgress) {
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 100);
+            onProgress(percent);
+          }
+        };
       }
-    };
 
-    xhr.onerror = () => reject(new Error("Network error during storage upload"));
-    xhr.onabort = () => reject(new Error("Upload aborted"));
-    xhr.send(file);
-  });
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`Storage upload failed with HTTP ${xhr.status}`));
+        }
+      };
 
-  // 4. Confirm completion with backend (probes metadata, marks the asset ready).
-  const completeRes = await client.POST("/v1/assets/{asset_id}/complete", {
-    params: { path: { asset_id } },
-  });
+      xhr.onerror = () => reject(new Error("Network error during storage upload"));
+      xhr.onabort = () => reject(new Error("Upload aborted"));
+      xhr.send(file);
+    });
+    uploadConfirmed = true;
 
-  if (completeRes.error || !completeRes.data) {
-    throw new Error((completeRes.error as any)?.detail || "Failed to finalize uploaded asset");
+    // 4. Confirm completion with backend (probes metadata, generates a
+    //    thumbnail/poster frame, and marks the asset ready).
+    onProcessing?.();
+    const completeRes = await client.POST("/v1/assets/{asset_id}/complete", {
+      params: { path: { asset_id } },
+    });
+
+    if (completeRes.error || !completeRes.data) {
+      throw new Error((completeRes.error as any)?.detail || "Failed to finalize uploaded asset");
+    }
+
+    return completeRes.data as unknown as Asset;
+  } catch (err) {
+    if (assetId && !uploadConfirmed) {
+      // The draft row was created but the object never reached storage; remove
+      // it so it cannot linger as an invisible pending asset.
+      try {
+        await client.DELETE("/v1/assets/{asset_id}", {
+          params: { path: { asset_id: assetId } },
+        });
+      } catch {
+        // Best-effort cleanup; the list endpoint hides unfinished uploads anyway.
+      }
+    }
+    throw err;
   }
-
-  return completeRes.data as unknown as Asset;
 }

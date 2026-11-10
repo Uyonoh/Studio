@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 import uuid
+from datetime import UTC, datetime
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock
 
+import jwt
 import pytest
+from cryptography.hazmat.primitives.asymmetric import ec
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
@@ -45,6 +49,40 @@ async def test_valid_jwt_is_accepted() -> None:
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
         resp = await client.get("/v1/workspaces", headers={"Authorization": f"Bearer {token}"})
     # Workspaces endpoint returns 200 with empty list — auth passed
+    assert resp.status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_valid_es256_jwt_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
+    """An ES256 token is verified via JWKS (covers the asymmetric Supabase path)."""
+    uid = uuid.uuid4()
+    private_key = ec.generate_private_key(ec.SECP256R1())
+    now = int(datetime.now(UTC).timestamp())
+    token = jwt.encode(
+        {
+            "sub": str(uid),
+            "email": f"{uid}@example.com",
+            "aud": "authenticated",
+            "iat": now,
+            "exp": now + 3600,
+        },
+        private_key,
+        algorithm="ES256",
+        headers={"kid": "test-key"},
+    )
+
+    fake_jwks_client = MagicMock()
+    fake_jwks_client.get_signing_key_from_jwt.return_value = SimpleNamespace(
+        key=private_key.public_key()
+    )
+    monkeypatch.setattr("api.auth._get_jwks_client", lambda _url: fake_jwks_client)
+
+    mock_conn = AsyncMock()
+    mock_conn.fetch = AsyncMock(return_value=[])
+    app = _make_app_with_db(mock_conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get("/v1/workspaces", headers={"Authorization": f"Bearer {token}"})
     assert resp.status_code == 200
 
 
