@@ -37,9 +37,9 @@ class Settings(BaseSettings):
 
     # Web and CORS
     web_origins: str = Field(
-           default="http://localhost:3000",
-           validation_alias=AliasChoices("WEB_ORIGINS", "WEB_ORIGIN"),
-       )
+        default="http://localhost:3000",
+        validation_alias=AliasChoices("WEB_ORIGINS", "WEB_ORIGIN"),
+    )
 
     # Database & Storage
     database_url: str = Field(
