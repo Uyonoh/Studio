@@ -23,6 +23,7 @@ from api.routers import (
 )
 from studio_core.db import create_pool
 from studio_core.observability import init_sentry, set_request_context
+from studio_core.redis import create_redis_pool
 from studio_core.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -48,17 +49,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.db_pool = pool
     logger.info("Database pool opened")
 
-    # ARQ Redis pool (lazy — imported here to avoid hard dep at import time)
+    # ARQ Redis pool with health checks and retries so idle connection drops
+    # from the managed Redis service do not fail the first request after idle.
+    redis_pool = create_redis_pool(settings.redis_url)
     try:
-        from arq import create_pool as arq_create_pool
-        from arq.connections import RedisSettings
-
-        redis_settings = RedisSettings.from_dsn(settings.redis_url)
-        redis_pool = await arq_create_pool(redis_settings)
+        await redis_pool.ping()
         app.state.redis_pool = redis_pool
         logger.info("Redis pool opened")
     except Exception as exc:  # noqa: BLE001
         logger.warning("Could not connect to Redis at startup: %s", exc)
+        await redis_pool.close()
         app.state.redis_pool = None
 
     yield

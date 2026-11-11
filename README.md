@@ -24,6 +24,8 @@ A modular AI content studio for text/image/video generation, media asset managem
   - [Runbook: Observability & Alerting](docs/runbooks/observability.md)
   - [Runbook: Deployment & Infrastructure](docs/runbooks/deployment.md)
   - [Runbook: Cloudflare WAF & Edge Rules](docs/runbooks/cloudflare.md)
+- **Setup Guides:**
+  - [Authentication Setup (Email / Magic Link / Google)](docs/auth-setup.md)
 
 ---
 
@@ -64,7 +66,17 @@ Copy the sample environment file to the repository root:
 ```bash
 cp .env.example .env
 ```
-The defaults in `.env.example` work out-of-the-box for local testing with the in-process `FakeProvider` and local Supabase/Redis.
+The defaults in `.env.example` work out-of-the-box for local testing with the in-process `FakeProvider` and local Supabase/Redis. The Supabase key entries are placeholders; after starting Supabase (step 3.4) run `npx supabase status -o env` and replace `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` in `.env` with the printed `ANON_KEY` and `SERVICE_ROLE_KEY`.
+
+The web app reads its own environment file. Create it once:
+```bash
+cp apps/web/.env.example apps/web/.env.local
+```
+Then set `NEXT_PUBLIC_SUPABASE_ANON_KEY` in `apps/web/.env.local` to the same `ANON_KEY` from `npx supabase status -o env`.
+
+Google OAuth and magic-link email require a few provider-side settings (Google
+Cloud credentials, redirect URL allowlist, SMTP). See
+[Authentication Setup](docs/auth-setup.md) for the exact steps.
 
 ### 3.3 Install Dependencies
 Install Python virtual environment and Node packages across all workspaces:
@@ -90,6 +102,12 @@ This starts:
 - **Supabase PostgreSQL:** `postgresql://postgres:postgres@127.0.0.1:54322/postgres`
 - **Supabase API & Auth:** `http://127.0.0.1:54321`
 - **Supabase Studio UI:** `http://127.0.0.1:54323`
+
+Once Supabase is running, print the local credentials and copy them into your env files:
+```bash
+npx supabase status -o env
+```
+Use `ANON_KEY` for `SUPABASE_ANON_KEY` (root `.env`) and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (`apps/web/.env.local`), and `SERVICE_ROLE_KEY` for `SUPABASE_SERVICE_ROLE_KEY` (root `.env`). These are local demo credentials, not production secrets.
 
 ### 3.5 Seed Development User & Initial Models
 Apply migrations and create a local test user:

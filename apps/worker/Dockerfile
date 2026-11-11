@@ -37,4 +37,4 @@ ENV PYTHONDONTWRITEBYTECODE=1
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD python -c "import worker; print('ok')"
 
-CMD ["arq", "worker.main.WorkerSettings"]
+CMD ["python", "-m", "worker.main"]
