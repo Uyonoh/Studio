@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 interface TopBarProps {
   userEmail?: string | null;
   creditsBalance?: number;
+  isCreditsLoading?: boolean;
   title?: string;
   /** Opens the off-canvas navigation on small screens. */
   onOpenNav?: () => void;
@@ -15,7 +16,8 @@ interface TopBarProps {
 
 export function TopBar({
   userEmail,
-  creditsBalance = 1000,
+  creditsBalance,
+  isCreditsLoading = false,
   title = "Projects",
   onOpenNav,
 }: TopBarProps) {
@@ -53,10 +55,16 @@ export function TopBar({
         {/* Credits Badge */}
         <div
           data-testid="credits-balance"
+          title="Credits available in the active workspace"
+          aria-busy={isCreditsLoading}
           className="flex items-center gap-1.5 sm:gap-2 h-9 px-2.5 sm:px-3.5 rounded-xl bg-[#14161C] border border-[#262A35] text-xs font-mono text-[#E8EAF0]"
         >
           <Zap className="w-3.5 h-3.5 text-[#A995FF] fill-[#7C5CFF]/20" />
-          <span className="font-semibold">{creditsBalance.toLocaleString()}</span>
+          <span className={`font-semibold ${isCreditsLoading ? "animate-pulse text-[#9AA1B2]" : ""}`}>
+            {isCreditsLoading || creditsBalance === undefined
+              ? "—"
+              : creditsBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+          </span>
           <span className="hidden sm:inline text-[#9AA1B2] font-sans">Credits</span>
         </div>
 

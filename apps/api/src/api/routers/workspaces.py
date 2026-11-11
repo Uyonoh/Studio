@@ -1,13 +1,15 @@
-"""Workspaces router — GET /v1/workspaces, POST /v1/workspaces."""
+"""Workspaces router — GET /v1/workspaces, POST /v1/workspaces, GET /v1/workspaces/{id}/credits."""
 
 import logging
+from decimal import Decimal
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from api.auth import AuthUser
 from api.deps import DBConn
+from studio_core.repositories import LedgerRepository, ProjectRepository
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +28,13 @@ class CreateWorkspaceRequest(BaseModel):
     """Request to create a new workspace."""
 
     name: str = Field(min_length=1, max_length=100)
+
+
+class CreditBalanceResponse(BaseModel):
+    """Current credit balance for a workspace."""
+
+    workspace_id: UUID
+    balance: Decimal
 
 
 @router.get("/workspaces", response_model=list[WorkspaceResponse])
@@ -85,3 +94,22 @@ async def create_workspace(
         )
 
     return WorkspaceResponse(id=ws_row["id"], name=ws_row["name"], owner_id=ws_row["owner_id"])
+
+
+@router.get("/workspaces/{workspace_id}/credits", response_model=CreditBalanceResponse)
+async def get_credit_balance(
+    workspace_id: UUID,
+    user: AuthUser,
+    db: DBConn,
+) -> CreditBalanceResponse:
+    """Return the current credit balance for a workspace the caller belongs to.
+
+    The balance is derived from the append-only ``credit_ledger`` so it always
+    reflects reservations, refunds, grants, and purchases.
+    """
+    role = await ProjectRepository(db).get_member_role(workspace_id, user.id)
+    if role is None:
+        raise HTTPException(status_code=403, detail="Not a member of this workspace")
+
+    balance = await LedgerRepository(db).get_balance(workspace_id)
+    return CreditBalanceResponse(workspace_id=workspace_id, balance=balance)

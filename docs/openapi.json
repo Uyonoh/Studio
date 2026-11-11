@@ -283,6 +283,42 @@
         "title": "CreateProjectRequest",
         "type": "object"
       },
+      "CreateWorkspaceRequest": {
+        "description": "Request to create a new workspace.",
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CreateWorkspaceRequest",
+        "type": "object"
+      },
+      "CreditBalanceResponse": {
+        "description": "Current credit balance for a workspace.",
+        "properties": {
+          "balance": {
+            "title": "Balance",
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "workspace_id",
+          "balance"
+        ],
+        "title": "CreditBalanceResponse",
+        "type": "object"
+      },
       "GenerationJobResponse": {
         "description": "Job representation returned to clients.",
         "properties": {
@@ -1319,7 +1355,7 @@
     },
     "/v1/assets/{asset_id}/complete": {
       "post": {
-        "description": "Confirm that a direct upload has completed.\n\nThe server verifies the object exists in storage, probes its MIME and\ndimensions, generates a thumbnail, and marks the asset ``ready``.",
+        "description": "Confirm that a direct upload has completed and process the media.\n\nThe server downloads the object from storage, probes its real MIME type,\ndimensions, duration and frame rate, generates a thumbnail (or video poster\nframe), uploads it, and marks the asset ``ready``.",
         "operationId": "complete_upload_v1_assets__asset_id__complete_post",
         "parameters": [
           {
@@ -2131,6 +2167,100 @@
           }
         ],
         "summary": "List Workspaces",
+        "tags": [
+          "workspaces"
+        ]
+      },
+      "post": {
+        "description": "Create a new workspace and make the caller the owner.",
+        "operationId": "create_workspace_v1_workspaces_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkspaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Workspace",
+        "tags": [
+          "workspaces"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/credits": {
+      "get": {
+        "description": "Return the current credit balance for a workspace the caller belongs to.\n\nThe balance is derived from the append-only ``credit_ledger`` so it always\nreflects reservations, refunds, grants, and purchases.",
+        "operationId": "get_credit_balance_v1_workspaces__workspace_id__credits_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditBalanceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Credit Balance",
         "tags": [
           "workspaces"
         ]
