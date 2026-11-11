@@ -285,8 +285,7 @@ export function startMockBackend(port = 3101) {
       });
     }
 
-    // Magic-link sign-in. The app is passwordless, so "sign up" is the same
-    // request: Supabase creates the user on first OTP if needed.
+    // Magic-link sign-in. Supabase creates the user on first OTP if needed.
     if (url.pathname === "/auth/v1/otp" && method === "POST") {
       readJson().then(() => sendJson({}, 200));
       return;
@@ -304,6 +303,10 @@ export function startMockBackend(port = 3101) {
           },
         ],
       });
+    }
+
+    if (url.pathname === "/v1/workspaces/ws-e2e/credits" && method === "GET") {
+      return sendJson({ workspace_id: "ws-e2e", balance: "1000.00" });
     }
 
     // 3. Project list and creation

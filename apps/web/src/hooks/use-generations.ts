@@ -113,6 +113,7 @@ export function useSubmitGeneration(projectId: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["generations", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["credits"] });
     },
   });
 }
@@ -194,6 +195,7 @@ function invalidateJobQueries(
   jobId?: string
 ) {
   queryClient.invalidateQueries({ queryKey: ["generations", projectId] });
+  queryClient.invalidateQueries({ queryKey: ["credits"] });
   if (jobId) {
     queryClient.invalidateQueries({ queryKey: ["generation", jobId] });
   }

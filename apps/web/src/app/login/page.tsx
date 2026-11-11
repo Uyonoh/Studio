@@ -25,7 +25,7 @@ function formatAuthError(error: string): string {
 }
 
 export default function LoginPage() {
-  const [authMode, setAuthMode] = useState<"magic-link" | "password">("magic-link");
+  const [authMode, setAuthMode] = useState<"magic-link" | "password">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -238,22 +238,6 @@ export default function LoginPage() {
               <button
                 type="button"
                 role="tab"
-                aria-selected={authMode === "magic-link"}
-                onClick={() => {
-                  setAuthMode("magic-link");
-                  setMessage(null);
-                }}
-                className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                  authMode === "magic-link"
-                    ? "bg-[#1B1E26] text-[#E8EAF0] shadow-sm border border-[#262A35]"
-                    : "text-[#9AA1B2] hover:text-[#E8EAF0]"
-                }`}
-              >
-                Magic Link
-              </button>
-              <button
-                type="button"
-                role="tab"
                 aria-selected={authMode === "password"}
                 onClick={() => {
                   setAuthMode("password");
@@ -267,47 +251,25 @@ export default function LoginPage() {
               >
                 Password
               </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={authMode === "magic-link"}
+                onClick={() => {
+                  setAuthMode("magic-link");
+                  setMessage(null);
+                }}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                  authMode === "magic-link"
+                    ? "bg-[#1B1E26] text-[#E8EAF0] shadow-sm border border-[#262A35]"
+                    : "text-[#9AA1B2] hover:text-[#E8EAF0]"
+                }`}
+              >
+                Magic Link
+              </button>
             </div>
 
-            {authMode === "magic-link" ? (
-              /* Email Magic Link Form */
-              <form onSubmit={handleEmailLogin} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="email" className="block text-xs font-medium text-[#9AA1B2]">
-                    Work email
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-[#9AA1B2] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@company.com"
-                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#0B0C10] border border-[#262A35] text-[#E8EAF0] placeholder-[#9AA1B2]/60 text-sm focus:outline-none focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF] transition-all"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading || isGoogleLoading || !email}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#6C4CE8] hover:bg-[#5B3FD6] text-white font-medium text-sm transition-all shadow-[0_0_20px_rgba(124,92,255,0.25)] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] focus:ring-offset-2 focus:ring-offset-[#14161C] disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <span>Send Magic Link</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </form>
-            ) : (
+            {authMode === "password" ? (
               /* Email + Password Form */
               <form onSubmit={handlePasswordLogin} className="space-y-4">
                 <div className="space-y-1.5">
@@ -360,6 +322,44 @@ export default function LoginPage() {
                   ) : (
                     <>
                       <span>Sign In</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              /* Email Magic Link Form */
+              <form onSubmit={handleEmailLogin} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="email" className="block text-xs font-medium text-[#9AA1B2]">
+                    Work email
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-[#9AA1B2] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@company.com"
+                      className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#0B0C10] border border-[#262A35] text-[#E8EAF0] placeholder-[#9AA1B2]/60 text-sm focus:outline-none focus:border-[#7C5CFF] focus:ring-1 focus:ring-[#7C5CFF] transition-all"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading || isGoogleLoading || !email}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#6C4CE8] hover:bg-[#5B3FD6] text-white font-medium text-sm transition-all shadow-[0_0_20px_rgba(124,92,255,0.25)] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] focus:ring-offset-2 focus:ring-offset-[#14161C] disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <span>Send Magic Link</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}

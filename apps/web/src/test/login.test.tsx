@@ -38,13 +38,24 @@ describe("LoginPage", () => {
     expect(screen.getByText(/create images and videos with ai/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /continue with google/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/work email/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /send magic link/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /password/i })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    expect(screen.getByRole("tab", { name: /magic link/i })).toHaveAttribute(
+      "aria-selected",
+      "false"
+    );
   });
 
   it("submits email magic link successfully and displays confirmation", async () => {
     mockSignInWithOtp.mockResolvedValueOnce({ error: null });
 
     render(<LoginPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /magic link/i }));
 
     const emailInput = screen.getByLabelText(/work email/i);
     fireEvent.change(emailInput, { target: { value: "creator@example.com" } });
@@ -91,6 +102,8 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
+    fireEvent.click(screen.getByRole("tab", { name: /magic link/i }));
+
     const emailInput = screen.getByLabelText(/work email/i);
     fireEvent.change(emailInput, { target: { value: "invalid@example.com" } });
 
@@ -104,14 +117,15 @@ describe("LoginPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Invalid email address");
   });
 
-  it("switches to password mode and logs in with credentials", async () => {
+  it("signs in with email and password by default", async () => {
     mockSignInWithPassword.mockResolvedValueOnce({ error: null });
 
     render(<LoginPage />);
 
-    const passwordTab = screen.getByRole("tab", { name: /password/i });
-    fireEvent.click(passwordTab);
-
+    expect(screen.getByRole("tab", { name: /password/i })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign in/i })).toBeInTheDocument();
 
@@ -133,6 +147,19 @@ describe("LoginPage", () => {
     });
   });
 
+  it("switches to magic link mode as a secondary option", () => {
+    render(<LoginPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /magic link/i }));
+
+    expect(screen.getByRole("tab", { name: /magic link/i })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /send magic link/i })).toBeInTheDocument();
+  });
+
   it("carries redirectedFrom through the magic-link callback", async () => {
     window.history.replaceState(
       {},
@@ -142,6 +169,8 @@ describe("LoginPage", () => {
     mockSignInWithOtp.mockResolvedValueOnce({ error: null });
 
     render(<LoginPage />);
+
+    fireEvent.click(screen.getByRole("tab", { name: /magic link/i }));
 
     fireEvent.change(screen.getByLabelText(/work email/i), {
       target: { value: "creator@example.com" },
@@ -193,7 +222,6 @@ describe("LoginPage", () => {
 
     render(<LoginPage />);
 
-    fireEvent.click(screen.getByRole("tab", { name: /password/i }));
     fireEvent.change(screen.getByLabelText(/work email/i), {
       target: { value: "dev@example.com" },
     });

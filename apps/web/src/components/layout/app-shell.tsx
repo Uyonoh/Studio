@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 import { WorkspaceProvider, useCurrentWorkspace } from "@/components/providers/workspace-context";
+import { useCreditBalance } from "@/hooks/use-credits";
 import { type Workspace } from "./workspace-switcher";
 
 interface AppShellProps {
@@ -16,6 +17,9 @@ interface AppShellProps {
 function AppShellContent({ children, userEmail }: { children: ReactNode; userEmail?: string | null }) {
   const { workspaces, currentWorkspace, setCurrentWorkspace } = useCurrentWorkspace();
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const { data: creditsBalance, isLoading: isCreditsLoading } = useCreditBalance(
+    currentWorkspace?.id
+  );
 
   return (
     <div className="min-h-screen bg-[#0B0C10] text-[#E8EAF0]">
@@ -35,7 +39,8 @@ function AppShellContent({ children, userEmail }: { children: ReactNode; userEma
       <div className="lg:pl-60 flex flex-col min-h-screen pt-16">
         <TopBar
           userEmail={userEmail}
-          creditsBalance={1000}
+          creditsBalance={creditsBalance}
+          isCreditsLoading={isCreditsLoading || !currentWorkspace}
           onOpenNav={() => setIsNavOpen(true)}
         />
         <main id="main-content" tabIndex={-1} className="flex-1 p-4 sm:p-6 lg:p-8">

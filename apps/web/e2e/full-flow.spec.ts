@@ -11,6 +11,7 @@ test.describe("Launch flows", () => {
       await page.goto("/login");
       await expect(page.getByRole("heading", { name: /Studio/i })).toBeVisible();
 
+      await page.getByRole("tab", { name: /Magic Link/i }).click();
       await page.getByLabel("Work email").fill("new-user@example.com");
       await page.getByRole("button", { name: /Send Magic Link/i }).click();
 

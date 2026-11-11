@@ -66,6 +66,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/admin/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admin Stats
+         * @description Return queue, failure, duration, and provider aggregates.
+         *
+         *     Access is restricted to ``ADMIN_USER_IDS``. The response is deliberately a
+         *     single object so a dashboard can fetch everything in one request.
+         */
+        get: operations["admin_stats_v1_admin_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/assets/{asset_id}": {
         parameters: {
             query?: never;
@@ -101,10 +124,11 @@ export interface paths {
         put?: never;
         /**
          * Complete Upload
-         * @description Confirm that a direct upload has completed.
+         * @description Confirm that a direct upload has completed and process the media.
          *
-         *     The server verifies the object exists in storage, probes its MIME and
-         *     dimensions, generates a thumbnail, and marks the asset ``ready``.
+         *     The server downloads the object from storage, probes its real MIME type,
+         *     dimensions, duration and frame rate, generates a thumbnail (or video poster
+         *     frame), uploads it, and marks the asset ``ready``.
          */
         post: operations["complete_upload_v1_assets__asset_id__complete_post"];
         delete?: never;
@@ -326,6 +350,33 @@ export interface paths {
          */
         get: operations["list_workspaces_v1_workspaces_get"];
         put?: never;
+        /**
+         * Create Workspace
+         * @description Create a new workspace and make the caller the owner.
+         */
+        post: operations["create_workspace_v1_workspaces_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/workspaces/{workspace_id}/credits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Credit Balance
+         * @description Return the current credit balance for a workspace the caller belongs to.
+         *
+         *     The balance is derived from the append-only ``credit_ledger`` so it always
+         *     reflects reservations, refunds, grants, and purchases.
+         */
+        get: operations["get_credit_balance_v1_workspaces__workspace_id__credits_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -366,11 +417,8 @@ export interface components {
          * @description Everything needed to explain where an asset came from.
          */
         AssetLineage: {
-            /**
-             * Inputs
-             * @default []
-             */
-            inputs: components["schemas"]["LineageAssetRef"][];
+            /** Inputs */
+            inputs?: components["schemas"]["LineageAssetRef"][];
             parent?: components["schemas"]["LineageAssetRef"] | null;
             source_job?: components["schemas"]["LineageSourceJob"] | null;
         };
@@ -446,6 +494,27 @@ export interface components {
             description?: string | null;
             /** Name */
             name: string;
+        };
+        /**
+         * CreateWorkspaceRequest
+         * @description Request to create a new workspace.
+         */
+        CreateWorkspaceRequest: {
+            /** Name */
+            name: string;
+        };
+        /**
+         * CreditBalanceResponse
+         * @description Current credit balance for a workspace.
+         */
+        CreditBalanceResponse: {
+            /** Balance */
+            balance: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
         };
         /**
          * GenerationJobResponse
@@ -851,6 +920,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+        };
+    };
+    admin_stats_v1_admin_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -1355,6 +1446,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkspaceResponse"][];
+                };
+            };
+        };
+    };
+    create_workspace_v1_workspaces_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateWorkspaceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_credit_balance_v1_workspaces__workspace_id__credits_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditBalanceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

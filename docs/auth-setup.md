@@ -1,10 +1,11 @@
 # Authentication Setup (Email / Magic Link / Google)
 
-The web app supports three sign-in methods:
+The web app supports three sign-in methods. Email + password is the default on
+the login page; magic link and Google OAuth remain available as secondary options.
 
 | Method | Code path |
 | --- | --- |
-| Email + password | `supabase.auth.signInWithPassword()` in `apps/web/src/app/login/page.tsx` |
+| Email + password (default) | `supabase.auth.signInWithPassword()` in `apps/web/src/app/login/page.tsx` |
 | Email magic link | `supabase.auth.signInWithOtp()` → `/auth/callback` |
 | Google OAuth | `supabase.auth.signInWithOAuth({ provider: "google" })` → `/auth/callback` |
 

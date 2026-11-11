@@ -77,6 +77,55 @@ async def test_list_workspaces_returns_empty() -> None:
     assert resp.json() == []
 
 
+# ── Workspace credit balance ───────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_get_credit_balance_returns_ledger_total() -> None:
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    conn = _mock_conn()
+
+    async def fetchval_side_effect(query: str, *args: Any) -> Any:
+        if "workspace_members" in query:
+            return "viewer"
+        if "credit_ledger" in query:
+            return 1250.5
+        return None
+
+    conn.fetchval = AsyncMock(side_effect=fetchval_side_effect)
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            f"/v1/workspaces/{ws_id}/credits",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 200
+    assert resp.json() == {
+        "workspace_id": str(ws_id),
+        "balance": "1250.5",
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_credit_balance_forbidden_for_non_member() -> None:
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    conn = _mock_conn()
+    conn.fetchval = AsyncMock(return_value=None)
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            f"/v1/workspaces/{ws_id}/credits",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 403
+
+
 # ── Create project ─────────────────────────────────────────────────────────────
 
 

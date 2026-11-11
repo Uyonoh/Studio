@@ -21,6 +21,10 @@ vi.mock("@/lib/supabase/client", () => ({
   }),
 }));
 
+vi.mock("@/hooks/use-credits", () => ({
+  useCreditBalance: () => ({ data: 1000, isLoading: false }),
+}));
+
 describe("Layout Components", () => {
   it("renders workspace switcher with current workspace and toggles options", () => {
     const workspaces = [
@@ -78,6 +82,12 @@ describe("Layout Components", () => {
     expect(screen.getByRole("menu")).toBeInTheDocument();
     expect(screen.getByText("alex@company.com")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
+  });
+
+  it("shows a placeholder while the credit balance is loading", () => {
+    render(<TopBar userEmail="alex@company.com" isCreditsLoading />);
+
+    expect(screen.getByTestId("credits-balance")).toHaveTextContent("—");
   });
 
   it("renders AppShell wrapping page content", async () => {
