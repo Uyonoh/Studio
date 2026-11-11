@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
-from arq.connections import create_pool
 from arq.cron import cron
+from arq.worker import Worker, get_kwargs
+from redis.exceptions import ConnectionError as RedisConnectionError
+from redis.exceptions import TimeoutError as RedisTimeoutError
 
 from studio_core.db import create_pool as create_db_pool
 from studio_core.observability import init_sentry
@@ -17,6 +20,41 @@ from worker.tasks.reconciler import reconcile_jobs
 from worker.tasks.run_generation import run_generation
 
 logger = logging.getLogger(__name__)
+
+# Cap the retry delay when Redis is unreachable for an extended period.
+_MAX_REDIS_RETRY_DELAY_SECONDS = 30.0
+
+
+class ResilientWorker(Worker):
+    """ARQ worker that keeps polling through transient Redis outages.
+
+    ARQ's stock poll loop does not catch Redis connection errors, so a single
+    dropped connection terminates the process. Jobs are already recoverable
+    from Postgres (see the reconciler), so staying alive and reconnecting is
+    preferable to crashing.
+    """
+
+    async def _poll_iteration(self) -> None:
+        try:
+            await super()._poll_iteration()
+        except (RedisConnectionError, RedisTimeoutError, OSError) as exc:
+            failures = getattr(self, "_redis_poll_failures", 0) + 1
+            self._redis_poll_failures = failures
+            delay = min(
+                _MAX_REDIS_RETRY_DELAY_SECONDS,
+                max(self.poll_delay_s, 0.5) * (2 ** min(failures, 6)),
+            )
+            logger.warning(
+                "Redis unavailable during poll (attempt %d): %s; retrying in %.1fs",
+                failures,
+                exc,
+                delay,
+            )
+            await asyncio.sleep(delay)
+        else:
+            if getattr(self, "_redis_poll_failures", 0):
+                logger.info("Redis connection recovered; resuming polling")
+                self._redis_poll_failures = 0
 
 
 async def startup(ctx: dict[str, Any]) -> None:
@@ -44,8 +82,13 @@ async def startup(ctx: dict[str, Any]) -> None:
     )
     ctx["db_pool"] = db_pool
 
-    # Redis pool for enqueuing deferred or downstream tasks
-    redis_pool = await create_pool(config.get_redis_settings())
+    # Reuse ARQ's own pool (configured with health checks + retries in
+    # WorkerSettings) so tasks enqueue through the same resilient connection.
+    redis_pool = ctx.get("redis")
+    if redis_pool is None:
+        # Startup invoked outside an ARQ worker (e.g. a test harness).
+        redis_pool = config.get_redis_pool()
+        ctx["_owns_redis_pool"] = True
     ctx["redis_pool"] = redis_pool
 
     # Run startup reconciliation pass (covers Redis loss/restarts)
@@ -63,9 +106,11 @@ async def shutdown(ctx: dict[str, Any]) -> None:
     if db_pool:
         await db_pool.close()
 
+    # ARQ owns and closes its own pool after this hook; only close a pool we
+    # created ourselves.
     redis_pool = ctx.get("redis_pool")
-    if redis_pool:
-        await redis_pool.close()
+    if redis_pool and ctx.get("_owns_redis_pool"):
+        await redis_pool.aclose()
     logger.info("ARQ Worker shutdown complete")
 
 
@@ -88,6 +133,10 @@ def get_worker_settings() -> type[Any]:
         ]
         on_startup = startup
         on_shutdown = shutdown
+        # Provide a pre-built pool so ARQ uses our health-checked/retrying
+        # connection pool instead of its default RedisSettings pool.
+        redis_pool = config.get_redis_pool()
+        # Keep settings for tooling such as ``arq --check``.
         redis_settings = config.get_redis_settings()
         max_jobs = config.worker_max_jobs
         job_timeout = config.worker_job_timeout
@@ -100,10 +149,11 @@ WorkerSettings = get_worker_settings()
 
 
 def main() -> None:
-    """CLI runner for local development (python -m worker.main)."""
-    from arq import run_worker
-
-    run_worker(WorkerSettings)
+    """CLI runner used by local development and the worker container."""
+    config = get_worker_config()
+    logging.basicConfig(level=config.log_level)
+    worker_kwargs: dict[str, Any] = get_kwargs(WorkerSettings)
+    ResilientWorker(**worker_kwargs).run()
 
 
 if __name__ == "__main__":

@@ -1524,18 +1524,22 @@ name = "studio-core"
 version = "0.1.0"
 source = { editable = "packages/studio_core" }
 dependencies = [
+    { name = "arq" },
     { name = "asyncpg" },
     { name = "jsonschema" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "redis" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "arq", specifier = ">=0.26.0" },
     { name = "asyncpg", specifier = ">=0.29.0" },
     { name = "jsonschema", specifier = ">=4.20.0" },
     { name = "pydantic", specifier = ">=2.7.0" },
     { name = "pydantic-settings", specifier = ">=2.2.0" },
+    { name = "redis", specifier = ">=5.0.0" },
 ]
 
 [[package]]

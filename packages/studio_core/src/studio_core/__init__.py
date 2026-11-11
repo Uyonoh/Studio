@@ -45,6 +45,7 @@ from studio_core.observability import (
     set_job_context,
     set_request_context,
 )
+from studio_core.redis import create_redis_pool, create_redis_settings
 from studio_core.repositories import (
     AssetRepository,
     EventRepository,
@@ -101,6 +102,8 @@ __all__ = [
     "capture_exception",
     "clear_current_job_context",
     "create_pool",
+    "create_redis_pool",
+    "create_redis_settings",
     "get_release",
     "get_settings",
     "init_sentry",

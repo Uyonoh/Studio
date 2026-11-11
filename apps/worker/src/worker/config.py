@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from arq.connections import RedisSettings
+from arq.connections import ArqRedis, RedisSettings
 from pydantic import Field
 
+from studio_core.redis import create_redis_pool, create_redis_settings
 from studio_core.settings import Settings
 
 
@@ -34,8 +35,18 @@ class WorkerConfig(Settings):
     )
 
     def get_redis_settings(self) -> RedisSettings:
+        """ARQ settings used by helpers such as ``arq --check``."""
         url = self.redis_url or "redis://127.0.0.1:6379/0"
-        return RedisSettings.from_dsn(url)
+        return create_redis_settings(url)
+
+    def get_redis_pool(self) -> ArqRedis:
+        """Worker pool with health checks and retries enabled.
+
+        Managed Redis servers drop idle connections. The worker must detect a
+        stale connection and reconnect instead of crashing on the next poll.
+        """
+        url = self.redis_url or "redis://127.0.0.1:6379/0"
+        return create_redis_pool(url)
 
 
 _worker_config: WorkerConfig | None = None

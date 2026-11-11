@@ -113,7 +113,7 @@ def test_render_blueprint_keeps_secrets_out_of_git() -> None:
 def test_dockerfiles_are_multistage_nonroot_and_healthchecked() -> None:
     expected_commands = {
         "api": 'CMD ["uvicorn", "api.main:app"',
-        "worker": 'CMD ["arq", "worker.main.WorkerSettings"]',
+        "worker": 'CMD ["python", "-m", "worker.main"]',
     }
     for app, command in expected_commands.items():
         dockerfile = (REPO_ROOT / "apps" / app / "Dockerfile").read_text(encoding="utf-8")
