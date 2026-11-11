@@ -1,9 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import {
+  DEFAULT_AUTH_DESTINATION,
+  safeRedirectPath,
+} from "@/lib/safe-redirect";
 import { Mail, Lock, ArrowRight, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+
+function formatAuthError(error: string): string {
+  const normalized = error.toLowerCase();
+
+  if (error === "auth_callback_failed") {
+    return "That sign-in link is invalid or has expired. Please request a new one.";
+  }
+  if (normalized.includes("access_denied")) {
+    return "Sign in was cancelled or access was denied. Please try again.";
+  }
+  if (normalized.includes("provider is not enabled") || normalized.includes("not enabled")) {
+    return "Google sign-in is not enabled for this project yet. Please sign in with email instead.";
+  }
+  return error;
+}
 
 export default function LoginPage() {
   const [authMode, setAuthMode] = useState<"magic-link" | "password">("magic-link");
@@ -13,24 +32,35 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
+
+  // Where to land after a successful sign in. Only internal paths are allowed.
+  const destination = useMemo(() => {
+    if (typeof window === "undefined") return DEFAULT_AUTH_DESTINATION;
+    return safeRedirectPath(
+      new URLSearchParams(window.location.search).get("redirectedFrom")
+    );
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const err = params.get("error");
       if (err) {
-        setMessage({
-          type: "error",
-          text:
-            err === "auth_callback_failed"
-              ? "Authentication callback failed. Please try signing in again."
-              : err,
-        });
+        setMessage({ type: "error", text: formatAuthError(err) });
       }
     }
   }, []);
+
+  /** Build the callback URL, preserving the post-login destination. */
+  const buildCallbackUrl = () => {
+    const callbackUrl = new URL("/auth/callback", window.location.origin);
+    if (destination !== DEFAULT_AUTH_DESTINATION) {
+      callbackUrl.searchParams.set("next", destination);
+    }
+    return callbackUrl.toString();
+  };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,20 +73,21 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: buildCallbackUrl(),
         },
       });
 
       if (error) {
         let text = error.message;
         if (text.toLowerCase().includes("rate limit")) {
-          text = "Email rate limit exceeded. Please sign in using password.";
+          text =
+            "Too many magic links requested. Wait a few minutes, or sign in with your password instead.";
         }
         setMessage({ type: "error", text });
       } else {
         setMessage({
           type: "success",
-          text: `Check your inbox! We sent a magic sign-in link to ${email}.`,
+          text: `Check your inbox! We sent a magic sign-in link to ${email}. The link expires after one hour.`,
         });
       }
     } catch (err: any) {
@@ -83,8 +114,6 @@ export default function LoginPage() {
         setMessage({ type: "error", text: error.message });
         setIsLoading(false);
       } else {
-        const params = new URLSearchParams(window.location.search);
-        const destination = params.get("redirectedFrom") || "/projects";
         router.push(destination);
         router.refresh();
       }
@@ -102,16 +131,12 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: buildCallbackUrl(),
         },
       });
 
       if (error) {
-        let text = error.message;
-        if (text.toLowerCase().includes("not enabled")) {
-          text = "Google sign-in is not enabled for this project. Please sign in with email/password.";
-        }
-        setMessage({ type: "error", text });
+        setMessage({ type: "error", text: formatAuthError(error.message) });
         setIsGoogleLoading(false);
       }
     } catch (err: any) {
