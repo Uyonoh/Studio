@@ -498,8 +498,10 @@ async def test_e2e_backend_pipeline_success(monkeypatch: pytest.MonkeyPatch) -> 
     mock_redis = MagicMock()
     mock_redis.eval = AsyncMock(return_value=1)
 
-    async def mock_enqueue_job(task_name: str, job_id_str: str, **kwargs: Any) -> None:
+    async def mock_enqueue_job(task_name: str, job_id_str: str, **kwargs: Any) -> object:
         state.enqueued_tasks.append((task_name, UUID(job_id_str)))
+        # ARQ returns a Job on success and None when the id is already queued.
+        return object()
 
     mock_redis.enqueue_job = AsyncMock(side_effect=mock_enqueue_job)
 
