@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, LogOut, User, ChevronDown, Menu } from "lucide-react";
+import Link from "next/link";
+import { Zap, LogOut, ChevronDown, Menu, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -52,12 +53,13 @@ export function TopBar({
 
       {/* Right controls */}
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-        {/* Credits Badge */}
-        <div
+        {/* Credits Badge — links to the usage section of settings */}
+        <Link
+          href="/settings?tab=usage"
           data-testid="credits-balance"
-          title="Credits available in the active workspace"
+          title="View credit usage in the active workspace"
           aria-busy={isCreditsLoading}
-          className="flex items-center gap-1.5 sm:gap-2 h-9 px-2.5 sm:px-3.5 rounded-xl bg-[#14161C] border border-[#262A35] text-xs font-mono text-[#E8EAF0]"
+          className="flex h-9 items-center gap-1.5 rounded-xl border border-[#262A35] bg-[#14161C] px-2.5 text-xs font-mono text-[#E8EAF0] transition-colors hover:border-[#7C5CFF]/50 hover:bg-[#1B1E26] sm:gap-2 sm:px-3.5"
         >
           <Zap className="w-3.5 h-3.5 text-[#A995FF] fill-[#7C5CFF]/20" />
           <span className={`font-semibold ${isCreditsLoading ? "animate-pulse text-[#9AA1B2]" : ""}`}>
@@ -66,7 +68,8 @@ export function TopBar({
               : creditsBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </span>
           <span className="hidden sm:inline text-[#9AA1B2] font-sans">Credits</span>
-        </div>
+          <span className="sr-only">— view credit usage</span>
+        </Link>
 
         {/* User Menu */}
         <div className="relative">
@@ -103,6 +106,22 @@ export function TopBar({
                 </div>
 
                 <div className="p-1">
+                  <Link
+                    href="/settings?tab=usage"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-[#E8EAF0] transition-colors hover:bg-[#1B1E26]"
+                  >
+                    <Zap className="w-4 h-4 text-[#A995FF]" />
+                    <span>Usage &amp; billing</span>
+                  </Link>
+                  <Link
+                    href="/settings"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs text-[#E8EAF0] transition-colors hover:bg-[#1B1E26]"
+                  >
+                    <Settings className="w-4 h-4 text-[#9AA1B2]" />
+                    <span>Workspace settings</span>
+                  </Link>
                   <button
                     type="button"
                     onClick={handleSignOut}

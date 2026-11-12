@@ -17,6 +17,7 @@ from studio_core.models import (
     AssetKind,
     AssetOrigin,
     CreditLedger,
+    CreditTransaction,
     GenerationJob,
     JobEvent,
     JobInput,
@@ -510,3 +511,51 @@ class LedgerRepository:
         row = await self.conn.fetchrow(query, workspace_id, job_id, delta, reason)
         assert row is not None
         return CreditLedger.model_validate(dict(row))
+
+    async def list_transactions(
+        self,
+        workspace_id: UUID,
+        limit: int = 20,
+        before_id: int | None = None,
+    ) -> list[CreditTransaction]:
+        """Return newest-first ledger entries with a running balance.
+
+        ``before_id`` pages backwards through the ledger; the running balance is
+        still correct because it is computed over every earlier entry for the
+        workspace, not just the returned page.
+        """
+        query = """
+            SELECT l.id, l.workspace_id, l.job_id, l.delta, l.reason, l.created_at,
+                   m.display_name AS model_name,
+                   j.status::text AS job_status,
+                   j.prompt,
+                   sum(l.delta) OVER (ORDER BY l.id ROWS UNBOUNDED PRECEDING)
+                       ::numeric(10,2) AS balance_after
+            FROM public.credit_ledger l
+            LEFT JOIN public.generation_jobs j ON j.id = l.job_id
+            LEFT JOIN public.models m ON m.id = j.model_id
+            WHERE l.workspace_id = $1
+              AND ($2::bigint IS NULL OR l.id < $2)
+            ORDER BY l.id DESC
+            LIMIT $3
+        """
+        rows = await self.conn.fetch(query, workspace_id, before_id, limit)
+        return [CreditTransaction.model_validate(dict(r)) for r in rows]
+
+    async def get_activity_summary(self, workspace_id: UUID, days: int = 30) -> dict[str, Any]:
+        """Aggregate credit activity for the last ``days`` days."""
+        query = """
+            SELECT
+                coalesce(sum(CASE WHEN delta < 0 THEN -delta ELSE 0 END), 0)
+                    ::numeric(10,2) AS spent,
+                coalesce(sum(CASE WHEN delta > 0 AND reason = 'refund' THEN delta ELSE 0 END), 0)
+                    ::numeric(10,2) AS refunded,
+                coalesce(sum(CASE WHEN delta > 0 AND reason <> 'refund' THEN delta ELSE 0 END), 0)
+                    ::numeric(10,2) AS granted,
+                count(*)::int AS transactions
+            FROM public.credit_ledger
+            WHERE workspace_id = $1
+              AND created_at >= now() - make_interval(days => $2)
+        """
+        row = await self.conn.fetchrow(query, workspace_id, days)
+        return dict(row) if row else {"spent": 0, "refunded": 0, "granted": 0, "transactions": 0}

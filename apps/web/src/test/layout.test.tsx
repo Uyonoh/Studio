@@ -73,7 +73,9 @@ describe("Layout Components", () => {
     );
 
     expect(screen.getByText("Active Projects")).toBeInTheDocument();
-    expect(screen.getByTestId("credits-balance")).toHaveTextContent("1,500");
+    const creditsLink = screen.getByTestId("credits-balance");
+    expect(creditsLink).toHaveTextContent("1,500");
+    expect(creditsLink).toHaveAttribute("href", "/settings?tab=usage");
     expect(screen.getByText("A")).toBeInTheDocument();
 
     const userMenuButton = screen.getByRole("button", { name: /user menu/i });
