@@ -59,6 +59,24 @@ const MODELS = [
     required_input_roles: [],
   },
   {
+    id: "m1-fal",
+    slug: "img-pro",
+    display_name: "Pro Image",
+    task_type: "text_to_image",
+    provider_id: "fal",
+    input_schema: {
+      type: "object",
+      properties: {
+        aspect_ratio: { type: "string", enum: ["1:1", "16:9"], default: "1:1" },
+        seed: { type: "integer", minimum: 0, maximum: 100 },
+      },
+      additionalProperties: false,
+    },
+    default_params: { aspect_ratio: "1:1" },
+    cost_credits: "5.00",
+    required_input_roles: [],
+  },
+  {
     id: "m2",
     slug: "img-remix",
     display_name: "Image Remix",
@@ -199,8 +217,8 @@ function clickSegment(groupName: string, buttonName: RegExp | string) {
 }
 
 async function waitForModel(slug: string) {
-  const select = (await screen.findByLabelText(/^model$/i)) as HTMLSelectElement;
-  await waitFor(() => expect(select.value).toBe(slug));
+  const trigger = await screen.findByTestId("model-picker-trigger");
+  await waitFor(() => expect(trigger).toHaveAttribute("data-value", slug));
 }
 
 function setPrompt(value: string) {
@@ -348,6 +366,38 @@ describe("GenerationComposer", () => {
     expect(await screen.findByText(/must be at most 100/i)).toBeInTheDocument();
     expect(seedInput).toHaveAttribute("aria-invalid", "true");
     expect(captured).toHaveLength(0);
+  });
+
+  it("groups models by provider and changes the selection from the picker", async () => {
+    renderComposer();
+    await waitForModel("img-fast");
+
+    fireEvent.click(screen.getByTestId("model-picker-trigger"));
+
+    expect(await screen.findByTestId("model-provider-fake")).toHaveTextContent(
+      /deterministic test provider/i
+    );
+    expect(screen.getByTestId("model-provider-fal")).toHaveTextContent(/fal\.ai/i);
+
+    fireEvent.click(screen.getByRole("option", { name: /pro image/i }));
+
+    await waitForModel("img-pro");
+    expect(screen.getByTestId("generation-cost")).toHaveTextContent("5.00");
+  });
+
+  it("closes the model picker with Escape and restores focus", async () => {
+    renderComposer();
+    await waitForModel("img-fast");
+
+    const trigger = screen.getByTestId("model-picker-trigger");
+    fireEvent.click(trigger);
+    const listbox = screen.getByRole("listbox");
+    expect(listbox).toHaveFocus();
+
+    fireEvent.keyDown(listbox, { key: "Escape" });
+
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 
   it("shows the selected model's credit cost and updates it live", async () => {

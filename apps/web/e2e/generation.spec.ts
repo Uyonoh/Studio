@@ -15,9 +15,9 @@ test.describe("Generation flow E2E", () => {
 
     // Composer: schema-driven form loads the fake model.
     await page.getByRole("tab", { name: /Generation Composer/i }).click();
-    const modelSelect = page.getByLabel("Model");
-    await expect(modelSelect).toBeVisible();
-    await expect(modelSelect).toHaveValue("fake-image-fast");
+    const modelPicker = page.getByRole("combobox", { name: "Model" });
+    await expect(modelPicker).toBeVisible();
+    await expect(modelPicker).toHaveAttribute("data-value", "fake-image-fast");
 
     const prompt = "A cinematic lighthouse at dusk";
     await page.getByRole("textbox", { name: "Prompt" }).fill(prompt);

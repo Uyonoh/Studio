@@ -55,8 +55,8 @@ test.describe("Launch flows", () => {
       await page.getByRole("button", { name: /Text \+ image/i }).click();
       await page.getByRole("button", { name: "Use seeded_photo.png" }).click();
 
-      const modelSelect = page.getByLabel("Model");
-      await expect(modelSelect).toHaveValue("fake-video-i2v");
+      const modelPicker = page.getByRole("combobox", { name: "Model" });
+      await expect(modelPicker).toHaveAttribute("data-value", "fake-video-i2v");
 
       const prompt = "E2E animate the seeded product photo";
       await page.getByRole("textbox", { name: "Prompt" }).fill(prompt);

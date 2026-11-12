@@ -42,6 +42,22 @@ The MVP needs one or two real models per task type (text→image, image→image,
 | MiniMax Video-01 I2V | Replicate | `replicate-minimax-i2v` | Excellent first-frame conditioning, smooth motion. |
 | Kling v2 Standard I2V | Fal.ai | `fal-kling-i2v` | Robust image-to-video with `start_image_url` conditioning. Supports 5s and 10s. |
 
+### Fal.ai tier expansion (migration 0007)
+
+The initial catalog only exposed one Fal.ai option per flow. Migration 0007
+adds a budget and a higher-fidelity option for each task type so users can
+trade cost against quality without switching providers:
+
+| Task type | Budget option | Mid/high option |
+|-----------|---------------|-----------------|
+| Text → Image | FLUX.1 [schnell] (`fal-flux-schnell`, 1 credit) | FLUX.1 [dev] (`fal-flux-dev`, 3 credits), FLUX1.1 [pro] (`fal-flux-pro-1-1`, 5 credits) |
+| Image → Image | FLUX.1 [dev] remix (`fal-flux-dev-i2i`, 3 credits) | FLUX.1 Kontext [pro] (`fal-flux-kontext-pro`, 5 credits) |
+| Text → Video | H3 Max Turbo (`fal-h3-max-turbo-t2v`, 10 credits) | Kling v2 Standard (`fal-kling-t2v`, 20 credits), Kling 2.5 Turbo Pro (`fal-kling-2-5-turbo-t2v`, 40 credits) |
+| Image → Video | H3 Max Turbo (`fal-h3-max-turbo-i2v`, 10 credits) | Kling v2 Standard (`fal-kling-i2v`, 20 credits), Kling 2.5 Turbo Pro (`fal-kling-2-5-turbo-i2v`, 40 credits) |
+
+Prices are rounded to whole credits using the same formula as above. The
+composer groups every model by provider so these tiers stay easy to scan.
+
 ### Credit pricing formula
 
 Credits are a unitless internal currency. We set 1 credit ≈ \$0.01 USD in provider cost:
