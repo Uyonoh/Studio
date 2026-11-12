@@ -58,6 +58,28 @@ trade cost against quality without switching providers:
 Prices are rounded to whole credits using the same formula as above. The
 composer groups every model by provider so these tiers stay easy to scan.
 
+### Replicate tier expansion (migration 0008)
+
+Migration 0008 broadens the Replicate catalog using the models currently
+available from the [Try for Free](https://replicate.com/collections/try-for-free)
+collection. The collection still links `google/imagen-4`, but that model has
+been delisted, so `google/nano-banana` is exposed as the Google image option.
+
+| Task type | Models |
+|-----------|--------|
+| Text → Image | FLUX 1.1 [pro] (`replicate-flux-1-1-pro`, 4 credits), FLUX.1 [dev] (`replicate-flux-dev`, 3 credits), FLUX.2 [pro] (`replicate-flux-2-pro`, 5 credits), Ideogram 3.0 Turbo (`replicate-ideogram-v3-turbo`, 3 credits), Nano Banana (`replicate-nano-banana`, 4 credits) |
+| Image → Image | FLUX.1 Kontext [pro] (`replicate-flux-kontext-pro`, 5 credits), FLUX.2 [pro] edit (`replicate-flux-2-pro-edit`, 5 credits), Nano Banana edit (`replicate-nano-banana-edit`, 4 credits), Topaz Image Upscale (`replicate-image-upscale`, 2 credits), CodeFormer (`replicate-codeformer`, 1 credit), GFPGAN (`replicate-gfpgan`, 1 credit) |
+
+The collection also lists video reframing/upscaling models
+(`luma/reframe-video`, `topazlabs/video-upscale`), which are omitted because
+the catalog only supports text/image → video, not video → video. MiniMax
+Video-01 already covers both video flows.
+
+A few of these models use non-standard input keys. The Replicate adapter maps
+`tencentarc/gfpgan` to `img`, `black-forest-labs/flux-2-pro` and
+`google/nano-banana` to their list-style image fields, and
+`minimax/video-01` to `first_frame_image`.
+
 ### Credit pricing formula
 
 Credits are a unitless internal currency. We set 1 credit ≈ \$0.01 USD in provider cost:

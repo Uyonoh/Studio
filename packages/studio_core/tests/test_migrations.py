@@ -103,3 +103,22 @@ def test_google_models_seed_migration_contents() -> None:
     assert "text_to_image" in content
     assert "image_to_image" in content
     assert "on conflict (provider_id, provider_model, task_type) do update" in content.lower()
+
+
+def test_replicate_models_expansion_migration_contents() -> None:
+    migration_file = REPO_ROOT / "supabase" / "migrations" / "0008_replicate_models_expansion.sql"
+    content = migration_file.read_text(encoding="utf-8")
+
+    assert "'replicate'" in content
+    assert "black-forest-labs/flux-1.1-pro" in content
+    assert "black-forest-labs/flux-dev" in content
+    assert "black-forest-labs/flux-2-pro" in content
+    assert "black-forest-labs/flux-kontext-pro" in content
+    assert "ideogram-ai/ideogram-v3-turbo" in content
+    assert "topazlabs/image-upscale" in content
+    assert "sczhou/codeformer" in content
+    assert "tencentarc/gfpgan" in content
+    assert "google/nano-banana" in content
+    assert "text_to_image" in content
+    assert "image_to_image" in content
+    assert "on conflict (provider_id, provider_model, task_type) do update" in content.lower()

@@ -36,6 +36,20 @@ _STATUS_MAP: dict[str, ProviderJobState] = {
 # Replay protection: reject webhook timestamps older than this (seconds)
 _WEBHOOK_TOLERANCE_SECONDS = 300
 
+# Replicate models do not share a single input schema. These maps keep the
+# model-specific image input names in one place instead of leaking them into
+# the catalog or the worker.
+_IMAGE_INPUT_KEY: dict[str, str] = {
+    "tencentarc/gfpgan": "img",
+}
+_IMAGE_LIST_INPUT_KEY: dict[str, str] = {
+    "black-forest-labs/flux-2-pro": "input_images",
+    "google/nano-banana": "image_input",
+}
+_FIRST_FRAME_INPUT_KEY: dict[str, str] = {
+    "minimax/video-01": "first_frame_image",
+}
+
 
 def _guess_kind_from_url(url: str) -> AssetKind:
     """Infer asset kind from a URL's extension."""
@@ -79,16 +93,26 @@ class ReplicateProvider:
         if req.negative_prompt:
             input_payload["negative_prompt"] = req.negative_prompt
 
-        # Map input assets by role
+        # Map input assets by role. A few Replicate models expect image
+        # inputs under a different key, so keep those quirks in one place.
+        image_urls: list[str] = []
         for inp in req.inputs:
             if inp.role in ("init_image", "reference_image"):
-                input_payload["image"] = inp.url
+                image_urls.append(inp.url)
             elif inp.role == "first_frame":
-                input_payload["first_frame"] = inp.url
+                first_frame_key = _FIRST_FRAME_INPUT_KEY.get(req.model, "first_frame")
+                input_payload[first_frame_key] = inp.url
             elif inp.role == "last_frame":
                 input_payload["last_frame"] = inp.url
             elif inp.role == "mask":
                 input_payload["mask"] = inp.url
+
+        if image_urls:
+            list_key = _IMAGE_LIST_INPUT_KEY.get(req.model)
+            if list_key:
+                input_payload[list_key] = image_urls
+            else:
+                input_payload[_IMAGE_INPUT_KEY.get(req.model, "image")] = image_urls[0]
 
         # Merge model-specific params
         input_payload.update(req.params)

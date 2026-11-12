@@ -40,6 +40,12 @@ class Settings(BaseSettings):
         default="http://localhost:3000",
         validation_alias=AliasChoices("WEB_ORIGINS", "WEB_ORIGIN"),
     )
+    # Comma-separated regex patterns for origins that cannot be listed
+    # explicitly (for example, Vercel preview deployments).
+    regex_web_origins: str = Field(
+        default="",
+        validation_alias=AliasChoices("REGEX_WEB_ORIGINS", "REGEX_WEB_ORIGIN"),
+    )
 
     # Database & Storage
     database_url: str = Field(
