@@ -58,13 +58,6 @@ export function TopBar({
           href="/settings?tab=usage"
           data-testid="credits-balance"
           title="View credit usage in the active workspace"
-          aria-label={
-            isCreditsLoading || creditsBalance === undefined
-              ? "View credit usage"
-              : `View credit usage. ${creditsBalance.toLocaleString(undefined, {
-                  maximumFractionDigits: 2,
-                })} credits available`
-          }
           aria-busy={isCreditsLoading}
           className="flex h-9 items-center gap-1.5 rounded-xl border border-[#262A35] bg-[#14161C] px-2.5 text-xs font-mono text-[#E8EAF0] transition-colors hover:border-[#7C5CFF]/50 hover:bg-[#1B1E26] sm:gap-2 sm:px-3.5"
         >
@@ -75,6 +68,7 @@ export function TopBar({
               : creditsBalance.toLocaleString(undefined, { maximumFractionDigits: 2 })}
           </span>
           <span className="hidden sm:inline text-[#9AA1B2] font-sans">Credits</span>
+          <span className="sr-only">— view credit usage</span>
         </Link>
 
         {/* User Menu */}
