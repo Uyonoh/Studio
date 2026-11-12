@@ -8,6 +8,7 @@ interface WorkspaceContextValue {
   workspaces: Workspace[];
   currentWorkspace: Workspace | null;
   setCurrentWorkspace: (ws: Workspace) => void;
+  updateWorkspace: (ws: Workspace) => void;
   isLoading: boolean;
 }
 
@@ -68,12 +69,18 @@ export function WorkspaceProvider({
     }
   };
 
+  const handleUpdateWorkspace = (ws: Workspace) => {
+    setWorkspaces((prev) => prev.map((item) => (item.id === ws.id ? { ...item, ...ws } : item)));
+    setCurrentWorkspace((prev) => (prev && prev.id === ws.id ? { ...prev, ...ws } : prev));
+  };
+
   return (
     <WorkspaceContext.Provider
       value={{
         workspaces,
         currentWorkspace,
         setCurrentWorkspace: handleSelectWorkspace,
+        updateWorkspace: handleUpdateWorkspace,
         isLoading,
       }}
     >

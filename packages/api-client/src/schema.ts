@@ -361,6 +361,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/workspaces/{workspace_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Workspace
+         * @description Rename a workspace. Requires the owner or admin role.
+         */
+        patch: operations["update_workspace_v1_workspaces__workspace_id__patch"];
+        trace?: never;
+    };
     "/v1/workspaces/{workspace_id}/credits": {
         parameters: {
             query?: never;
@@ -376,6 +396,30 @@ export interface paths {
          *     reflects reservations, refunds, grants, and purchases.
          */
         get: operations["get_credit_balance_v1_workspaces__workspace_id__credits_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/workspaces/{workspace_id}/credits/transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Credit Transactions
+         * @description List credit ledger activity for a workspace with backward pagination.
+         *
+         *     Each entry includes the balance after that entry. The response also carries
+         *     a summary of the last 30 days so the usage screen can render headline
+         *     numbers without a second request.
+         */
+        get: operations["list_credit_transactions_v1_workspaces__workspace_id__credits_transactions_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -504,6 +548,22 @@ export interface components {
             name: string;
         };
         /**
+         * CreditActivitySummary
+         * @description Aggregated credit activity over the recent window.
+         */
+        CreditActivitySummary: {
+            /** Granted */
+            granted: string;
+            /** Refunded */
+            refunded: string;
+            /** Spent */
+            spent: string;
+            /** Transactions */
+            transactions: number;
+            /** Window Days */
+            window_days: number;
+        };
+        /**
          * CreditBalanceResponse
          * @description Current credit balance for a workspace.
          */
@@ -515,6 +575,49 @@ export interface components {
              * Format: uuid
              */
             workspace_id: string;
+        };
+        /**
+         * CreditTransactionResponse
+         * @description A single credit ledger entry enriched with job context.
+         */
+        CreditTransactionResponse: {
+            /** Balance After */
+            balance_after: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Delta */
+            delta: string;
+            /** Id */
+            id: number;
+            /** Job Id */
+            job_id: string | null;
+            /** Job Status */
+            job_status: string | null;
+            /** Model Name */
+            model_name: string | null;
+            /** Prompt */
+            prompt: string | null;
+            /** Reason */
+            reason: string;
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+        };
+        /**
+         * CreditTransactionsResponse
+         * @description A page of credit transactions plus recent aggregate activity.
+         */
+        CreditTransactionsResponse: {
+            /** Items */
+            items: components["schemas"]["CreditTransactionResponse"][];
+            /** Next Before Id */
+            next_before_id: number | null;
+            summary: components["schemas"]["CreditActivitySummary"];
         };
         /**
          * GenerationJobResponse
@@ -779,6 +882,14 @@ export interface components {
             description?: string | null;
             /** Name */
             name?: string | null;
+        };
+        /**
+         * UpdateWorkspaceRequest
+         * @description Request to rename an existing workspace.
+         */
+        UpdateWorkspaceRequest: {
+            /** Name */
+            name: string;
         };
         /**
          * UploadRequest
@@ -1483,6 +1594,41 @@ export interface operations {
             };
         };
     };
+    update_workspace_v1_workspaces__workspace_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateWorkspaceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_credit_balance_v1_workspaces__workspace_id__credits_get: {
         parameters: {
             query?: never;
@@ -1501,6 +1647,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreditBalanceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_credit_transactions_v1_workspaces__workspace_id__credits_transactions_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                before_id?: number | null;
+            };
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreditTransactionsResponse"];
                 };
             };
             /** @description Validation Error */

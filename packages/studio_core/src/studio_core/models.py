@@ -187,3 +187,12 @@ class CreditLedger(BaseDomainModel):
     delta: Decimal
     reason: str
     created_at: datetime
+
+
+class CreditTransaction(CreditLedger):
+    """A ledger entry enriched with the running balance and job context."""
+
+    balance_after: Decimal
+    model_name: str | None = None
+    job_status: str | None = None
+    prompt: str | None = None

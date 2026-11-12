@@ -299,6 +299,40 @@
         "title": "CreateWorkspaceRequest",
         "type": "object"
       },
+      "CreditActivitySummary": {
+        "description": "Aggregated credit activity over the recent window.",
+        "properties": {
+          "granted": {
+            "title": "Granted",
+            "type": "string"
+          },
+          "refunded": {
+            "title": "Refunded",
+            "type": "string"
+          },
+          "spent": {
+            "title": "Spent",
+            "type": "string"
+          },
+          "transactions": {
+            "title": "Transactions",
+            "type": "integer"
+          },
+          "window_days": {
+            "title": "Window Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "window_days",
+          "spent",
+          "refunded",
+          "granted",
+          "transactions"
+        ],
+        "title": "CreditActivitySummary",
+        "type": "object"
+      },
       "CreditBalanceResponse": {
         "description": "Current credit balance for a workspace.",
         "properties": {
@@ -317,6 +351,129 @@
           "balance"
         ],
         "title": "CreditBalanceResponse",
+        "type": "object"
+      },
+      "CreditTransactionResponse": {
+        "description": "A single credit ledger entry enriched with job context.",
+        "properties": {
+          "balance_after": {
+            "title": "Balance After",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "delta": {
+            "title": "Delta",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "job_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Status"
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name"
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "workspace_id": {
+            "format": "uuid",
+            "title": "Workspace Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "workspace_id",
+          "job_id",
+          "delta",
+          "reason",
+          "created_at",
+          "balance_after",
+          "model_name",
+          "job_status",
+          "prompt"
+        ],
+        "title": "CreditTransactionResponse",
+        "type": "object"
+      },
+      "CreditTransactionsResponse": {
+        "description": "A page of credit transactions plus recent aggregate activity.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CreditTransactionResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_before_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Before Id"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/CreditActivitySummary"
+          }
+        },
+        "required": [
+          "items",
+          "next_before_id",
+          "summary"
+        ],
+        "title": "CreditTransactionsResponse",
         "type": "object"
       },
       "GenerationJobResponse": {
@@ -994,6 +1151,22 @@
           }
         },
         "title": "UpdateProjectRequest",
+        "type": "object"
+      },
+      "UpdateWorkspaceRequest": {
+        "description": "Request to rename an existing workspace.",
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "UpdateWorkspaceRequest",
         "type": "object"
       },
       "UploadRequest": {
@@ -2217,6 +2390,65 @@
         ]
       }
     },
+    "/v1/workspaces/{workspace_id}": {
+      "patch": {
+        "description": "Rename a workspace. Requires the owner or admin role.",
+        "operationId": "update_workspace_v1_workspaces__workspace_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkspaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Workspace",
+        "tags": [
+          "workspaces"
+        ]
+      }
+    },
     "/v1/workspaces/{workspace_id}/credits": {
       "get": {
         "description": "Return the current credit balance for a workspace the caller belongs to.\n\nThe balance is derived from the append-only ``credit_ledger`` so it always\nreflects reservations, refunds, grants, and purchases.",
@@ -2261,6 +2493,84 @@
           }
         ],
         "summary": "Get Credit Balance",
+        "tags": [
+          "workspaces"
+        ]
+      }
+    },
+    "/v1/workspaces/{workspace_id}/credits/transactions": {
+      "get": {
+        "description": "List credit ledger activity for a workspace with backward pagination.\n\nEach entry includes the balance after that entry. The response also carries\na summary of the last 30 days so the usage screen can render headline\nnumbers without a second request.",
+        "operationId": "list_credit_transactions_v1_workspaces__workspace_id__credits_transactions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "before_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreditTransactionsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Credit Transactions",
         "tags": [
           "workspaces"
         ]
