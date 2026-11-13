@@ -500,7 +500,47 @@ async def test_list_models_returns_enabled_models() -> None:
     assert len(models) == 1
     assert models[0]["slug"] == "fake-img-v1"
     assert models[0]["task_type"] == "text_to_image"
+    assert models[0]["input_capabilities"] == []
     assert "Cache-Control" in resp.headers
+
+
+@pytest.mark.asyncio
+async def test_list_models_advertises_multi_image_capabilities() -> None:
+    uid = uuid.uuid4()
+    model_row = {
+        "id": uuid.uuid4(),
+        "provider_id": "replicate",
+        "provider_model": "black-forest-labs/flux-2-pro",
+        "slug": "replicate-flux-2-pro-edit",
+        "display_name": "FLUX.2 Pro Edit",
+        "task_type": "image_to_image",
+        "input_schema": '{"type": "object", "properties": {}}',
+        "default_params": "{}",
+        "cost_credits": "5.00",
+        "enabled": True,
+    }
+
+    conn = _mock_conn()
+    conn.fetch = AsyncMock(return_value=[model_row])
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            "/v1/models?task_type=image_to_image",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 200
+    capabilities = resp.json()[0]["input_capabilities"]
+    assert capabilities == [
+        {
+            "role": "init_image",
+            "kind": "image",
+            "required": True,
+            "max_count": 4,
+            "label": "Source images",
+        }
+    ]
 
 
 @pytest.mark.asyncio

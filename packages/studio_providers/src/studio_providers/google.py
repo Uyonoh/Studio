@@ -278,6 +278,8 @@ class GoogleProvider(GenerationProvider):
         for inp in req.inputs:
             if inp.role in ("init_image", "first_frame", "reference_image"):
                 instance["image"] = self._format_input_image(inp.url)
+            elif inp.role == "last_frame":
+                instance["lastFrame"] = self._format_input_image(inp.url)
 
         aspect_ratio = req.params.get("aspect_ratio") or req.params.get("aspectRatio") or "16:9"
         duration_val = (

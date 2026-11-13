@@ -39,6 +39,14 @@ const IMAGE_ASSET = {
   created_at: new Date().toISOString(),
 };
 
+const SECOND_IMAGE_ASSET = {
+  ...IMAGE_ASSET,
+  id: "asset-input-2",
+  storage_path: "uploads/second.png",
+  signed_url: "https://storage.example.com/second.png",
+  metadata: { filename: "second.png" },
+};
+
 const MODELS = [
   {
     id: "m1",
@@ -92,6 +100,15 @@ const MODELS = [
     default_params: { strength: 0.75 },
     cost_credits: "1.50",
     required_input_roles: ["init_image"],
+    input_capabilities: [
+      {
+        role: "init_image",
+        kind: "image",
+        required: true,
+        max_count: 3,
+        label: "Source images",
+      },
+    ],
   },
   {
     id: "m3",
@@ -127,6 +144,39 @@ const MODELS = [
     cost_credits: "7.50",
     required_input_roles: ["first_frame"],
   },
+  {
+    id: "m5",
+    slug: "vid-frames",
+    display_name: "Animate First/Last Frame",
+    task_type: "image_to_video",
+    provider_id: "fal",
+    input_schema: {
+      type: "object",
+      properties: {
+        duration_s: { type: "integer", enum: [3, 5], default: 5 },
+      },
+      additionalProperties: false,
+    },
+    default_params: { duration_s: 5 },
+    cost_credits: "9.00",
+    required_input_roles: ["first_frame"],
+    input_capabilities: [
+      {
+        role: "first_frame",
+        kind: "image",
+        required: true,
+        max_count: 1,
+        label: "First frame",
+      },
+      {
+        role: "last_frame",
+        kind: "image",
+        required: false,
+        max_count: 1,
+        label: "Last frame",
+      },
+    ],
+  },
 ];
 
 const server = setupServer(
@@ -138,7 +188,7 @@ const server = setupServer(
   }),
 
   http.get(`${BASE_URL}/v1/projects/:project_id/assets`, () => {
-    return HttpResponse.json({ items: [IMAGE_ASSET], next_cursor: null });
+    return HttpResponse.json({ items: [IMAGE_ASSET, SECOND_IMAGE_ASSET], next_cursor: null });
   }),
 
   http.post(`${BASE_URL}/v1/projects/:project_id/generations`, async ({ request }) => {
@@ -323,6 +373,61 @@ describe("GenerationComposer", () => {
       prompt: "Gentle camera push, golden hour, film grain",
       inputs: [{ asset_id: "asset-input", role: "first_frame" }],
       params: { duration_s: 5 },
+    });
+  });
+
+  it("submits multiple source images when the model supports them", async () => {
+    renderComposer();
+    await waitForModel("img-fast");
+
+    clickSegment("Starting point", /text \+ image/i);
+    await waitForModel("img-remix");
+
+    await selectInputImage();
+    const sourceImages = screen.getByRole("group", { name: /source images/i });
+    fireEvent.click(within(sourceImages).getByRole("button", { name: "Use second.png" }));
+    setPrompt("Blend these two references into one scene");
+    submit();
+
+    await waitFor(() => expect(captured).toHaveLength(1));
+    expect(captured[0].body).toMatchObject({
+      model: "img-remix",
+      task_type: "image_to_image",
+      inputs: [
+        { asset_id: "asset-input", role: "init_image" },
+        { asset_id: "asset-input-2", role: "init_image" },
+      ],
+    });
+  });
+
+  it("submits first and last frames when the model supports them", async () => {
+    renderComposer();
+    await waitForModel("img-fast");
+
+    clickSegment("Output type", /video/i);
+    clickSegment("Starting point", /text \+ image/i);
+    await waitForModel("vid-anim");
+
+    fireEvent.click(screen.getByTestId("model-picker-trigger"));
+    fireEvent.click(screen.getByRole("option", { name: /animate first\/last frame/i }));
+    await waitForModel("vid-frames");
+
+    const firstFrame = screen.getByRole("group", { name: /^first frame$/i });
+    const lastFrame = screen.getByRole("group", { name: /^last frame$/i });
+    fireEvent.click(within(firstFrame).getByRole("button", { name: "Use input.png" }));
+    fireEvent.click(within(lastFrame).getByRole("button", { name: "Use second.png" }));
+
+    setPrompt("Morph between the two frames");
+    submit();
+
+    await waitFor(() => expect(captured).toHaveLength(1));
+    expect(captured[0].body).toMatchObject({
+      model: "vid-frames",
+      task_type: "image_to_video",
+      inputs: [
+        { asset_id: "asset-input", role: "first_frame" },
+        { asset_id: "asset-input-2", role: "last_frame" },
+      ],
     });
   });
 

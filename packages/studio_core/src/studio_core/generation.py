@@ -1,5 +1,6 @@
 """Generation submission service: validation, limits, deduplication, and atomic job creation."""
 
+from collections import Counter
 from typing import Any
 from uuid import UUID
 
@@ -7,9 +8,9 @@ import asyncpg
 import jsonschema
 from pydantic import BaseModel, Field
 
+from studio_core.capabilities import get_input_capabilities
 from studio_core.credits import CreditService, InsufficientCredits
 from studio_core.models import (
-    AssetKind,
     GenerationJob,
     InputRole,
     TaskType,
@@ -190,14 +191,28 @@ class GenerationService:
         except jsonschema.ValidationError as err:
             raise InvalidParamsError(f"Invalid generation parameters: {err.message}") from err
 
-        # 6. Enforce required inputs per task type
-        input_roles_present = {inp.role for inp in request.inputs}
-        if request.task_type == TaskType.IMAGE_TO_IMAGE:
-            if InputRole.INIT_IMAGE not in input_roles_present:
-                raise MissingInputError("Task 'image_to_image' requires an 'init_image' input")
-        elif request.task_type == TaskType.IMAGE_TO_VIDEO:
-            if InputRole.FIRST_FRAME not in input_roles_present:
-                raise MissingInputError("Task 'image_to_video' requires a 'first_frame' input")
+        # 6. Enforce the model's media input capabilities
+        capabilities = get_input_capabilities(model)
+        capability_by_role = {cap.role: cap for cap in capabilities}
+        role_counts = Counter(inp.role for inp in request.inputs)
+
+        for input_role, count in role_counts.items():
+            capability = capability_by_role.get(input_role)
+            if capability is None:
+                raise InvalidParamsError(
+                    f"Model '{model.slug}' does not accept a '{input_role.value}' input"
+                )
+            if count > capability.max_count:
+                raise InvalidParamsError(
+                    f"Input role '{input_role.value}' accepts at most "
+                    f"{capability.max_count} file(s)"
+                )
+
+        for capability in capabilities:
+            if capability.required and role_counts[capability.role] == 0:
+                raise MissingInputError(
+                    f"Task '{request.task_type.value}' requires a '{capability.role.value}' input"
+                )
 
         # Verify all input assets exist, are in the same workspace, and match kinds
         asset_ids = [inp.asset_id for inp in request.inputs]
@@ -211,14 +226,11 @@ class GenerationService:
                 asset = asset_map[inp.asset_id]
                 if asset.workspace_id != project.workspace_id:
                     raise PermissionDeniedError("Input asset belongs to a different workspace")
-                image_roles = (
-                    InputRole.INIT_IMAGE,
-                    InputRole.FIRST_FRAME,
-                    InputRole.REFERENCE_IMAGE,
-                )
-                if inp.role in image_roles and asset.kind != AssetKind.IMAGE:
-                    err_msg = f"Input role '{inp.role.value}' must be an image asset"
-                    raise InvalidParamsError(err_msg)
+                capability = capability_by_role[inp.role]
+                if asset.kind != capability.kind:
+                    raise InvalidParamsError(
+                        f"Input role '{inp.role.value}' must be a {capability.kind.value} asset"
+                    )
 
         # 7. Enforce per-workspace concurrent active jobs cap
         active_jobs = await self.job_repo.count_active_jobs_for_workspace(project.workspace_id)

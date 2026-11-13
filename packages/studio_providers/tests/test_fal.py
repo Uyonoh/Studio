@@ -176,6 +176,52 @@ class TestFalSubmit:
 
     @pytest.mark.asyncio
     @respx.mock
+    async def test_submit_maps_multiple_images_as_list(self) -> None:
+        provider = _make_provider()
+        route = respx.post(f"{FAL_BASE}/{MODEL}").mock(
+            return_value=httpx.Response(200, json=SUBMIT_RESPONSE)
+        )
+
+        req = _text_to_image_req(
+            inputs=[
+                ProviderInput(role="init_image", url="https://example.com/first.png"),
+                ProviderInput(role="init_image", url="https://example.com/second.png"),
+            ],
+        )
+        await provider.submit(req)
+
+        sent = json.loads(route.calls[0].request.content)
+        assert sent["image_urls"] == [
+            "https://example.com/first.png",
+            "https://example.com/second.png",
+        ]
+        assert "image_url" not in sent
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_submit_maps_kling_last_frame(self) -> None:
+        provider = _make_provider()
+        model = "fal-ai/kling-video/v2/standard/image-to-video"
+        route = respx.post(f"{FAL_BASE}/{model}").mock(
+            return_value=httpx.Response(200, json=SUBMIT_RESPONSE)
+        )
+
+        req = _text_to_image_req(
+            model=model,
+            task_type=TaskType.IMAGE_TO_VIDEO,
+            inputs=[
+                ProviderInput(role="first_frame", url="https://example.com/first.png"),
+                ProviderInput(role="last_frame", url="https://example.com/last.png"),
+            ],
+        )
+        await provider.submit(req)
+
+        sent = json.loads(route.calls[0].request.content)
+        assert sent["image_url"] == "https://example.com/first.png"
+        assert sent["tail_image_url"] == "https://example.com/last.png"
+
+    @pytest.mark.asyncio
+    @respx.mock
     async def test_submit_appends_webhook_url(self) -> None:
         provider = _make_provider()
         route = respx.post(url__regex=rf"^{FAL_BASE}/{MODEL}\?fal_webhook=").mock(

@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from api.auth import AuthUser
 from api.deps import DBConn
+from studio_core.capabilities import get_input_capabilities
 from studio_core.models import TaskType
 from studio_core.repositories import ModelRepository
 
@@ -20,13 +21,15 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["models"])
 
-# Required input roles for each task type (drives UI and client validation)
-REQUIRED_INPUT_ROLES: dict[str, list[str]] = {
-    TaskType.TEXT_TO_IMAGE: [],
-    TaskType.IMAGE_TO_IMAGE: ["init_image"],
-    TaskType.TEXT_TO_VIDEO: [],
-    TaskType.IMAGE_TO_VIDEO: ["first_frame"],
-}
+
+class InputCapabilityResponse(BaseModel):
+    """A media slot the model accepts, with its limits."""
+
+    role: str
+    kind: str
+    required: bool
+    max_count: int
+    label: str
 
 
 class ModelResponse(BaseModel):
@@ -40,7 +43,9 @@ class ModelResponse(BaseModel):
     input_schema: dict[str, Any]
     default_params: dict[str, Any]
     cost_credits: str  # serialized as string for precision
+    # Kept for backwards compatibility; prefer input_capabilities.
     required_input_roles: list[str]
+    input_capabilities: list[InputCapabilityResponse]
 
 
 @router.get("/models", response_model=list[ModelResponse])
@@ -72,17 +77,32 @@ async def list_models(
     repo = ModelRepository(db)
     models = await repo.list_models(task_type=parsed_task, only_enabled=True)
 
-    return [
-        ModelResponse(
-            id=m.id,
-            slug=m.slug,
-            display_name=m.display_name,
-            task_type=m.task_type.value,
-            provider_id=m.provider_id,
-            input_schema=m.input_schema,
-            default_params=m.default_params,
-            cost_credits=str(m.cost_credits),
-            required_input_roles=REQUIRED_INPUT_ROLES.get(m.task_type, []),
+    responses: list[ModelResponse] = []
+    for model in models:
+        capabilities = get_input_capabilities(model)
+        responses.append(
+            ModelResponse(
+                id=model.id,
+                slug=model.slug,
+                display_name=model.display_name,
+                task_type=model.task_type.value,
+                provider_id=model.provider_id,
+                input_schema=model.input_schema,
+                default_params=model.default_params,
+                cost_credits=str(model.cost_credits),
+                required_input_roles=[
+                    capability.role.value for capability in capabilities if capability.required
+                ],
+                input_capabilities=[
+                    InputCapabilityResponse(
+                        role=capability.role.value,
+                        kind=capability.kind.value,
+                        required=capability.required,
+                        max_count=capability.max_count,
+                        label=capability.label,
+                    )
+                    for capability in capabilities
+                ],
+            )
         )
-        for m in models
-    ]
+    return responses

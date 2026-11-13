@@ -36,14 +36,20 @@ _CONTENT_TYPE_TO_KIND: dict[str, AssetKind] = {
 
 # Mapping from ProviderInput role to fal input field name
 _ROLE_TO_FAL_FIELD: dict[str, str] = {
-    "init_image": "image_url",
-    "first_frame": "image_url",
-    "reference_image": "image_url",
-    "last_frame": "image_url",
     "mask": "mask_url",
     "audio": "audio_url",
     "video": "video_url",
 }
+
+# Some fal models use a dedicated field for the last frame instead of the
+# generic ``image_url`` slot used by their first frame. Kling calls it
+# ``tail_image_url``; other families may use a different key, so only the
+# known overrides are listed here and the fallback stays generic.
+_LAST_FRAME_INPUT_KEY: dict[str, str] = {
+    "fal-ai/kling-video/v2/standard/image-to-video": "tail_image_url",
+    "fal-ai/kling-video/v2.5-turbo/pro/image-to-video": "tail_image_url",
+}
+_DEFAULT_LAST_FRAME_KEY = "last_frame_url"
 
 
 class FalProvider(GenerationProvider):
@@ -77,10 +83,25 @@ class FalProvider(GenerationProvider):
         if req.negative_prompt is not None:
             input_data["negative_prompt"] = req.negative_prompt
 
-        # Map input assets by role
+        # Map input assets by role. Image inputs share a single slot when
+        # there is one and become ``image_urls`` when a model accepts several.
+        image_urls: list[str] = []
         for inp in req.inputs:
-            field_name = _ROLE_TO_FAL_FIELD.get(inp.role, f"{inp.role}_url")
-            input_data[field_name] = inp.url
+            if inp.role in ("init_image", "reference_image"):
+                image_urls.append(inp.url)
+            elif inp.role == "first_frame":
+                input_data["image_url"] = inp.url
+            elif inp.role == "last_frame":
+                last_frame_key = _LAST_FRAME_INPUT_KEY.get(req.model, _DEFAULT_LAST_FRAME_KEY)
+                input_data[last_frame_key] = inp.url
+            else:
+                field_name = _ROLE_TO_FAL_FIELD.get(inp.role, f"{inp.role}_url")
+                input_data[field_name] = inp.url
+
+        if len(image_urls) == 1:
+            input_data["image_url"] = image_urls[0]
+        elif image_urls:
+            input_data["image_urls"] = image_urls
 
         # Merge extra params (allows overriding anything)
         input_data.update(req.params)

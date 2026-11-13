@@ -728,6 +728,40 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "InputCapabilityResponse": {
+        "description": "A media slot the model accepts, with its limits.",
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "max_count": {
+            "title": "Max Count",
+            "type": "integer"
+          },
+          "required": {
+            "title": "Required",
+            "type": "boolean"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "kind",
+          "required",
+          "max_count",
+          "label"
+        ],
+        "title": "InputCapabilityResponse",
+        "type": "object"
+      },
       "JobEventResponse": {
         "properties": {
           "created_at": {
@@ -976,6 +1010,13 @@
             "title": "Id",
             "type": "string"
           },
+          "input_capabilities": {
+            "items": {
+              "$ref": "#/components/schemas/InputCapabilityResponse"
+            },
+            "title": "Input Capabilities",
+            "type": "array"
+          },
           "input_schema": {
             "additionalProperties": true,
             "title": "Input Schema",
@@ -1010,7 +1051,8 @@
           "input_schema",
           "default_params",
           "cost_credits",
-          "required_input_roles"
+          "required_input_roles",
+          "input_capabilities"
         ],
         "title": "ModelResponse",
         "type": "object"

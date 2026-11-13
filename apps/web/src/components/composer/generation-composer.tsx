@@ -15,7 +15,12 @@ import { toast } from "sonner";
 import { ComposerImagePicker } from "./composer-image-picker";
 import { ModelPicker } from "./model-picker";
 import { SchemaParamsForm } from "./schema-params-form";
-import { useModels, type StudioModel, type TaskType } from "@/hooks/use-models";
+import {
+  useModels,
+  type ModelInputCapability,
+  type StudioModel,
+  type TaskType,
+} from "@/hooks/use-models";
 import {
   GenerationSubmitError,
   newIdempotencyKey,
@@ -24,6 +29,7 @@ import {
   type SubmitGenerationPayload,
 } from "@/hooks/use-generations";
 import type { Asset } from "@/hooks/use-assets";
+import { capabilitiesOfKind, getInputCapabilities } from "@/lib/model-inputs";
 import {
   defaultParamValues,
   normalizeParamValues,
@@ -68,7 +74,7 @@ export function GenerationComposer({
   const [prompt, setPrompt] = useState("");
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [params, setParams] = useState<ParamValues>({});
-  const [inputAsset, setInputAsset] = useState<Asset | null>(initialAsset);
+  const [inputsByRole, setInputsByRole] = useState<Record<string, Asset[]>>({});
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [imageError, setImageError] = useState<string | undefined>();
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -82,6 +88,7 @@ export function GenerationComposer({
   const { data: models = [], isLoading: modelsLoading, isError: modelsError } = useModels(taskType);
   const selectedModel: StudioModel | null =
     models.find((model) => model.slug === selectedSlug) ?? models[0] ?? null;
+  const imageCapabilities = capabilitiesOfKind(selectedModel, "image");
 
   const mutation = useSubmitGeneration(projectId);
 
@@ -104,20 +111,57 @@ export function GenerationComposer({
     setFieldErrors({});
   }, [selectedModel]);
 
+  // Seed a caller-provided asset (e.g. "Use as input") into the first image slot.
+  useEffect(() => {
+    if (!initialAsset || !selectedModel) return;
+    const capabilities = capabilitiesOfKind(selectedModel, "image");
+    const target = capabilities.find((capability) => capability.required) ?? capabilities[0];
+    if (!target) return;
+
+    setInputsByRole((previous) => {
+      const current = previous[target.role] ?? [];
+      if (current.some((asset) => asset.id === initialAsset.id)) return previous;
+      return {
+        ...previous,
+        [target.role]: [...current, initialAsset].slice(0, target.max_count),
+      };
+    });
+  }, [initialAsset, selectedModel]);
+
+  // Drop selections that the newly selected model cannot accept.
+  useEffect(() => {
+    if (!selectedModel) return;
+    const capabilities = capabilitiesOfKind(selectedModel, "image");
+
+    setInputsByRole((previous) => {
+      const next: Record<string, Asset[]> = {};
+      let changed = false;
+      for (const capability of capabilities) {
+        const current = previous[capability.role] ?? [];
+        const trimmed = current.slice(0, capability.max_count);
+        if (trimmed.length > 0) next[capability.role] = trimmed;
+        if (trimmed.length !== current.length) changed = true;
+      }
+      const removedRole = Object.keys(previous).some((role) => !(role in next));
+      if (removedRole) changed = true;
+      return changed ? next : previous;
+    });
+  }, [selectedModel]);
+
   useEffect(() => {
     if (!withImage) setImageError(undefined);
   }, [withImage]);
 
   function buildPayload(model: StudioModel): SubmitGenerationPayload {
-    const inputs =
-      withImage && inputAsset
-        ? [
-            {
-              asset_id: inputAsset.id,
-              role: mode === "image" ? "init_image" : "first_frame",
-            },
-          ]
-        : [];
+    const inputs: SubmitGenerationPayload["inputs"] = [];
+
+    if (withImage) {
+      for (const capability of capabilitiesOfKind(model, "image")) {
+        for (const asset of inputsByRole[capability.role] ?? []) {
+          inputs.push({ asset_id: asset.id, role: capability.role });
+        }
+      }
+    }
 
     return {
       model: model.slug,
@@ -182,13 +226,25 @@ export function GenerationComposer({
     if (inFlight.current || mutation.isPending || !selectedModel) return;
 
     const errors = validateParamValues(selectedModel.input_schema, params);
-    const missingImage = withImage && !inputAsset;
+    const hasImageSlots = imageCapabilities.length > 0;
+    const missingCapability = withImage
+      ? imageCapabilities.find(
+          (capability) =>
+            capability.required && (inputsByRole[capability.role]?.length ?? 0) === 0
+        )
+      : undefined;
+    const noImageSupport = withImage && !hasImageSlots;
+    const inputError = noImageSupport
+      ? "This model does not accept image inputs."
+      : missingCapability
+        ? `Choose a ${missingCapability.label.toLowerCase()} for this flow.`
+        : undefined;
 
     setFieldErrors(errors);
-    setImageError(missingImage ? "Choose a source image for this flow." : undefined);
+    setImageError(inputError);
     setSubmitError(null);
 
-    if (Object.keys(errors).length > 0 || missingImage) return;
+    if (Object.keys(errors).length > 0 || inputError) return;
 
     const payload = buildPayload(selectedModel);
     const signature = JSON.stringify(payload);
@@ -265,7 +321,9 @@ export function GenerationComposer({
               Starting point
             </h2>
             <p className="text-xs text-[#9AA1B2] mt-0.5">
-              Start from text, or add an image to guide the result.
+              {imageCapabilities.length > 1
+                ? "Set a first frame and an optional last frame to guide the result."
+                : "Start from text, or add one or more images to guide the result."}
             </p>
           </div>
           <div
@@ -293,14 +351,30 @@ export function GenerationComposer({
             </button>
           </div>
 
-          {withImage && (
-            <ComposerImagePicker
-              projectId={projectId}
-              value={inputAsset}
-              onChange={setInputAsset}
-              error={imageError}
-            />
+          {withImage && selectedModel && imageCapabilities.length === 0 && (
+            <p role="alert" className="text-xs text-red-400">
+              This model does not accept image inputs.
+            </p>
           )}
+
+          {withImage &&
+            imageCapabilities.map((capability: ModelInputCapability, index: number) => (
+              <ComposerImagePicker
+                key={capability.role}
+                projectId={projectId}
+                kind={capability.kind}
+                label={capability.label}
+                max={capability.max_count}
+                values={inputsByRole[capability.role] ?? []}
+                error={index === 0 ? imageError : undefined}
+                onChange={(assets) =>
+                  setInputsByRole((previous) => ({
+                    ...previous,
+                    [capability.role]: assets,
+                  }))
+                }
+              />
+            ))}
         </section>
 
         {/* Prompt */}

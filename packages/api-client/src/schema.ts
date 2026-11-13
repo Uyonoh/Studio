@@ -721,6 +721,22 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /**
+         * InputCapabilityResponse
+         * @description A media slot the model accepts, with its limits.
+         */
+        InputCapabilityResponse: {
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Max Count */
+            max_count: number;
+            /** Required */
+            required: boolean;
+            /** Role */
+            role: string;
+        };
         /** JobEventResponse */
         JobEventResponse: {
             /**
@@ -817,6 +833,8 @@ export interface components {
              * Format: uuid
              */
             id: string;
+            /** Input Capabilities */
+            input_capabilities: components["schemas"]["InputCapabilityResponse"][];
             /** Input Schema */
             input_schema: {
                 [key: string]: unknown;
