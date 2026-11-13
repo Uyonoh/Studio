@@ -125,9 +125,9 @@ test.describe("Launch flows", () => {
       await expect(alert).toBeVisible();
       await expect(alert).toContainText(/Top up your workspace/i);
 
-      // No job was accepted, so job history stays empty.
+      // No job was accepted, so job history stays empty for the default 24h window.
       await page.getByRole("tab", { name: /Job History/i }).click();
-      await expect(page.getByText("No generation jobs yet")).toBeVisible();
+      await expect(page.getByText("No matching generation jobs")).toBeVisible();
     });
   });
 });

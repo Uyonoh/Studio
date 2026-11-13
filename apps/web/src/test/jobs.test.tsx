@@ -76,10 +76,12 @@ let detailJob: any = null;
 let detailCalls = 0;
 let cancelCalls = 0;
 let retryCalls = 0;
+let lastListUrl: URL | null = null;
 
 const server = setupServer(
   http.get(`${BASE_URL}/v1/projects/:project_id/generations`, ({ request }) => {
     const url = new URL(request.url);
+    lastListUrl = url;
     const status = url.searchParams.get("status");
     const items = status ? jobs.filter((job) => job.status === status) : jobs;
     return HttpResponse.json({ items, next_cursor: null });
@@ -121,6 +123,7 @@ beforeEach(() => {
   detailCalls = 0;
   cancelCalls = 0;
   retryCalls = 0;
+  lastListUrl = null;
   realtime.subscribeCallback = null;
   realtime.updateHandler = null;
   realtime.subscriptionCount = 0;
@@ -144,7 +147,9 @@ function renderHistory(props: Partial<React.ComponentProps<typeof JobHistory>> =
 }
 
 function jobCard(jobId: string) {
-  return screen.findByRole("article", { name: `Generation ${jobId}` });
+  // Cold CI runners can take longer than Testing Library's 1s default to mount
+  // the first job card after the initial query resolves.
+  return screen.findByRole("article", { name: `Generation ${jobId}` }, { timeout: 5000 });
 }
 
 describe("JobHistory & JobCard", () => {
@@ -198,6 +203,22 @@ describe("JobHistory & JobCard", () => {
     expect(await screen.findByAltText("A red fox in snow")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /use as input/i })).toBeInTheDocument();
     expect(detailCalls).toBe(0);
+  });
+
+  it("defaults the time filter to the last 24 hours and can widen it", async () => {
+    jobs = [makeJob()];
+    renderHistory();
+
+    await jobCard("job-1");
+
+    const timeSelect = screen.getByLabelText("Time");
+    expect(timeSelect).toHaveValue("24h");
+    expect(lastListUrl?.searchParams.get("since")).not.toBeNull();
+
+    fireEvent.change(timeSelect, { target: { value: "all" } });
+
+    await waitFor(() => expect(lastListUrl?.searchParams.get("since")).toBeNull());
+    expect(screen.getByLabelText("Time")).toHaveValue("all");
   });
 
   it("falls back to polling when Realtime never subscribes", async () => {

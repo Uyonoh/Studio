@@ -406,3 +406,40 @@ async def test_enqueue_failure_marks_job_failed_and_refunds() -> None:
                 },
             )
     assert resp.status_code == 503
+
+
+@pytest.mark.asyncio
+async def test_list_generations_filters_by_since() -> None:
+    """The job history time filter is applied server-side."""
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    proj_id = uuid.uuid4()
+    job = _job_row(project_id=proj_id, workspace_id=ws_id)
+
+    conn = _mock_conn()
+    conn.fetchrow = AsyncMock(return_value={"workspace_id": ws_id})
+    conn.fetchval = AsyncMock(return_value="viewer")
+
+    async def fetch_side_effect(query: str, *args: Any) -> list[dict[str, Any]]:
+        if "FROM public.assets" in query:
+            return []
+        return [job]
+
+    conn.fetch = AsyncMock(side_effect=fetch_side_effect)
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            f"/v1/projects/{proj_id}/generations?since=2026-11-12T00:00:00Z",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 200
+    assert len(resp.json()["items"]) == 1
+
+    list_call = next(
+        call for call in conn.fetch.call_args_list if "FROM public.generation_jobs" in call.args[0]
+    )
+    assert "queued_at >= $" in list_call.args[0]
+    assert list_call.args[1] == proj_id
+    assert list_call.args[2].isoformat() == "2026-11-12T00:00:00+00:00"

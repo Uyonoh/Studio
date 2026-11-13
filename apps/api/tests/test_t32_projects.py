@@ -257,8 +257,13 @@ async def test_list_projects_cursor_pagination() -> None:
 
     conn = _mock_conn()
 
+    async def fetch_side_effect(query: str, *args: Any) -> list[dict[str, Any]]:
+        if "public.assets" in query:
+            return []
+        return projects
+
     conn.fetchval = AsyncMock(return_value="viewer")
-    conn.fetch = AsyncMock(return_value=projects)  # returns 3, limit=2 → has_more=True
+    conn.fetch = AsyncMock(side_effect=fetch_side_effect)
     app = _make_app(conn)
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
@@ -270,6 +275,56 @@ async def test_list_projects_cursor_pagination() -> None:
     body = resp.json()
     assert len(body["items"]) == 2
     assert body["next_cursor"] is not None  # there are more items
+
+
+@pytest.mark.asyncio
+async def test_list_projects_includes_media_previews() -> None:
+    """Project cards receive up to four ready media thumbnails per project."""
+    uid = uuid.uuid4()
+    ws_id = uuid.uuid4()
+    project = _project_row(workspace_id=ws_id)
+    asset_id = uuid.uuid4()
+    preview_rows = [
+        {
+            "asset_id": asset_id,
+            "project_id": project["id"],
+            "kind": "image",
+            "origin": "generated",
+            "storage_path": f"{ws_id}/{project['id']}/{asset_id}/original.png",
+            "thumbnail_path": f"{ws_id}/{project['id']}/{asset_id}/thumbnail.jpg",
+        }
+    ]
+
+    conn = _mock_conn()
+
+    async def fetch_side_effect(query: str, *args: Any) -> list[dict[str, Any]]:
+        if "public.assets" in query:
+            return preview_rows
+        return [project]
+
+    conn.fetchval = AsyncMock(return_value="viewer")
+    conn.fetch = AsyncMock(side_effect=fetch_side_effect)
+    app = _make_app(conn)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.get(
+            f"/v1/workspaces/{ws_id}/projects",
+            headers={"Authorization": f"Bearer {make_jwt(uid)}"},
+        )
+
+    assert resp.status_code == 200
+    previews = resp.json()["items"][0]["previews"]
+    assert len(previews) == 1
+    assert previews[0]["asset_id"] == str(asset_id)
+    assert previews[0]["origin"] == "generated"
+    assert previews[0]["thumbnail_url"]
+    assert previews[0]["signed_url"]
+
+    preview_query = next(
+        call.args[0] for call in conn.fetch.call_args_list if "public.assets" in call.args[0]
+    )
+    assert "WHEN 'generated' THEN 0" in preview_query
+    assert "COALESCE(a.metadata->>'status', 'ready') = 'ready'" in preview_query
 
 
 # ── Archive (soft-delete) ─────────────────────────────────────────────────────

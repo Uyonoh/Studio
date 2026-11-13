@@ -2,13 +2,87 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Folder, MoreVertical, Edit2, Archive, Calendar } from "lucide-react";
-import { type Project } from "@/hooks/use-projects";
+import { Folder, MoreVertical, Edit2, Archive, Calendar, Sparkles, Video } from "lucide-react";
+import { type Project, type ProjectPreviewAsset } from "@/hooks/use-projects";
 
 interface ProjectCardProps {
   project: Project;
   onRename: (project: Project) => void;
   onArchive: (project: Project) => void;
+}
+
+function previewSource(preview: ProjectPreviewAsset): string | null {
+  if (preview.thumbnail_url) return preview.thumbnail_url;
+  // Video originals cannot be rendered as an <img>; only images fall back.
+  if (preview.kind === "image") return preview.signed_url;
+  return null;
+}
+
+function ProjectPreviewMosaic({ project }: { project: Project }) {
+  const [failedAssetIds, setFailedAssetIds] = useState<Set<string>>(() => new Set());
+  const previews = (project.previews ?? [])
+    .filter((preview) => previewSource(preview) && !failedAssetIds.has(preview.asset_id))
+    .slice(0, 4);
+
+  if (previews.length === 0) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center text-[#A995FF]/30 group-hover:text-[#A995FF]/50 transition-colors">
+        <Folder className="w-12 h-12" />
+      </div>
+    );
+  }
+
+  const count = previews.length;
+  const gridClass =
+    count === 1
+      ? "grid-cols-1 grid-rows-1"
+      : count === 2
+        ? "grid-cols-2 grid-rows-1"
+        : "grid-cols-2 grid-rows-2";
+
+  return (
+    <div className={`grid h-full w-full gap-0.5 ${gridClass}`}>
+      {previews.map((preview, index) => {
+        const src = previewSource(preview);
+        if (!src) return null;
+        const isVideo = preview.kind === "video";
+
+        return (
+          <div
+            key={preview.asset_id}
+            className={`relative min-h-0 min-w-0 overflow-hidden bg-[#0E1015] ${
+              count === 3 && index === 0 ? "row-span-2" : ""
+            }`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={src}
+              alt={index === 0 ? `Preview of ${project.name}` : ""}
+              aria-hidden={index === 0 ? undefined : true}
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+              onError={() =>
+                setFailedAssetIds((current) => {
+                  const next = new Set(current);
+                  next.add(preview.asset_id);
+                  return next;
+                })
+              }
+            />
+            {(isVideo || preview.origin === "generated") && (
+              <span className="absolute bottom-1 right-1 flex items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-md">
+                {isVideo ? (
+                  <Video className="h-2.5 w-2.5 text-[#A995FF]" aria-hidden="true" />
+                ) : (
+                  <Sparkles className="h-2.5 w-2.5 text-[#A995FF]" aria-hidden="true" />
+                )}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 export function ProjectCard({ project, onRename, onArchive }: ProjectCardProps) {
@@ -27,10 +101,8 @@ export function ProjectCard({ project, onRename, onArchive }: ProjectCardProps) 
         aria-label={`Open ${project.name}`}
         className="block aspect-[16/9] bg-[#0E1015] relative overflow-hidden group-hover:opacity-95 transition-opacity"
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#14161C] via-transparent to-transparent z-10" />
-        <div className="absolute inset-0 flex items-center justify-center text-[#A995FF]/30 group-hover:text-[#A995FF]/50 transition-colors">
-          <Folder className="w-12 h-12" />
-        </div>
+        <ProjectPreviewMosaic project={project} />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#14161C] via-transparent to-transparent z-10 pointer-events-none" />
       </Link>
 
       {/* Content */}

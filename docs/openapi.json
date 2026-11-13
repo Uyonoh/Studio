@@ -1043,6 +1043,53 @@
         "title": "ProjectListResponse",
         "type": "object"
       },
+      "ProjectPreviewAsset": {
+        "description": "A thumbnail-sized asset used to preview a project on its card.",
+        "properties": {
+          "asset_id": {
+            "format": "uuid",
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "origin": {
+            "title": "Origin",
+            "type": "string"
+          },
+          "signed_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Url"
+          },
+          "thumbnail_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Url"
+          }
+        },
+        "required": [
+          "asset_id",
+          "kind",
+          "origin"
+        ],
+        "title": "ProjectPreviewAsset",
+        "type": "object"
+      },
       "ProjectResponse": {
         "description": "Project as returned to clients.",
         "properties": {
@@ -1099,6 +1146,13 @@
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "previews": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectPreviewAsset"
+            },
+            "title": "Previews",
+            "type": "array"
           },
           "updated_at": {
             "format": "date-time",
@@ -2150,7 +2204,7 @@
     },
     "/v1/projects/{project_id}/generations": {
       "get": {
-        "description": "List generation jobs in a project with optional status filter and cursor pagination.",
+        "description": "List generation jobs in a project with optional status/time filters.",
         "operationId": "list_generations_v1_projects__project_id__generations_get",
         "parameters": [
           {
@@ -2177,6 +2231,23 @@
                 }
               ],
               "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "since",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Since"
             }
           },
           {

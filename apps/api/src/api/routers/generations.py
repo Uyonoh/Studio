@@ -12,7 +12,7 @@ Endpoints:
 import json
 import logging
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -327,10 +327,11 @@ async def list_generations(
     user: AuthUser,
     db: DBConn,
     status: str | None = None,
+    since: datetime | None = None,
     limit: Annotated[int, Query(ge=1, le=MAX_PAGE_SIZE)] = DEFAULT_PAGE_SIZE,
     cursor: str | None = None,
 ) -> JobListResponse:
-    """List generation jobs in a project with optional status filter and cursor pagination."""
+    """List generation jobs in a project with optional status/time filters."""
     await _require_project_member(db, project_id, user.id)
 
     before: datetime | None = None
@@ -354,6 +355,12 @@ async def list_generations(
     if before:
         params.append(before)
         clauses.append(f"queued_at < ${len(params)}")
+
+    if since:
+        if since.tzinfo is None:
+            since = since.replace(tzinfo=UTC)
+        params.append(since)
+        clauses.append(f"queued_at >= ${len(params)}")
 
     params.append(limit + 1)
     where_sql = " AND ".join(clauses)
