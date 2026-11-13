@@ -319,7 +319,7 @@ export interface paths {
         };
         /**
          * List Generations
-         * @description List generation jobs in a project with optional status filter and cursor pagination.
+         * @description List generation jobs in a project with optional status/time filters.
          */
         get: operations["list_generations_v1_projects__project_id__generations_get"];
         put?: never;
@@ -838,6 +838,25 @@ export interface components {
             next_cursor: string | null;
         };
         /**
+         * ProjectPreviewAsset
+         * @description A thumbnail-sized asset used to preview a project on its card.
+         */
+        ProjectPreviewAsset: {
+            /**
+             * Asset Id
+             * Format: uuid
+             */
+            asset_id: string;
+            /** Kind */
+            kind: string;
+            /** Origin */
+            origin: string;
+            /** Signed Url */
+            signed_url?: string | null;
+            /** Thumbnail Url */
+            thumbnail_url?: string | null;
+        };
+        /**
          * ProjectResponse
          * @description Project as returned to clients.
          */
@@ -865,6 +884,8 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+            /** Previews */
+            previews?: components["schemas"]["ProjectPreviewAsset"][];
             /**
              * Updated At
              * Format: date-time
@@ -1473,6 +1494,7 @@ export interface operations {
         parameters: {
             query?: {
                 status?: string | null;
+                since?: string | null;
                 limit?: number;
                 cursor?: string | null;
             };

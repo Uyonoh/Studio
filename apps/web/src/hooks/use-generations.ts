@@ -138,16 +138,20 @@ export function isActiveJobStatus(status: string): boolean {
   return ACTIVE_JOB_STATUSES.has(status);
 }
 
-/** List generation jobs for a project, optionally filtered by status. */
-export function useProjectJobs(projectId?: string | null, status?: string | null) {
+/** List generation jobs for a project, optionally filtered by status and start time. */
+export function useProjectJobs(
+  projectId?: string | null,
+  status?: string | null,
+  since?: string | null
+) {
   return useQuery({
-    queryKey: ["generations", projectId, status ?? "all"],
+    queryKey: ["generations", projectId, status ?? "all", since ?? "any"],
     queryFn: async (): Promise<JobListPage> => {
       const client = getApiClient();
       const res = await client.GET("/v1/projects/{project_id}/generations", {
         params: {
           path: { project_id: projectId as string },
-          query: { status: status || undefined, limit: 50 },
+          query: { status: status || undefined, since: since || undefined, limit: 50 },
         },
       });
 

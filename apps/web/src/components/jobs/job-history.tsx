@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, History, Loader2, RefreshCw } from "lucide-react";
 import {
@@ -26,6 +26,15 @@ const STATUS_FILTERS = [
   { value: "canceled", label: "Canceled" },
 ];
 
+const TIME_FILTERS = [
+  { value: "24h", label: "Last 24 hours", hours: 24 },
+  { value: "7d", label: "Last 7 days", hours: 24 * 7 },
+  { value: "30d", label: "Last 30 days", hours: 24 * 30 },
+  { value: "all", label: "All time", hours: null },
+] as const;
+
+type TimeFilter = (typeof TIME_FILTERS)[number]["value"];
+
 function connectionLabel(state: RealtimeConnectionState): { text: string; className: string } {
   if (state === "subscribed") {
     return { text: "Live", className: "bg-emerald-400" };
@@ -47,10 +56,21 @@ interface JobHistoryProps {
 export function JobHistory({ projectId, onUseAsInput, realtimeTimeoutMs }: JobHistoryProps) {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState("");
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>("24h");
+
+  // Freeze the window when the filter changes so the query key (and therefore
+  // the fetch) stays stable across renders. A 1-minute buffer avoids dropping
+  // jobs queued just before mount due to clock skew.
+  const since = useMemo(() => {
+    const option = TIME_FILTERS.find((filter) => filter.value === timeFilter);
+    if (!option?.hours) return null;
+    return new Date(Date.now() - option.hours * 60 * 60 * 1000 - 60_000).toISOString();
+  }, [timeFilter]);
 
   const { data, isLoading, isError, error, refetch, isFetching } = useProjectJobs(
     projectId,
-    statusFilter || null
+    statusFilter || null,
+    since
   );
 
   const handleJobChange = useCallback(
@@ -90,6 +110,8 @@ export function JobHistory({ projectId, onUseAsInput, realtimeTimeoutMs }: JobHi
   const poll = realtimeState === "disconnected";
   const connection = connectionLabel(realtimeState);
   const jobs = data?.items ?? [];
+  const activeTimeLabel =
+    TIME_FILTERS.find((filter) => filter.value === timeFilter)?.label.toLowerCase() ?? "";
 
   return (
     <div className="space-y-4">
@@ -108,6 +130,21 @@ export function JobHistory({ projectId, onUseAsInput, realtimeTimeoutMs }: JobHi
         </div>
 
         <div className="flex items-center gap-2">
+          <label htmlFor="job-time-filter" className="text-xs text-[#9AA1B2]">
+            Time
+          </label>
+          <select
+            id="job-time-filter"
+            value={timeFilter}
+            onChange={(event) => setTimeFilter(event.target.value as TimeFilter)}
+            className="px-2.5 py-1.5 rounded-lg bg-[#14161C] border border-[#262A35] text-xs text-[#E8EAF0] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF]"
+          >
+            {TIME_FILTERS.map((filter) => (
+              <option key={filter.value} value={filter.value}>
+                {filter.label}
+              </option>
+            ))}
+          </select>
           <label htmlFor="job-status-filter" className="text-xs text-[#9AA1B2]">
             Status
           </label>
@@ -159,9 +196,15 @@ export function JobHistory({ projectId, onUseAsInput, realtimeTimeoutMs }: JobHi
 
       {!isLoading && !isError && jobs.length === 0 && (
         <div className="rounded-2xl border border-dashed border-[#262A35] bg-[#14161C] p-12 text-center space-y-1">
-          <p className="text-sm font-medium text-[#E8EAF0]">No generation jobs yet</p>
+          <p className="text-sm font-medium text-[#E8EAF0]">
+            {statusFilter || timeFilter !== "all"
+              ? "No matching generation jobs"
+              : "No generation jobs yet"}
+          </p>
           <p className="text-xs text-[#9AA1B2]">
-            Use the Generation Composer to create your first image or video.
+            {timeFilter === "all"
+              ? "Use the Generation Composer to create your first image or video."
+              : `No jobs found in the ${activeTimeLabel}. Try a wider time range.`}
           </p>
         </div>
       )}

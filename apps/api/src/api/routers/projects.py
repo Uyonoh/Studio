@@ -14,11 +14,12 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from api.auth import AuthUser
 from api.deps import DBConn
 from api.pagination import decode_cursor, encode_cursor
+from api.routers.assets import _supabase_signed_download_url
 from studio_core.models import Project, WorkspaceRole
 from studio_core.repositories import ProjectRepository
 
@@ -33,6 +34,16 @@ MAX_PAGE_SIZE = 100
 # ── Schemas ────────────────────────────────────────────────────────────────────
 
 
+class ProjectPreviewAsset(BaseModel):
+    """A thumbnail-sized asset used to preview a project on its card."""
+
+    asset_id: UUID
+    kind: str
+    origin: str
+    thumbnail_url: str | None = None
+    signed_url: str | None = None
+
+
 class ProjectResponse(BaseModel):
     """Project as returned to clients."""
 
@@ -41,6 +52,7 @@ class ProjectResponse(BaseModel):
     name: str
     description: str | None
     cover_asset_id: UUID | None
+    previews: list[ProjectPreviewAsset] = Field(default_factory=list)
     created_by: UUID
     created_at: datetime
     updated_at: datetime
@@ -65,18 +77,83 @@ class ProjectListResponse(BaseModel):
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
 
-def _project_response(p: Project) -> ProjectResponse:
+def _project_response(
+    p: Project,
+    previews: list[ProjectPreviewAsset] | None = None,
+) -> ProjectResponse:
     return ProjectResponse(
         id=p.id,
         workspace_id=p.workspace_id,
         name=p.name,
         description=p.description,
         cover_asset_id=p.cover_asset_id,
+        previews=previews or [],
         created_by=p.created_by,
         created_at=p.created_at,
         updated_at=p.updated_at,
         archived_at=p.archived_at,
     )
+
+
+async def _fetch_project_previews(
+    db: DBConn,
+    project_ids: list[UUID],
+    limit_per_project: int = 4,
+) -> dict[UUID, list[ProjectPreviewAsset]]:
+    """Return ready thumbnails for each project, generated media first.
+
+    One window-function query covers every project on the page so the project
+    list stays a single round-trip regardless of how many cards are shown.
+    """
+    if not project_ids:
+        return {}
+
+    rows = await db.fetch(
+        """
+        SELECT asset_id, project_id, kind, origin, storage_path, thumbnail_path
+        FROM (
+            SELECT a.id AS asset_id, a.project_id, a.kind, a.origin,
+                   a.storage_path, a.thumbnail_path,
+                   row_number() OVER (
+                       PARTITION BY a.project_id
+                       ORDER BY
+                           CASE a.origin
+                               WHEN 'generated' THEN 0
+                               WHEN 'derived' THEN 1
+                               ELSE 2
+                           END,
+                           a.created_at DESC,
+                           a.id DESC
+                   ) AS position
+            FROM public.assets a
+            WHERE a.project_id = ANY($1::uuid[])
+              AND a.deleted_at IS NULL
+              AND COALESCE(a.metadata->>'status', 'ready') = 'ready'
+              AND (a.thumbnail_path IS NOT NULL OR a.kind = 'image')
+        ) ranked
+        WHERE position <= $2
+        ORDER BY project_id, position
+        """,
+        project_ids,
+        limit_per_project,
+    )
+
+    previews: dict[UUID, list[ProjectPreviewAsset]] = {project_id: [] for project_id in project_ids}
+    for row in rows:
+        thumbnail_path = row["thumbnail_path"]
+        storage_path = row["storage_path"]
+        previews[row["project_id"]].append(
+            ProjectPreviewAsset(
+                asset_id=row["asset_id"],
+                kind=str(row["kind"]),
+                origin=str(row["origin"]),
+                thumbnail_url=(
+                    _supabase_signed_download_url(thumbnail_path) if thumbnail_path else None
+                ),
+                signed_url=_supabase_signed_download_url(storage_path) if storage_path else None,
+            )
+        )
+    return previews
 
 
 async def _require_workspace_member(
@@ -155,7 +232,11 @@ async def list_projects(
         last = items[-1]
         next_cursor = encode_cursor(last.created_at, last.id)
 
-    return ProjectListResponse(items=[_project_response(p) for p in items], next_cursor=next_cursor)
+    previews = await _fetch_project_previews(db, [p.id for p in items])
+    return ProjectListResponse(
+        items=[_project_response(p, previews.get(p.id, [])) for p in items],
+        next_cursor=next_cursor,
+    )
 
 
 @router.get("/projects/{project_id}", response_model=ProjectResponse)
@@ -166,7 +247,8 @@ async def get_project(project_id: UUID, user: AuthUser, db: DBConn) -> ProjectRe
     if project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     await _require_workspace_member(db, project.workspace_id, user.id)
-    return _project_response(project)
+    previews = await _fetch_project_previews(db, [project.id])
+    return _project_response(project, previews.get(project.id, []))
 
 
 @router.patch("/projects/{project_id}", response_model=ProjectResponse)

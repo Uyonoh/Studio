@@ -140,6 +140,10 @@ def get_worker_settings() -> type[Any]:
         redis_settings = config.get_redis_settings()
         max_jobs = config.worker_max_jobs
         job_timeout = config.worker_job_timeout
+        # Tasks are fire-and-forget and all durable state lives in Postgres.
+        # ARQ's default keep_result (1h) leaves `arq:result:<id>` keys behind,
+        # and those keys block any later enqueue that reuses the same id.
+        keep_result = 0
         handle_signals = True
 
     return WorkerSettings

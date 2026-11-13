@@ -42,6 +42,44 @@ The MVP needs one or two real models per task type (text→image, image→image,
 | MiniMax Video-01 I2V | Replicate | `replicate-minimax-i2v` | Excellent first-frame conditioning, smooth motion. |
 | Kling v2 Standard I2V | Fal.ai | `fal-kling-i2v` | Robust image-to-video with `start_image_url` conditioning. Supports 5s and 10s. |
 
+### Fal.ai tier expansion (migration 0007)
+
+The initial catalog only exposed one Fal.ai option per flow. Migration 0007
+adds a budget and a higher-fidelity option for each task type so users can
+trade cost against quality without switching providers:
+
+| Task type | Budget option | Mid/high option |
+|-----------|---------------|-----------------|
+| Text → Image | FLUX.1 [schnell] (`fal-flux-schnell`, 1 credit) | FLUX.1 [dev] (`fal-flux-dev`, 3 credits), FLUX1.1 [pro] (`fal-flux-pro-1-1`, 5 credits) |
+| Image → Image | FLUX.1 [dev] remix (`fal-flux-dev-i2i`, 3 credits) | FLUX.1 Kontext [pro] (`fal-flux-kontext-pro`, 5 credits) |
+| Text → Video | H3 Max Turbo (`fal-h3-max-turbo-t2v`, 10 credits) | Kling v2 Standard (`fal-kling-t2v`, 20 credits), Kling 2.5 Turbo Pro (`fal-kling-2-5-turbo-t2v`, 40 credits) |
+| Image → Video | H3 Max Turbo (`fal-h3-max-turbo-i2v`, 10 credits) | Kling v2 Standard (`fal-kling-i2v`, 20 credits), Kling 2.5 Turbo Pro (`fal-kling-2-5-turbo-i2v`, 40 credits) |
+
+Prices are rounded to whole credits using the same formula as above. The
+composer groups every model by provider so these tiers stay easy to scan.
+
+### Replicate tier expansion (migration 0008)
+
+Migration 0008 broadens the Replicate catalog using the models currently
+available from the [Try for Free](https://replicate.com/collections/try-for-free)
+collection. The collection still links `google/imagen-4`, but that model has
+been delisted, so `google/nano-banana` is exposed as the Google image option.
+
+| Task type | Models |
+|-----------|--------|
+| Text → Image | FLUX 1.1 [pro] (`replicate-flux-1-1-pro`, 4 credits), FLUX.1 [dev] (`replicate-flux-dev`, 3 credits), FLUX.2 [pro] (`replicate-flux-2-pro`, 5 credits), Ideogram 3.0 Turbo (`replicate-ideogram-v3-turbo`, 3 credits), Nano Banana (`replicate-nano-banana`, 4 credits) |
+| Image → Image | FLUX.1 Kontext [pro] (`replicate-flux-kontext-pro`, 5 credits), FLUX.2 [pro] edit (`replicate-flux-2-pro-edit`, 5 credits), Nano Banana edit (`replicate-nano-banana-edit`, 4 credits), Topaz Image Upscale (`replicate-image-upscale`, 2 credits), CodeFormer (`replicate-codeformer`, 1 credit), GFPGAN (`replicate-gfpgan`, 1 credit) |
+
+The collection also lists video reframing/upscaling models
+(`luma/reframe-video`, `topazlabs/video-upscale`), which are omitted because
+the catalog only supports text/image → video, not video → video. MiniMax
+Video-01 already covers both video flows.
+
+A few of these models use non-standard input keys. The Replicate adapter maps
+`tencentarc/gfpgan` to `img`, `black-forest-labs/flux-2-pro` and
+`google/nano-banana` to their list-style image fields, and
+`minimax/video-01` to `first_frame_image`.
+
 ### Credit pricing formula
 
 Credits are a unitless internal currency. We set 1 credit ≈ \$0.01 USD in provider cost:

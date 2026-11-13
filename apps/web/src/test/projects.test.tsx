@@ -77,6 +77,15 @@ beforeEach(() => {
       name: "Cyberpunk Teaser",
       description: "Visual exploration for futuristic teaser",
       cover_asset_id: null,
+      previews: [
+        {
+          asset_id: "asset-preview-1",
+          kind: "image",
+          origin: "generated",
+          thumbnail_url: "https://storage.example.com/p1-thumb.jpg",
+          signed_url: null,
+        },
+      ],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       archived_at: null,
@@ -133,6 +142,49 @@ describe("ProjectsPage component with MSW", () => {
     expect(await screen.findByText("Cyberpunk Teaser", {}, { timeout: 4000 })).toBeInTheDocument();
     expect(screen.getByText("Architectural Stills")).toBeInTheDocument();
     expect(screen.getByText(/2 active/i)).toBeInTheDocument();
+  });
+
+  it("renders a mosaic of project media previews, generated media first", async () => {
+    projectsData[0].previews = [
+      {
+        asset_id: "asset-generated-1",
+        kind: "image",
+        origin: "generated",
+        thumbnail_url: "https://storage.example.com/generated-thumb.jpg",
+        signed_url: null,
+      },
+      {
+        asset_id: "asset-generated-2",
+        kind: "video",
+        origin: "generated",
+        thumbnail_url: "https://storage.example.com/generated-poster.jpg",
+        signed_url: "https://storage.example.com/generated.mp4",
+      },
+      {
+        asset_id: "asset-upload-1",
+        kind: "image",
+        origin: "upload",
+        thumbnail_url: null,
+        signed_url: "https://storage.example.com/uploaded.jpg",
+      },
+    ];
+
+    renderProjectsPage();
+
+    const cardLink = await screen.findByRole(
+      "link",
+      { name: "Open Cyberpunk Teaser" },
+      { timeout: 4000 }
+    );
+    const images = cardLink.querySelectorAll("img");
+    expect(images).toHaveLength(3);
+    expect(images[0]).toHaveAttribute(
+      "src",
+      "https://storage.example.com/generated-thumb.jpg"
+    );
+    expect(images[0]).toHaveAttribute("alt", "Preview of Cyberpunk Teaser");
+    // Secondary tiles are decorative; the link itself carries the accessible name.
+    expect(images[1]).toHaveAttribute("aria-hidden", "true");
   });
 
   it("filters projects in real time by search query", async () => {

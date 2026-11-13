@@ -2,12 +2,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getApiClient } from "@/lib/api";
 import { toast } from "sonner";
 
+export interface ProjectPreviewAsset {
+  asset_id: string;
+  kind: string;
+  origin: string;
+  thumbnail_url: string | null;
+  signed_url: string | null;
+}
+
 export interface Project {
   id: string;
   workspace_id: string;
   name: string;
   description: string | null;
   cover_asset_id: string | null;
+  previews?: ProjectPreviewAsset[] | null;
   created_at: string;
   updated_at: string;
   archived_at: string | null;

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ComposerImagePicker } from "./composer-image-picker";
+import { ModelPicker } from "./model-picker";
 import { SchemaParamsForm } from "./schema-params-form";
 import { useModels, type StudioModel, type TaskType } from "@/hooks/use-models";
 import {
@@ -377,23 +378,20 @@ export function GenerationComposer({
           )}
 
           {models.length > 0 && (
-            <>
-              <label htmlFor="composer-model" className="block text-xs font-medium text-[#C7CBD6]">
-                Model
-              </label>
-              <select
-                id="composer-model"
-                value={selectedModel?.slug ?? ""}
-                onChange={(event) => setSelectedSlug(event.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0F1117] border border-[#262A35] text-sm text-[#E8EAF0] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF]"
+            <div className="space-y-1.5">
+              <span
+                id="composer-model-label"
+                className="block text-xs font-medium text-[#C7CBD6]"
               >
-                {models.map((model) => (
-                  <option key={model.id} value={model.slug}>
-                    {model.display_name}
-                  </option>
-                ))}
-              </select>
-            </>
+                Model
+              </span>
+              <ModelPicker
+                models={models}
+                value={selectedModel?.slug ?? null}
+                onChange={setSelectedSlug}
+                labelledBy="composer-model-label"
+              />
+            </div>
           )}
 
           <div className="flex items-center justify-between rounded-xl bg-[#0F1117] border border-[#262A35] px-3 py-2">

@@ -55,8 +55,8 @@ test.describe("Launch flows", () => {
       await page.getByRole("button", { name: /Text \+ image/i }).click();
       await page.getByRole("button", { name: "Use seeded_photo.png" }).click();
 
-      const modelSelect = page.getByLabel("Model");
-      await expect(modelSelect).toHaveValue("fake-video-i2v");
+      const modelPicker = page.getByRole("combobox", { name: "Model" });
+      await expect(modelPicker).toHaveAttribute("data-value", "fake-video-i2v");
 
       const prompt = "E2E animate the seeded product photo";
       await page.getByRole("textbox", { name: "Prompt" }).fill(prompt);
@@ -125,9 +125,9 @@ test.describe("Launch flows", () => {
       await expect(alert).toBeVisible();
       await expect(alert).toContainText(/Top up your workspace/i);
 
-      // No job was accepted, so job history stays empty.
+      // No job was accepted, so job history stays empty for the default 24h window.
       await page.getByRole("tab", { name: /Job History/i }).click();
-      await expect(page.getByText("No generation jobs yet")).toBeVisible();
+      await expect(page.getByText("No matching generation jobs")).toBeVisible();
     });
   });
 });

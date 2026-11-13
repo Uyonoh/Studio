@@ -39,9 +39,4 @@ export const TASK_LABELS: Record<string, string> = {
   image_to_video: "Image to video",
 };
 
-export const PROVIDER_LABELS: Record<string, string> = {
-  replicate: "Replicate",
-  fal: "Fal.ai",
-  google: "Google AI",
-  fake: "Deterministic Test Provider",
-};
+export { PROVIDER_LABELS } from "@/lib/providers";

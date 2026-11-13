@@ -26,3 +26,10 @@ def test_settings_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.storage_bucket == "custom-bucket"
     assert settings.environment == "staging"
     assert settings.max_active_jobs_per_workspace == 10
+
+
+def test_settings_regex_web_origins(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("REGEX_WEB_ORIGINS", r"^https://.*\.vercel\.app$")
+
+    settings = Settings()
+    assert settings.regex_web_origins == r"^https://.*\.vercel\.app$"

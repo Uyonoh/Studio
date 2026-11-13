@@ -215,6 +215,68 @@ class TestReplicateSubmit:
         assert sent["input"]["image"] == "https://storage/img.png"
         assert sent["input"]["mask"] == "https://storage/mask.png"
 
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_submit_maps_gfpgan_image_key(self) -> None:
+        provider = _make_provider()
+        route = respx.post(f"{REPLICATE_BASE}/v1/predictions").mock(
+            return_value=httpx.Response(201, json=PREDICTION_CREATED)
+        )
+
+        req = _text_to_image_req(
+            model="tencentarc/gfpgan",
+            task_type=TaskType.IMAGE_TO_IMAGE,
+            inputs=[ProviderInput(role="init_image", url="https://storage/face.png")],
+        )
+        await provider.submit(req)
+
+        sent = json.loads(route.calls[0].request.content)
+        assert sent["input"]["img"] == "https://storage/face.png"
+        assert "image" not in sent["input"]
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_submit_maps_flux_2_pro_images_as_list(self) -> None:
+        provider = _make_provider()
+        route = respx.post(f"{REPLICATE_BASE}/v1/predictions").mock(
+            return_value=httpx.Response(201, json=PREDICTION_CREATED)
+        )
+
+        req = _text_to_image_req(
+            model="black-forest-labs/flux-2-pro",
+            task_type=TaskType.IMAGE_TO_IMAGE,
+            inputs=[
+                ProviderInput(role="init_image", url="https://storage/first.png"),
+                ProviderInput(role="reference_image", url="https://storage/second.png"),
+            ],
+        )
+        await provider.submit(req)
+
+        sent = json.loads(route.calls[0].request.content)
+        assert sent["input"]["input_images"] == [
+            "https://storage/first.png",
+            "https://storage/second.png",
+        ]
+
+    @pytest.mark.asyncio
+    @respx.mock
+    async def test_submit_maps_minimax_first_frame(self) -> None:
+        provider = _make_provider()
+        route = respx.post(f"{REPLICATE_BASE}/v1/predictions").mock(
+            return_value=httpx.Response(201, json=PREDICTION_CREATED)
+        )
+
+        req = _text_to_image_req(
+            model="minimax/video-01",
+            task_type=TaskType.IMAGE_TO_VIDEO,
+            inputs=[ProviderInput(role="first_frame", url="https://storage/frame.png")],
+        )
+        await provider.submit(req)
+
+        sent = json.loads(route.calls[0].request.content)
+        assert sent["input"]["first_frame_image"] == "https://storage/frame.png"
+        assert "first_frame" not in sent["input"]
+
 
 class TestReplicateGetStatus:
     """Tests for ReplicateProvider.get_status()."""

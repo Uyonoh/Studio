@@ -71,6 +71,42 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logger.info("Redis pool closed")
 
 
+def _parse_origin_regex(raw: str) -> str | None:
+    """Combine comma-separated origin regex patterns into a single alternation.
+
+    Commas inside regex groups (for example ``{1,3}`` or ``[a,b]``) are kept
+    intact so a single pattern can still use quantifiers and character classes.
+    """
+    patterns: list[str] = []
+    current: list[str] = []
+    depth = 0
+
+    for char in raw:
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth = max(0, depth - 1)
+
+        if char == "," and depth == 0:
+            pattern = "".join(current).strip()
+            if pattern:
+                patterns.append(pattern)
+            current = []
+            continue
+
+        current.append(char)
+
+    pattern = "".join(current).strip()
+    if pattern:
+        patterns.append(pattern)
+
+    if not patterns:
+        return None
+    if len(patterns) == 1:
+        return patterns[0]
+    return "|".join(f"(?:{pattern})" for pattern in patterns)
+
+
 def create_app() -> FastAPI:
     """Construct and configure the FastAPI application."""
     settings = get_settings()
@@ -95,10 +131,13 @@ def create_app() -> FastAPI:
 
     # ── CORS ──────────────────────────────────────────────────────────────────
     web_origins = getattr(settings, "web_origins", "http://localhost:3000")
-    allow_origins = [o.strip().rstrip("/") for o in web_origins.split(", ") if o.strip()]
+    allow_origins = [o.strip().rstrip("/") for o in web_origins.split(",") if o.strip()]
+    regex_web_origins = getattr(settings, "regex_web_origins", "")
+    allow_origin_regex = _parse_origin_regex(regex_web_origins)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allow_origins,
+        allow_origin_regex=allow_origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
