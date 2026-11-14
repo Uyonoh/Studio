@@ -106,4 +106,49 @@ describe("Layout Components", () => {
 
     expect(screen.getByTestId("test-content")).toHaveTextContent("Dashboard Content");
   });
+
+  it("collapses the desktop sidebar and persists the preference", async () => {
+    window.localStorage.clear();
+
+    await act(async () => {
+      render(
+        <AppShell
+          userEmail="user@example.com"
+          initialWorkspace={{ id: "ws-1", name: "Alpha Workspace" }}
+        >
+          <div>Content</div>
+        </AppShell>
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /collapse navigation/i }));
+
+    expect(window.localStorage.getItem("studio.sidebar.collapsed")).toBe("true");
+    expect(
+      screen.getByRole("button", { name: /expand navigation/i })
+    ).toBeInTheDocument();
+
+    window.localStorage.clear();
+  });
+
+  it("restores the collapsed sidebar preference from localStorage", async () => {
+    window.localStorage.setItem("studio.sidebar.collapsed", "true");
+
+    await act(async () => {
+      render(
+        <AppShell
+          userEmail="user@example.com"
+          initialWorkspace={{ id: "ws-1", name: "Alpha Workspace" }}
+        >
+          <div>Content</div>
+        </AppShell>
+      );
+    });
+
+    expect(
+      screen.getByRole("button", { name: /expand navigation/i })
+    ).toBeInTheDocument();
+
+    window.localStorage.clear();
+  });
 });

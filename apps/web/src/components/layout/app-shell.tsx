@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 import { WorkspaceProvider, useCurrentWorkspace } from "@/components/providers/workspace-context";
@@ -14,12 +14,36 @@ interface AppShellProps {
   initialWorkspaces?: Workspace[];
 }
 
+const SIDEBAR_COLLAPSED_KEY = "studio.sidebar.collapsed";
+
 function AppShellContent({ children, userEmail }: { children: ReactNode; userEmail?: string | null }) {
   const { workspaces, currentWorkspace, setCurrentWorkspace } = useCurrentWorkspace();
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const { data: creditsBalance, isLoading: isCreditsLoading } = useCreditBalance(
     currentWorkspace?.id
   );
+
+  // Read the saved desktop preference after mount so server and client markup match.
+  useEffect(() => {
+    try {
+      setIsNavCollapsed(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true");
+    } catch {
+      // localStorage can be unavailable in private/locked-down contexts.
+    }
+  }, []);
+
+  function toggleNavCollapsed() {
+    setIsNavCollapsed((previous) => {
+      const next = !previous;
+      try {
+        window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next));
+      } catch {
+        // Preference persistence is best-effort.
+      }
+      return next;
+    });
+  }
 
   return (
     <div className="min-h-screen bg-[#0B0C10] text-[#E8EAF0]">
@@ -35,13 +59,20 @@ function AppShellContent({ children, userEmail }: { children: ReactNode; userEma
         onSelectWorkspace={setCurrentWorkspace}
         isOpen={isNavOpen}
         onClose={() => setIsNavOpen(false)}
+        isCollapsed={isNavCollapsed}
+        onToggleCollapse={toggleNavCollapsed}
       />
-      <div className="lg:pl-60 flex flex-col min-h-screen pt-16">
+      <div
+        className={`flex flex-col min-h-screen pt-16 transition-[padding] duration-200 ease-out ${
+          isNavCollapsed ? "lg:pl-16" : "lg:pl-60"
+        }`}
+      >
         <TopBar
           userEmail={userEmail}
           creditsBalance={creditsBalance}
           isCreditsLoading={isCreditsLoading || !currentWorkspace}
           onOpenNav={() => setIsNavOpen(true)}
+          isNavCollapsed={isNavCollapsed}
         />
         <main id="main-content" tabIndex={-1} className="flex-1 p-4 sm:p-6 lg:p-8">
           {children}

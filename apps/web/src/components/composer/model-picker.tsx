@@ -11,6 +11,8 @@ interface ModelPickerProps {
   onChange: (slug: string) => void;
   /** Id of the visible label that names the picker. */
   labelledBy?: string;
+  /** "compact" renders an inline pill for dense toolbars. */
+  variant?: "default" | "compact";
 }
 
 interface ModelGroup {
@@ -60,7 +62,14 @@ export function groupModelsByProvider(models: StudioModel[]): ModelGroup[] {
  * Native <select> elements cannot style or pin provider labels, so this uses
  * a listbox with sticky provider headings that stay visible while scrolling.
  */
-export function ModelPicker({ models, value, onChange, labelledBy }: ModelPickerProps) {
+export function ModelPicker({
+  models,
+  value,
+  onChange,
+  labelledBy,
+  variant = "default",
+}: ModelPickerProps) {
+  const compact = variant === "compact";
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -180,24 +189,51 @@ export function ModelPicker({ models, value, onChange, labelledBy }: ModelPicker
         aria-label={labelledBy ? undefined : "Model"}
         onClick={() => (open ? closeList() : openList())}
         onKeyDown={handleTriggerKeyDown}
-        className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#262A35] bg-[#0F1117] px-3 py-2 text-left transition-colors hover:border-[#3A3F4D] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF]"
+        className={`flex items-center justify-between text-left transition-colors hover:border-[#3A3F4D] focus:outline-none focus:ring-2 focus:ring-[#7C5CFF] ${
+          compact
+            ? "w-auto max-w-[15rem] gap-1.5 whitespace-nowrap rounded-lg border border-[#262A35] bg-[#0F1117] px-2.5 py-1.5"
+            : "w-full gap-3 rounded-xl border border-[#262A35] bg-[#0F1117] px-3 py-2"
+        }`}
       >
-        <span className="flex min-w-0 flex-col">
-          <span className="truncate text-sm text-[#E8EAF0]">
-            {selectedModel?.display_name ?? "Select a model"}
-          </span>
-          {selectedModel && (
+        {compact ? (
+          <>
             <span
-              className={`mt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${providerAccent(selectedModel.provider_id)}`}
+              className={`flex items-center gap-1.5 min-w-0 text-xs font-medium ${providerAccent(
+                selectedModel?.provider_id ?? ""
+              )}`}
             >
-              {providerLabel(selectedModel.provider_id)}
+              <span className="h-3 w-1 rounded-full bg-current opacity-80" aria-hidden="true" />
+              <span className="truncate text-[#E8EAF0]">
+                {selectedModel?.display_name ?? "Select model"}
+              </span>
             </span>
-          )}
-        </span>
-        <ChevronDown
-          className={`h-4 w-4 shrink-0 text-[#9AA1B2] transition-transform ${open ? "rotate-180" : ""}`}
-          aria-hidden="true"
-        />
+            <ChevronDown
+              className={`h-3.5 w-3.5 shrink-0 text-[#9AA1B2] transition-transform ${
+                open ? "rotate-180" : ""
+              }`}
+              aria-hidden="true"
+            />
+          </>
+        ) : (
+          <>
+            <span className="flex min-w-0 flex-col">
+              <span className="truncate text-sm text-[#E8EAF0]">
+                {selectedModel?.display_name ?? "Select a model"}
+              </span>
+              {selectedModel && (
+                <span
+                  className={`mt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] ${providerAccent(selectedModel.provider_id)}`}
+                >
+                  {providerLabel(selectedModel.provider_id)}
+                </span>
+              )}
+            </span>
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 text-[#9AA1B2] transition-transform ${open ? "rotate-180" : ""}`}
+              aria-hidden="true"
+            />
+          </>
+        )}
       </button>
 
       {open && (
@@ -209,7 +245,9 @@ export function ModelPicker({ models, value, onChange, labelledBy }: ModelPicker
           aria-activedescendant={flatModels.length > 0 ? `${listId}-option-${activeIndex}` : undefined}
           tabIndex={-1}
           onKeyDown={handleListKeyDown}
-          className="absolute z-30 mt-2 max-h-80 w-full overflow-y-auto rounded-xl border border-[#262A35] bg-[#0F1117] px-1 pb-1 shadow-2xl shadow-black/50 focus:outline-none"
+          className={`absolute z-30 max-h-80 overflow-y-auto rounded-xl border border-[#262A35] bg-[#0F1117] px-1 pb-1 shadow-2xl shadow-black/50 focus:outline-none ${
+            compact ? "bottom-full mb-2 w-72 max-w-[calc(100vw-2rem)]" : "mt-2 w-full"
+          }`}
         >
           {groups.map((group, groupIndex) => {
             const headingId = `${listId}-provider-${group.providerId}`;

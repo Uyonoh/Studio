@@ -13,6 +13,8 @@ interface TopBarProps {
   title?: string;
   /** Opens the off-canvas navigation on small screens. */
   onOpenNav?: () => void;
+  /** Mirrors the desktop sidebar state so the bar tracks its width. */
+  isNavCollapsed?: boolean;
 }
 
 export function TopBar({
@@ -21,6 +23,7 @@ export function TopBar({
   isCreditsLoading = false,
   title = "Projects",
   onOpenNav,
+  isNavCollapsed = false,
 }: TopBarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const router = useRouter();
@@ -34,7 +37,11 @@ export function TopBar({
   const initial = userEmail ? userEmail[0].toUpperCase() : "U";
 
   return (
-    <header className="fixed top-0 left-0 lg:left-60 right-0 h-16 bg-[#0B0C10]/80 backdrop-blur-xl border-b border-[#262A35] z-20 flex items-center justify-between gap-3 px-3 sm:px-6 select-none">
+    <header
+      className={`fixed top-0 left-0 right-0 h-16 bg-[#0B0C10]/80 backdrop-blur-xl border-b border-[#262A35] z-20 flex items-center justify-between gap-3 px-3 sm:px-6 select-none transition-[left] duration-200 ease-out ${
+        isNavCollapsed ? "lg:left-16" : "lg:left-60"
+      }`}
+    >
       {/* Title / Breadcrumb */}
       <div className="flex items-center gap-2 text-sm min-w-0">
         <button
