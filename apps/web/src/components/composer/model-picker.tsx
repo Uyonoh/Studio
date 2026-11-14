@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronDown } from "lucide-react";
 import type { StudioModel } from "@/hooks/use-models";
 import { providerAccent, providerLabel } from "@/lib/providers";
@@ -72,6 +73,12 @@ export function ModelPicker({
   const compact = variant === "compact";
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [dropdownPosition, setDropdownPosition] = useState<{
+    bottom?: number;
+    top?: number;
+    left: number;
+    width: number;
+  } | null>(null);
 
   const listId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -84,8 +91,27 @@ export function ModelPicker({
   const selectedModel = models.find((model) => model.slug === value) ?? null;
   const selectedIndex = flatModels.findIndex((model) => model.slug === value);
 
+  function updateDropdownPosition() {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    if (compact) {
+      setDropdownPosition({
+        bottom: window.innerHeight - rect.top + 8,
+        left: Math.max(8, Math.min(rect.left, window.innerWidth - 300)),
+        width: 288,
+      });
+    } else {
+      setDropdownPosition({
+        top: rect.bottom + 8,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  }
+
   function openList() {
     setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
+    updateDropdownPosition();
     setOpen(true);
   }
 
@@ -113,14 +139,28 @@ export function ModelPicker({
     if (!open) return;
 
     function handlePointerDown(event: MouseEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        !containerRef.current?.contains(target) &&
+        !listRef.current?.contains(target)
+      ) {
         setOpen(false);
       }
     }
 
+    function handleScrollOrResize() {
+      updateDropdownPosition();
+    }
+
     document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [open]);
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+    };
+  }, [open, compact]);
 
   function handleTriggerKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
@@ -236,89 +276,182 @@ export function ModelPicker({
         )}
       </button>
 
-      {open && (
-        <div
-          ref={listRef}
-          id={listId}
-          role="listbox"
-          aria-labelledby={labelledBy}
-          aria-activedescendant={flatModels.length > 0 ? `${listId}-option-${activeIndex}` : undefined}
-          tabIndex={-1}
-          onKeyDown={handleListKeyDown}
-          className={`absolute z-30 max-h-80 overflow-y-auto rounded-xl border border-[#262A35] bg-[#0F1117] px-1 pb-1 shadow-2xl shadow-black/50 focus:outline-none ${
-            compact ? "bottom-full mb-2 w-72 max-w-[calc(100vw-2rem)]" : "mt-2 w-full"
-          }`}
-        >
-          {groups.map((group, groupIndex) => {
-            const headingId = `${listId}-provider-${group.providerId}`;
-
-            return (
+      {open &&
+        (compact && typeof document !== "undefined"
+          ? createPortal(
               <div
-                key={group.providerId}
-                role="group"
-                aria-labelledby={headingId}
-                className={
-                  groupIndex === 0 ? undefined : "mt-1.5 border-t border-[#262A35]/70 pt-1.5"
+                ref={listRef}
+                id={listId}
+                role="listbox"
+                aria-labelledby={labelledBy}
+                aria-activedescendant={
+                  flatModels.length > 0 ? `${listId}-option-${activeIndex}` : undefined
                 }
+                tabIndex={-1}
+                onKeyDown={handleListKeyDown}
+                style={{
+                  position: "fixed",
+                  bottom: dropdownPosition?.bottom ?? 80,
+                  left: dropdownPosition?.left ?? 16,
+                  width: dropdownPosition?.width ?? 288,
+                  zIndex: 9999,
+                }}
+                className="max-h-80 overflow-y-auto rounded-xl border border-[#262A35] bg-[#0F1117] px-1 pb-1 shadow-2xl shadow-black/80 focus:outline-none"
               >
-                <div
-                  id={headingId}
-                  data-testid={`model-provider-${group.providerId}`}
-                  className={`sticky top-0 z-10 flex items-center justify-between bg-[#0F1117] px-2.5 py-2 text-[10px] font-bold uppercase tracking-[0.16em] ${providerAccent(
-                    group.providerId
-                  )}`}
-                >
-                  <span>{group.label}</span>
-                  <span className="font-mono text-[10px] font-normal normal-case tracking-normal text-[#6B7280]">
-                    {group.models.length}
-                  </span>
-                </div>
+                {groups.map((group, groupIndex) => {
+                  const headingId = `${listId}-provider-${group.providerId}`;
 
-                <div className="space-y-0.5">
-                  {group.models.map((model) => {
-                    const index = flatModels.indexOf(model);
-                    const isSelected = model.slug === value;
-                    const isActive = index === activeIndex;
-
-                    return (
-                      <button
-                        key={model.id}
-                        ref={(element) => {
-                          optionRefs.current[index] = element;
-                        }}
-                        type="button"
-                        role="option"
-                        id={`${listId}-option-${index}`}
-                        aria-selected={isSelected}
-                        tabIndex={-1}
-                        onClick={() => chooseModel(model.slug)}
-                        onMouseEnter={() => setActiveIndex(index)}
-                        className={`flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
-                          isSelected
-                            ? "bg-[#6C4CE8]/25 text-[#E8EAF0]"
-                            : isActive
-                              ? "bg-[#1B1E26] text-[#E8EAF0]"
-                              : "text-[#C7CBD6] hover:bg-[#1B1E26]"
-                        }`}
+                  return (
+                    <div
+                      key={group.providerId}
+                      role="group"
+                      aria-labelledby={headingId}
+                      className={
+                        groupIndex === 0 ? undefined : "mt-1.5 border-t border-[#262A35]/70 pt-1.5"
+                      }
+                    >
+                      <div
+                        id={headingId}
+                        data-testid={`model-provider-${group.providerId}`}
+                        className={`sticky top-0 z-10 flex items-center justify-between bg-[#0F1117] px-2.5 py-2 text-[10px] font-bold uppercase tracking-[0.16em] ${providerAccent(
+                          group.providerId
+                        )}`}
                       >
-                        <span className="min-w-0 truncate">{model.display_name}</span>
-                        <span className="flex shrink-0 items-center gap-2">
-                          <span className="font-mono text-[11px] text-[#9AA1B2]">
-                            {formatCost(model)} cr
-                          </span>
-                          {isSelected && (
-                            <Check className="h-3.5 w-3.5 text-[#A995FF]" aria-hidden="true" />
-                          )}
+                        <span>{group.label}</span>
+                        <span className="font-mono text-[10px] font-normal normal-case tracking-normal text-[#6B7280]">
+                          {group.models.length}
                         </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                      </div>
+
+                      <div className="space-y-0.5">
+                        {group.models.map((model) => {
+                          const index = flatModels.indexOf(model);
+                          const isSelected = model.slug === value;
+                          const isActive = index === activeIndex;
+
+                          return (
+                            <button
+                              key={model.id}
+                              ref={(element) => {
+                                optionRefs.current[index] = element;
+                              }}
+                              type="button"
+                              role="option"
+                              id={`${listId}-option-${index}`}
+                              aria-selected={isSelected}
+                              tabIndex={-1}
+                              onClick={() => chooseModel(model.slug)}
+                              onMouseEnter={() => setActiveIndex(index)}
+                              className={`flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
+                                isSelected
+                                  ? "bg-[#6C4CE8]/25 text-[#E8EAF0]"
+                                  : isActive
+                                    ? "bg-[#1B1E26] text-[#E8EAF0]"
+                                    : "text-[#C7CBD6] hover:bg-[#1B1E26]"
+                              }`}
+                            >
+                              <span className="min-w-0 truncate">{model.display_name}</span>
+                              <span className="flex shrink-0 items-center gap-2">
+                                <span className="font-mono text-[11px] text-[#9AA1B2]">
+                                  {formatCost(model)} cr
+                                </span>
+                                {isSelected && (
+                                  <Check className="h-3.5 w-3.5 text-[#A995FF]" aria-hidden="true" />
+                                )}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>,
+              document.body
+            )
+          : (
+              <div
+                ref={listRef}
+                id={listId}
+                role="listbox"
+                aria-labelledby={labelledBy}
+                aria-activedescendant={
+                  flatModels.length > 0 ? `${listId}-option-${activeIndex}` : undefined
+                }
+                tabIndex={-1}
+                onKeyDown={handleListKeyDown}
+                className="absolute z-30 mt-2 max-h-80 w-full overflow-y-auto rounded-xl border border-[#262A35] bg-[#0F1117] px-1 pb-1 shadow-2xl shadow-black/50 focus:outline-none"
+              >
+                {groups.map((group, groupIndex) => {
+                  const headingId = `${listId}-provider-${group.providerId}`;
+
+                  return (
+                    <div
+                      key={group.providerId}
+                      role="group"
+                      aria-labelledby={headingId}
+                      className={
+                        groupIndex === 0 ? undefined : "mt-1.5 border-t border-[#262A35]/70 pt-1.5"
+                      }
+                    >
+                      <div
+                        id={headingId}
+                        data-testid={`model-provider-${group.providerId}`}
+                        className={`sticky top-0 z-10 flex items-center justify-between bg-[#0F1117] px-2.5 py-2 text-[10px] font-bold uppercase tracking-[0.16em] ${providerAccent(
+                          group.providerId
+                        )}`}
+                      >
+                        <span>{group.label}</span>
+                        <span className="font-mono text-[10px] font-normal normal-case tracking-normal text-[#6B7280]">
+                          {group.models.length}
+                        </span>
+                      </div>
+
+                      <div className="space-y-0.5">
+                        {group.models.map((model) => {
+                          const index = flatModels.indexOf(model);
+                          const isSelected = model.slug === value;
+                          const isActive = index === activeIndex;
+
+                          return (
+                            <button
+                              key={model.id}
+                              ref={(element) => {
+                                optionRefs.current[index] = element;
+                              }}
+                              type="button"
+                              role="option"
+                              id={`${listId}-option-${index}`}
+                              aria-selected={isSelected}
+                              tabIndex={-1}
+                              onClick={() => chooseModel(model.slug)}
+                              onMouseEnter={() => setActiveIndex(index)}
+                              className={`flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
+                                isSelected
+                                  ? "bg-[#6C4CE8]/25 text-[#E8EAF0]"
+                                  : isActive
+                                    ? "bg-[#1B1E26] text-[#E8EAF0]"
+                                    : "text-[#C7CBD6] hover:bg-[#1B1E26]"
+                              }`}
+                            >
+                              <span className="min-w-0 truncate">{model.display_name}</span>
+                              <span className="flex shrink-0 items-center gap-2">
+                                <span className="font-mono text-[11px] text-[#9AA1B2]">
+                                  {formatCost(model)} cr
+                                </span>
+                                {isSelected && (
+                                  <Check className="h-3.5 w-3.5 text-[#A995FF]" aria-hidden="true" />
+                                )}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
-      )}
+            ))}
     </div>
   );
 }

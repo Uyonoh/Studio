@@ -351,6 +351,7 @@ export function StudioCanvas({ projectId }: StudioCanvasProps) {
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const referenceRef = useRef<HTMLDivElement>(null);
+  const referenceMenuRef = useRef<HTMLDivElement>(null);
   const advancedRef = useRef<HTMLDivElement>(null);
   const inFlight = useRef(false);
   const idempotency = useRef<{ key: string; signature: string } | null>(null);
@@ -362,15 +363,22 @@ export function StudioCanvas({ projectId }: StudioCanvasProps) {
     [inputsByRole]
   );
   const hasInputs = attachedAssets.length > 0;
+  // If the user has attached inputs, use image-to-x models; otherwise fetch the full mode catalog or text-to-x models.
   const taskType = taskTypeFor(mode, hasInputs);
+  const companionTaskType = taskTypeFor(mode, !hasInputs);
 
   const { data: models = [], isLoading: modelsLoading, isError: modelsError } = useModels(taskType);
+  const { data: companionModels = [] } = useModels(companionTaskType);
   const selectedModel: StudioModel | null =
     models.find((model) => model.slug === selectedSlug) ?? models[0] ?? null;
-  const imageCapabilities = useMemo(
-    () => capabilitiesOfKind(selectedModel, "image"),
-    [selectedModel]
-  );
+  const imageCapabilities = useMemo(() => {
+    const direct = capabilitiesOfKind(selectedModel, "image");
+    if (direct.length > 0) return direct;
+    // If the currently selected model is text_to_image / text_to_video, look up what
+    // capabilities the mode's image models support so references can still be attached.
+    const companion = companionModels.find((m) => capabilitiesOfKind(m, "image").length > 0);
+    return capabilitiesOfKind(companion, "image");
+  }, [selectedModel, companionModels]);
   const mutation = useSubmitGeneration(projectId);
 
   const {
@@ -416,10 +424,11 @@ export function StudioCanvas({ projectId }: StudioCanvasProps) {
     setFieldErrors({});
   }, [selectedModel]);
 
-  // Drop references the newly selected model cannot accept.
+  // Drop references only if the model is an image-input model that cannot accept them.
   useEffect(() => {
     if (!selectedModel) return;
     const capabilities = capabilitiesOfKind(selectedModel, "image");
+    if (capabilities.length === 0) return;
     setInputsByRole((previous) => {
       const next: Record<string, Asset[]> = {};
       let changed = false;
@@ -450,7 +459,11 @@ export function StudioCanvas({ projectId }: StudioCanvasProps) {
   useEffect(() => {
     function handlePointerDown(event: MouseEvent) {
       const target = event.target as Node;
-      if (isReferenceOpen && !referenceRef.current?.contains(target)) {
+      if (
+        isReferenceOpen &&
+        !referenceRef.current?.contains(target) &&
+        !referenceMenuRef.current?.contains(target)
+      ) {
         setIsReferenceOpen(false);
       }
       if (
@@ -475,7 +488,10 @@ export function StudioCanvas({ projectId }: StudioCanvasProps) {
   );
 
   function addReference(asset: Asset, role?: string) {
-    const capabilities = capabilitiesOfKind(selectedModel, "image");
+    const capabilities =
+      imageCapabilities.length > 0
+        ? imageCapabilities
+        : capabilitiesOfKind(selectedModel, "image");
     if (capabilities.length === 0) {
       toast.error("This model does not accept image references.");
       return;
@@ -896,7 +912,7 @@ export function StudioCanvas({ projectId }: StudioCanvasProps) {
                 </div>
 
                 {/* Compact horizontal controls */}
-                <div ref={referenceRef} className="relative mt-2">
+                <div className="relative mt-2">
                   <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   <input
                     ref={uploadInputRef}
@@ -922,7 +938,7 @@ export function StudioCanvas({ projectId }: StudioCanvasProps) {
                     )}
                   </button>
 
-                  <div className="flex shrink-0 items-center gap-1.5">
+                  <div ref={referenceRef} className="flex shrink-0 items-center gap-1.5">
                     <button
                       type="button"
                       onClick={openReferencePicker}
@@ -1049,7 +1065,10 @@ export function StudioCanvas({ projectId }: StudioCanvasProps) {
                   </div>
 
                   {isReferenceOpen && (
-                    <div className="absolute bottom-full left-0 z-40 mb-2 max-h-[26rem] w-[min(34rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-[#262A35] bg-[#0F1117] p-3 shadow-2xl shadow-black/60">
+                    <div
+                      ref={referenceMenuRef}
+                      className="absolute bottom-full left-0 z-40 mb-2 max-h-[26rem] w-[min(34rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-[#262A35] bg-[#0F1117] p-3 shadow-2xl shadow-black/60"
+                    >
                       <div className="mb-2 flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5 text-xs font-semibold text-[#E8EAF0]">
                           <Layers className="h-3.5 w-3.5 text-[#A995FF]" />
